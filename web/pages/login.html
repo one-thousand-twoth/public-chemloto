@@ -92,17 +92,12 @@
 <body>
 
     <div id="header">
-        <?php
-        // Показать имя пользователя, если вошли в систему
-        if (isset($_SESSION['username'])) {
-            echo 'Здравствуйте, ' . $_SESSION['username'] . '!';
-        }
-        ?>
+       
     </div>
 
     <div id="content">
-        <h2>Регистрация</h2>
-        <form method="post" action="/signup">
+        <!-- <h2>Регистрация</h2> -->
+        <!-- <form method="post" action="/signup">
             <label for="name">Введите имя:</label>
             <input type="text" name="name" id="name" required>
 
@@ -118,25 +113,22 @@
             </div>
 
             <button type="submit" name="register">Зарегистрировать</button>
-        </form>
+        </form> -->
 
         <!-- Форма для входа -->
-        <form method="post" action="">
+        <form method="post" action="/">
             <h2>Вход</h2>
-            <label for="loginName">Имя пользователя:</label>
-            <input type="text" name="loginName" id="loginName" required>
-            <label for="loginPassword">Пароль:</label>
-            <input type="password" name="loginPassword" id="loginPassword" required>
+            <label for="name">Введите имя:</label>
+            <input type="text" name="name" id="name" required>
+            <!-- <label for="loginPassword">Пароль:</label>
+            <input type="password" name="loginPassword" id="loginPassword" required> -->
             <button type="submit" name="login">Войти</button>
         </form>
 
         <div id="error">
-            <?php
-            // Вывод сообщений об ошибках, если они есть
-            if (!empty($errorMessage)) {
-                echo $errorMessage;
-            }
-            ?>
+            
+                <label class='error'>{{.name}}</label>
+          
         </div>
     </div>
 
@@ -148,9 +140,7 @@
         organizerCheckbox.addEventListener('change', function () {
             codeContainer.style.display = organizerCheckbox.checked ? 'block' : 'none';
         });
-
-
-    </script>
+     </script>
 
 
 </body>
