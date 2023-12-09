@@ -170,6 +170,7 @@ func (app *App) UserHandler() http.HandlerFunc {
 				scoreValue, err := strconv.Atoi(score)
 				err = app.database.UpdateUserScore(roomID, scoreValue)
 				if err != nil {
+					log.Println("user score update:", err)
 					app.writeJSON(w, http.StatusBadRequest, envelope{"success": false}, nil)
 				}
 				app.writeJSON(w, http.StatusOK, envelope{"success": true}, nil)

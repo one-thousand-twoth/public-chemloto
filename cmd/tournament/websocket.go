@@ -5,14 +5,15 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 
 	"github.com/gorilla/sessions"
 	"github.com/gorilla/websocket"
 )
 
 type wsmessage struct {
-	Type   string `json:"type"`
-	Struct any    `json:"struct"`
+	Type   string          `json:"type"`
+	Struct json.RawMessage `json:"struct"`
 }
 
 type textMessage struct {
@@ -22,9 +23,46 @@ type textMessage struct {
 type handMessage struct {
 	Sender string `json:"sender"`
 }
+type scoreMessage struct {
+	Target string `json:"target"`
+	Score  int    `json:"score"`
+}
+
+func (s *scoreMessage) UnmarshalJSON(data []byte) error {
+	// Define a struct with the same fields as scoreMessage to unmarshal into
+	var temp struct {
+		Target string      `json:"target"`
+		Score  interface{} `json:"score"`
+	}
+
+	// Unmarshal into the temporary struct
+	if err := json.Unmarshal(data, &temp); err != nil {
+		return err
+	}
+
+	// Perform additional handling for the Score field
+	switch v := temp.Score.(type) {
+	case float64:
+		s.Score = int(v) // Convert float64 to int if it's a number
+	case string:
+		// Handle string case accordingly, e.g., convert to int or perform validation
+		scoreInt, err := strconv.Atoi(v)
+		if err != nil {
+			return err
+		}
+		s.Score = scoreInt
+	default:
+		return fmt.Errorf("unexpected type for Score: %T", v)
+	}
+
+	// Assign other fields
+	s.Target = temp.Target
+
+	return nil
+}
 
 // NewMessage ...
-func NewMessage(messageType string, strct any) *wsmessage {
+func NewMessage(messageType string, strct json.RawMessage) *wsmessage {
 	return &wsmessage{
 		Type:   messageType,
 		Struct: strct,
@@ -37,10 +75,11 @@ type wsclient struct {
 	manager *clientManager
 	channel chan *wsmessage
 	room    string
+	admin   bool
 }
 
-func newClient(ws *websocket.Conn, name string, room string) *wsclient {
-	return &wsclient{ws: ws, name: name, channel: make(chan *wsmessage), room: room}
+func newClient(ws *websocket.Conn, name string, room string, admin bool) *wsclient {
+	return &wsclient{ws: ws, name: name, channel: make(chan *wsmessage), room: room, admin: admin}
 }
 
 // type clientManager struct {
@@ -89,6 +128,11 @@ func (app *App) MessagingHandler() http.HandlerFunc {
 		if err != nil {
 			log.Println("MessagingHandler: ", err.Error())
 		}
+
+		admin, ok := userSession.Values["admin"].(bool)
+		if !ok {
+			log.Println("Fail to type assertion")
+		}
 		// upgrade this connection to a WebSocket
 		// connection
 		ws, err := webocketUpgrader.Upgrade(w, r, nil)
@@ -97,7 +141,7 @@ func (app *App) MessagingHandler() http.HandlerFunc {
 		}
 
 		//adding connection to connections pull
-		conn := newClient(ws, username, user.Room)
+		conn := newClient(ws, username, user.Room, admin)
 		app.clientManager.addClient(userSession.ID, user.Room, conn)
 
 		log.Println("Client Connected")
@@ -132,27 +176,57 @@ func (clnt *wsclient) readerBuffer(app *App) {
 		}
 		var wsmsg wsmessage
 		if err := json.Unmarshal([]byte(p), &wsmsg); err != nil {
-			// TODO: add validation
+			// // TODO: add validation
 
-			msg := NewMessage("chat_text", textMessage{Sender: clnt.name, Payload: p})
+			// msg, err := json.Marshal(textMessage{Sender: clnt.name, Payload: p})
+			// if err != nil {
+			// 	log.Println("failed json marshal chat_text")
+			// }
 
-			log.Print("printed: ", string(msg.Struct.(textMessage).Payload))
+			// // log.Print("printed: ", string(msg.Struct.(textMessage).Payload))
 
-			for _, ws := range app.clientManager.rooms[clnt.room].wsconnections {
-				ws.channel <- msg
-			}
-		} else {
-			if wsmsg.Type == "raiseHand" {
-				msg := NewMessage("raiseHand", handMessage{Sender: clnt.name})
-				for _, ws := range app.clientManager.rooms[clnt.room].wsconnections {
-					ws.channel <- msg
-				}
-			} else {
-				fmt.Printf("Species: %s, Description: %s", wsmsg.Type, wsmsg.Struct)
-				fmt.Println()
-			}
+			// for _, ws := range app.clientManager.rooms[clnt.room].wsconnections {
+			// 	ws.channel <- msg
+			log.Print("error unmarshaling wsmessage", string(p))
 		}
 
+		switch wsmsg.Type {
+		case "chat_text":
+			//msg := textMessage{Sender: clnt.name, Payload: p}
+
+			// log.Print("printed: ", string(msg.Struct.(textMessage).Payload))
+
+			for _, ws := range app.clientManager.rooms[clnt.room].wsconnections {
+				ws.channel <- &wsmsg
+			}
+
+		case "score_up":
+			if clnt.admin {
+				// msg := NewMessage("score_up", scoreMessage{Target: wsmsg.S, Payload: p})
+				log.Println("score up!", wsmsg)
+				var wsmsg_struct scoreMessage
+				err := json.Unmarshal(wsmsg.Struct, &wsmsg_struct)
+				if err != nil {
+					log.Println("score_up: error type assert")
+					continue
+				}
+				err = app.database.UpdateUserScore(wsmsg_struct.Target, wsmsg_struct.Score)
+				if err != nil {
+					log.Println("user score update:", err)
+				}
+				log.Println("successfuly update user score ", wsmsg_struct)
+			}
+		case "raise_hand":
+			// msg := handMessage{Sender: clnt.name}
+			log.Println(wsmsg)
+			for _, ws := range app.clientManager.rooms[clnt.room].wsconnections {
+				ws.channel <- &wsmsg
+			}
+
+		default:
+			log.Println("websocket get undefined message type: ", wsmsg.Type)
+
+		}
 	}
 }
 
