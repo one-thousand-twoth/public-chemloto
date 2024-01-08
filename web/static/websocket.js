@@ -105,7 +105,8 @@ document.addEventListener('DOMContentLoaded', e => {
           var button = document.querySelector('.raise-hand-btn');
           button.style.display = 'block';
         }
-        if (document.getElementById('continueButton').style.display != 'none'){
+        
+        else if (document.getElementById('continueButton').style.display != 'none' ){
           console.log('DDDDDDDdd')
           document.getElementById('continueButton').style.display = 'none'
         }

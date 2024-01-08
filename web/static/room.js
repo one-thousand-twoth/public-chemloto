@@ -57,8 +57,7 @@ document.addEventListener('DOMContentLoaded', function () {
     modalTitle.textContent = 'Начислить очки игроку: ' + player.Username
 
     modal.style.display = 'block'
-    document.getElementById('playerName').textContent =
-      'Игрок: ' + player.Username
+    
 
     // Сохраните имя пользователя в глобальной переменной
     selectedUsername = player.Username
