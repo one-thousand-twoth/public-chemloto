@@ -20,13 +20,15 @@ type clientManager struct {
 type Room struct {
 	wsconnections map[string]*wsclient
 	models.Room
-	ticker         *time.Ticker
-	started        bool
-	paused         bool
-	completed      bool
-	pushedElements []string
-	round          map[string]bool
-	round_int      map[string]int
+	ticker           *time.Ticker
+	started          bool
+	paused           bool
+	completed        bool
+	pushedElements   []string
+	round            map[string]bool
+	round_int        map[string]int
+	rnd              *rand.Rand
+	lastElementsKeys []string
 }
 
 func newClientManager(store sqlite.Storage) *clientManager {
@@ -63,6 +65,16 @@ func (clntMngr *clientManager) removeClient(conn *wsclient, room string) {
 func (clntMngr *clientManager) addRoom(room models.Room) {
 	clntMngr.Lock()
 	defer clntMngr.Unlock()
+	var src cryptoSource
+
+	keys := make([]string, 0, 12)
+	for k, v := range room.Elements {
+		if v != 0 {
+			for i := 0; i < v; i++ {
+				keys = append(keys, k)
+			}
+		}
+	}
 
 	clntMngr.rooms[room.Name] = &Room{
 		wsconnections: make(map[string]*wsclient),
@@ -77,6 +89,8 @@ func (clntMngr *clientManager) addRoom(room models.Room) {
 			"B": 4,
 			"Y": 4,
 		},
+		rnd:              rand.New(src),
+		lastElementsKeys: keys,
 	}
 }
 
@@ -93,43 +107,48 @@ func (clntMngr *clientManager) removeRoom(room string) {
 
 func (room *Room) getRandomElement() (string, bool) {
 
-	elems := room.Elements
-	keys := make([]string, 0, 12)
+	// elems := room.Elements
+	// keys := make([]string, 0, 12)
+	keys := room.lastElementsKeys
 	// empty_el := make([]string, 12)
 	// i := 0
-	for k, v := range elems {
-		if v != 0 {
-			// log.Println(k, " ", v, " ")
-			keys = append(keys, k)
-			// i++
-		}
-	}
+	// for k, v := range room.lastElementsKeys {
+	// 	if v != 0 {
+	// 		// log.Println(k, " ", v, " ")
+	// 		keys = append(keys, k)
+	// 		// i++
+	// 	}
+	// }
+	log.Printf("%+v", room.Elements)
 	// output := "'" + strings.Join(keys, `','`) + `'`
 	// fmt.Println(output)
+
 	if len(keys) == 0 {
 		return "nil", false
 	}
 
-	// log.Println(len(elems))
+	// var src cryptoSource
+	// rnd := rand.New(src)
 
-	for {
-		rand_index := rand.Intn(len(keys))
-		item, ok := elems[keys[rand_index]]
-		if !ok {
-			log.Println("something went wrong when pick an element: ", keys[rand_index])
-			return "nil", false
-		}
-		if item == 0 {
-			keys = removeElement(keys, keys[rand_index])
-			// log.Println("removing ", keys[rand_index])
-		} else {
-			elems[keys[rand_index]] = item - 1
-			room.pushedElements = append(room.pushedElements, keys[rand_index])
-			// output := "'" + strings.Join(keys, `','`) + `'`
-			// fmt.Println(output)
-			return keys[rand_index], true
-		}
+	// for {
+	rand_index := room.rnd.Intn(len(keys))
+	elem := keys[rand_index]
+	item, ok := room.Elements[elem]
+	if !ok {
+		log.Println("something went wrong when pick an element: ", elem)
+		return "Error", false
 	}
+	room.Elements[elem] = item - 1
+
+	room.lastElementsKeys = removeElement(room.lastElementsKeys, elem)
+
+	log.Println(elem, " -1")
+	room.pushedElements = append(room.pushedElements, elem)
+	// output := "'" + strings.Join(keys, `','`) + `'`
+	// fmt.Println(output)
+	return elem, true
+
+	// }
 
 }
 
@@ -156,6 +175,9 @@ func sendRandomItem(room *Room) {
 
 	elem, ok := room.getRandomElement()
 	if !ok {
+		if elem == "Error" {
+			log.Println("Error getting random element ", elem)
+		}
 		elem = "Empty bag!"
 		room.completed = true
 	}

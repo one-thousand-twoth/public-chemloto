@@ -258,9 +258,9 @@ func (clnt *wsclient) readerBuffer(app *App) {
 				}
 				// fmt.Println(room.Elements)
 				if !room.started && room.Time == 0 {
-					room.started = true
 					sendRandomItem(room)
 				}
+				room.started = true
 			}
 		default:
 			log.Println("websocket get undefined message type: ", wsmsg.Type)

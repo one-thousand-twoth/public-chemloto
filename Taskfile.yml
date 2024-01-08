@@ -4,3 +4,7 @@ tasks:
   build:
     cmds:
       - go build -v .\\cmd\\tournament\\
+  run:
+    cmds:
+      - go build -v .\\cmd\\tournament\\
+      - .\tournament.exe
