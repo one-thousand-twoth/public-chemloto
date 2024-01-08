@@ -160,7 +160,11 @@ document.addEventListener('DOMContentLoaded', e => {
             pauseTimer()
           }
           console.log(data.struct.last_elements)
-          handleElementResponse(data.struct.last_elements[data.struct.last_elements.length - 1], data.struct.last_elements);
+          if (data.struct.Completed === true){
+            handleElementResponse('Empty bag!', data.struct.last_elements);
+          }
+          else handleElementResponse(data.struct.last_elements[data.struct.last_elements.length - 1], data.struct.last_elements);
+          
         }
         else if (data.struct.Started == false) {
           if (isAdmin === 'false') {
