@@ -29,6 +29,9 @@ button {
 .full_room{
     display: none;
 }
+.modal2{
+    text-align: center;
+}
 #if_admin,
 #admin_panel_button {
     background-color: #007BFF;
