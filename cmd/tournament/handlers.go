@@ -82,9 +82,9 @@ func (app *App) CreateRoomHandler() http.HandlerFunc {
 			// log.Printf("%+v", validationErrors)
 			for _, v := range validationErrors {
 				if v.Field() == "Name" {
-					errorsList = append(errorsList, "Имя комнаты указано не правильно")
+					errorsList = append(errorsList, "Имя комнаты указано неправильно")
 				} else if v.Field() == "Max_partic" {
-					errorsList = append(errorsList, "Количество игроков указано не правильно")
+					errorsList = append(errorsList, "Количество игроков указано неправильно")
 				} else {
 					errorsList = append(errorsList, v.Error())
 				}
@@ -167,7 +167,12 @@ func (app *App) RoomHandler() http.HandlerFunc {
 					Username: username,
 					Admin:    admin,
 				}
-				if count >= room.Max_partic && !admin {
+				user, err := app.database.GetUser(username)
+				if err != nil {
+					log.Println("roomhandler: failed to get user")
+				}
+
+				if count >= room.Max_partic && !admin && user.Room != roomID {
 					data.Error = "В комнате больше нет мест"
 					app.render(w, http.StatusTemporaryRedirect, "room_list", data)
 					return
