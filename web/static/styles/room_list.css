@@ -15,7 +15,20 @@ button {
     cursor: pointer;
     border-radius: 4px;
 }
+.modal2 {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    padding: 20px;
+    background-color: #fff;
+    box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+  }
 
+.full_room{
+    display: none;
+}
 #if_admin,
 #admin_panel_button {
     background-color: #007BFF;

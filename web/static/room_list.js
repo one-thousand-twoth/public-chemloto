@@ -219,3 +219,30 @@ function deleteRooms (roomName) {
       .catch(error => console.error('Ошибка при удалении комнаты: ' + error))
   }
 }
+var myElement = document.getElementById("myDiv");
+  var content = myElement.innerHTML;
+
+  if (content.trim() !== "") {
+    // Если содержимое не пусто, открываем модальное окно
+    openModal(content);
+  }
+
+  function openModal(content) {
+    var modal = document.getElementById("myModal");
+    var modalContent = document.getElementById("modalContent");
+
+    // Устанавливаем содержимое модального окна
+    modalContent.innerHTML = content;
+
+    // Показываем модальное окно и фон
+    modal.style.display = "block";
+
+  }
+
+  function closeModal() {
+    var modal = document.getElementById("myModal");
+
+    // Закрываем модальное окно и фон
+    modal.style.display = "none";
+
+  }

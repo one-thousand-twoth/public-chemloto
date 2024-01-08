@@ -21,7 +21,15 @@
 <body>
 
     <div id="header">
-        {{.Error}}
+        <div class="full_room" id="myDiv">{{.Error}}</div>
+
+<!-- Модальное окно -->
+<div id="myModal" class="modal2">
+  <p id="modalContent"></p>
+  <button onclick="closeModal()">Закрыть</button>
+</div>
+
+<div class="overlay2" id="overlay"></div>
         {{.Username}}
         {{if .Admin}}
         {{if .Admin}}

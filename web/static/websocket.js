@@ -121,13 +121,15 @@ document.addEventListener('DOMContentLoaded', e => {
         timer = data.struct.Time;
         break;
       case 'init_connection':
+        
         timer = data.struct.Time;
         if (data.struct.Started == true) {
+          console.log('init')
           if (isAdmin === 'false') {
             var button = document.querySelector('.raise-hand-btn');
             button.style.display = 'block';
           }
-
+          
           startGameHandler();
           console.log(timer)
           if (timer === 0 && !isStopButtonHidden && isAdmin === 'true') {
