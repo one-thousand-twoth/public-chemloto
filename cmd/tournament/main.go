@@ -10,6 +10,7 @@ import (
 
 	"github.com/anrew1002/Tournament-ChemLoto/sqlite"
 	"github.com/anrew1002/Tournament-ChemLoto/sqlitestore"
+	"github.com/anrew1002/Tournament-ChemLoto/web"
 	"github.com/go-playground/validator/v10"
 	_ "github.com/mattn/go-sqlite3"
 
@@ -51,7 +52,7 @@ func main() {
 		r.Get("/api/rooms", app.GetRooms())
 		r.Get("/api/users", app.GetUsers())
 
-		r.Delete("/api/users", app.UsersClearHandler())
+		// r.Delete("/api/users", app.UsersClearHandler())
 		r.Delete("/api/rooms", app.RoomsClearHandler())
 
 		r.Delete("/api/rooms/{room_id}", app.RoomDeleteHandler())
@@ -68,11 +69,11 @@ func main() {
 
 	})
 
-	items := http.FileServer(http.Dir("./web/items"))
-	r.Handle("/items/*", http.StripPrefix("/items/", items))
+	items := http.FileServer(http.FS(web.StaticFS))
+	r.Handle("/items/*", items)
 
-	static := http.FileServer(http.Dir("./web/static"))
-	r.Handle("/static/*", http.StripPrefix("/static/", static))
+	static := http.FileServer(http.FS(web.StaticFS))
+	r.Handle("/static/*", static)
 
 	r.Group(func(r chi.Router) {
 		r.Use(app.ReAuthMiddleware())
@@ -87,7 +88,7 @@ func main() {
 		Handler: r,
 	}
 	ip := GetOutboundIP().String()
-	log.Printf("Starting server on: %s", ip+*addr)
+	log.Printf("Starting server on: %s, code: %s ", ip+*addr, *AdminCode)
 	log.Fatal(srv.ListenAndServe())
 }
 

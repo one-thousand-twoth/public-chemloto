@@ -119,7 +119,7 @@ func (room *Room) getRandomElement() (string, bool) {
 	// 		// i++
 	// 	}
 	// }
-	log.Printf("%+v", room.Elements)
+	// log.Printf("%+v", room.Elements)
 	// output := "'" + strings.Join(keys, `','`) + `'`
 	// fmt.Println(output)
 
@@ -142,7 +142,7 @@ func (room *Room) getRandomElement() (string, bool) {
 
 	room.lastElementsKeys = removeElement(room.lastElementsKeys, elem)
 
-	log.Println(elem, " -1")
+	// log.Println(elem, " -1")
 	room.pushedElements = append(room.pushedElements, elem)
 	// output := "'" + strings.Join(keys, `','`) + `'`
 	// fmt.Println(output)

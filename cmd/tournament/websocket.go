@@ -259,6 +259,7 @@ func (clnt *wsclient) readerBuffer(app *App) {
 				// fmt.Println(room.Elements)
 				if !room.started && room.Time == 0 {
 					sendRandomItem(room)
+					log.Printf("%+v", room.Elements)
 				}
 				room.started = true
 			}

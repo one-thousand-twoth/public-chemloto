@@ -6,18 +6,20 @@ import (
 	"html/template"
 	"log"
 	"net/http"
-	"path/filepath"
+
+	"github.com/anrew1002/Tournament-ChemLoto/web"
 )
 
 func (app *App) render(w http.ResponseWriter, status int, page string, data interface{}) {
-	path := filepath.Join("web", "pages", page+".html")
+	// path := filepath.Join("web", "pages", page+".html")
 	// if !ok {
 	// 	err := fmt.Errorf("the template %s does not exist", page)
 	// 			log.Println(err.Error())
 	// 	http.Error(w, "Internal Error", http.StatusInternalServerError)
 	// 	return
 	// }
-	tmpl, err := template.ParseFiles(path)
+	// template.ParseFS(web.IndexHTML)
+	tmpl, err := template.ParseFS(web.IndexHTML, "pages/"+page+".html")
 	if err != nil {
 		log.Println(err.Error())
 		http.Error(w, "Internal Error", http.StatusInternalServerError)
