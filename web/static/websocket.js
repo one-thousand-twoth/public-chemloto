@@ -92,6 +92,7 @@ document.addEventListener('DOMContentLoaded', e => {
         }
         break;
       case 'send_element':
+        playNotificationSoundElement()
         handleElementResponse(data.struct.element, data.struct.last_elements);
         // Сразу сбрасываем и запускаем таймер
         if (timer == 0) {
@@ -101,6 +102,7 @@ document.addEventListener('DOMContentLoaded', e => {
         }
         break;
       case 'start_game':
+        playNotificationSoundElement()
         if (isAdmin === 'false') {
           var button = document.querySelector('.raise-hand-btn');
           button.style.display = 'block';
@@ -381,6 +383,10 @@ document.addEventListener('DOMContentLoaded', e => {
   }
   function playNotificationSound() {
     var notificationSound = document.getElementById('notification-sound')
+    notificationSound.play()
+  }
+  function playNotificationSoundElement() {
+    var notificationSound = document.getElementById('notification-sound2')
     notificationSound.play()
   }
   function textMessageHandler(message) {

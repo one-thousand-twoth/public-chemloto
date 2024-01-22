@@ -32,7 +32,9 @@ function createRoom () {
   const roomName = document.getElementById('roomName').value
   const isAuto = document.getElementById('autoPlay').checked
   const timeOptions = document.getElementById('timeOptions')
-  const time = timeOptions.options[timeOptions.selectedIndex].value
+  const timeInput = document.getElementById('timeOptions');
+  const time = timeInput.value;
+
   const maxPlayers = document.getElementById('maxPlayers').value
 
   // Получите данные о количестве элементов

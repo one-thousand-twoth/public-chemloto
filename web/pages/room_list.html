@@ -47,7 +47,7 @@
             <h2>Создать комнату</h2>
             <form>
                 <label for="roomName">Название комнаты:</label>
-                <input type="text" name="roomName" id="roomName" required>
+                <input type="text" name="roomName" id="roomName" required placeholder="Комната 402">
 
                 <label for="autoPlay">Авто-игра:</label>
                 <input type="checkbox" name="autoPlay" id="autoPlay">
@@ -55,15 +55,11 @@
                 <!-- Этот блок будет появляться при выборе "Авто-игра" -->
                 <div id="timeControl" style="display: none;">
                     <label>Время на ход (в секундах):</label>
-                    <select id="timeOptions" name="timeOptions">
-                        <option value="20">20 секунд</option>
-                        <option value="30">30 секунд</option>
-                        <option value="60">60 секунд</option>
-                    </select>
+                    <input type="number" id="timeOptions" name="timeOptions" min="1" placeholder="Введите значение (секунды)">
                 </div>
 
                 <label for="maxPlayers">Макс. количество игроков:</label>
-                <input type="number" id="maxPlayers" min="2">
+                <input type="number" id="maxPlayers" min="2" placeholder="Например, 24">
 
                 <!-- Добавленные картинки с химическими элементами и полями ввода -->
                 <div class="chemical-elements">

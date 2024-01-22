@@ -169,6 +169,7 @@ button:hover {
 .modal-content {
     background-color: #fff;
     margin: 15% auto;
+    margin-top: 5%;
     padding: 20px;
     width: 60%;
     border: 1px solid #888;
