@@ -85,6 +85,8 @@ func (app *App) CreateRoomHandler() http.HandlerFunc {
 					errorsList = append(errorsList, "Имя комнаты указано неправильно")
 				} else if v.Field() == "Max_partic" {
 					errorsList = append(errorsList, "Количество игроков указано неправильно")
+				} else if v.Field() == "Time" {
+					errorsList = append(errorsList, "Время указано неправильно")
 				} else {
 					errorsList = append(errorsList, v.Error())
 				}
