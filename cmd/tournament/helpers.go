@@ -1,65 +1,65 @@
 package main
 
-import (
-	"bytes"
-	"encoding/json"
-	"html/template"
-	"log"
-	"net/http"
+// import (
+// 	"bytes"
+// 	"encoding/json"
+// 	"html/template"
+// 	"log"
+// 	"net/http"
 
-	"github.com/anrew1002/Tournament-ChemLoto/web"
-)
+// 	"github.com/anrew1002/Tournament-ChemLoto/web"
+// )
 
-func (app *App) render(w http.ResponseWriter, status int, page string, data interface{}) {
-	// path := filepath.Join("web", "pages", page+".html")
-	// if !ok {
-	// 	err := fmt.Errorf("the template %s does not exist", page)
-	// 			log.Println(err.Error())
-	// 	http.Error(w, "Internal Error", http.StatusInternalServerError)
-	// 	return
-	// }
-	// template.ParseFS(web.IndexHTML)
-	tmpl, err := template.ParseFS(web.IndexHTML, "pages/"+page+".html")
-	if err != nil {
-		log.Println(err.Error())
-		http.Error(w, "Internal Error", http.StatusInternalServerError)
-	}
+// func (app *App) render(w http.ResponseWriter, status int, page string, data interface{}) {
+// 	// path := filepath.Join("web", "pages", page+".html")
+// 	// if !ok {
+// 	// 	err := fmt.Errorf("the template %s does not exist", page)
+// 	// 			log.Println(err.Error())
+// 	// 	http.Error(w, "Internal Error", http.StatusInternalServerError)
+// 	// 	return
+// 	// }
+// 	// template.ParseFS(web.IndexHTML)
+// 	tmpl, err := template.ParseFS(web.IndexHTML, "pages/"+page+".html")
+// 	if err != nil {
+// 		log.Println(err.Error())
+// 		http.Error(w, "Internal Error", http.StatusInternalServerError)
+// 	}
 
-	buf := new(bytes.Buffer)
+// 	buf := new(bytes.Buffer)
 
-	// err := ts.ExecuteTemplate(buf, "base", data)
-	// if err != nil {
-	// 	app.serverError(w, err)
-	// 	return
-	// }
+// 	// err := ts.ExecuteTemplate(buf, "base", data)
+// 	// if err != nil {
+// 	// 	app.serverError(w, err)
+// 	// 	return
+// 	// }
 
-	err = tmpl.Execute(buf, data)
-	if err != nil {
-		log.Println(err.Error())
-		http.Error(w, "", http.StatusInternalServerError)
-	}
-	w.WriteHeader(status)
+// 	err = tmpl.Execute(buf, data)
+// 	if err != nil {
+// 		log.Println(err.Error())
+// 		http.Error(w, "", http.StatusInternalServerError)
+// 	}
+// 	w.WriteHeader(status)
 
-	buf.WriteTo(w)
-}
+// 	buf.WriteTo(w)
+// }
 
-type envelope map[string]any
+// type envelope map[string]any
 
-func (app *App) writeJSON(w http.ResponseWriter, status int, data envelope, headers http.Header) error {
-	js, err := json.MarshalIndent(data, "", "\t")
-	if err != nil {
-		return err
-	}
+// func (app *App) writeJSON(w http.ResponseWriter, status int, data envelope, headers http.Header) error {
+// 	js, err := json.MarshalIndent(data, "", "\t")
+// 	if err != nil {
+// 		return err
+// 	}
 
-	js = append(js, '\n')
+// 	js = append(js, '\n')
 
-	for key, value := range headers {
-		w.Header()[key] = value
-	}
+// 	for key, value := range headers {
+// 		w.Header()[key] = value
+// 	}
 
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(status)
-	w.Write(js)
+// 	w.Header().Set("Content-Type", "application/json")
+// 	w.WriteHeader(status)
+// 	w.Write(js)
 
-	return nil
-}
+// 	return nil
+// }

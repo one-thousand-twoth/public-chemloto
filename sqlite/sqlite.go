@@ -19,7 +19,7 @@ var (
 	ErrNoRecord = errors.New("record not found")
 )
 
-func NewStorage() Storage {
+func NewStorage() *Storage {
 	db, err := sql.Open("sqlite3", "store.db")
 	if err != nil {
 		log.Fatal(err)
@@ -34,7 +34,7 @@ func NewStorage() Storage {
 		log.Fatal(err)
 	}
 
-	return Storage{db}
+	return &Storage{db}
 }
 func (s Storage) CreateRoom(room models.Room) error {
 	Elem_string, err := json.Marshal(room.Elements)
