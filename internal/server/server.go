@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -93,4 +94,14 @@ func NewServer() *Server {
 	server.configureRoutes()
 
 	return server
+}
+
+func (s *Server) CheckToken(token string) (*hub.Client, error) {
+	if token == "" {
+		return nil, fmt.Errorf("bad token")
+	}
+	if clnt := s.hub.Users.Get(token); clnt != nil {
+		return clnt, nil
+	}
+	return nil, fmt.Errorf("bad token")
 }

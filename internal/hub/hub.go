@@ -26,5 +26,6 @@ type Hub struct {
 func NewHub(storage *sqlite.Storage, log *slog.Logger) *Hub {
 	return &Hub{
 		Rooms: &roomsState{state: make(map[string]*room)},
+		Users: &usersState{state: make(map[string]*Client)},
 	}
 }

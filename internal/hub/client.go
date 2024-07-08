@@ -5,17 +5,17 @@ import (
 	"sync"
 )
 
-type client struct {
-	name   string
+type Client struct {
+	Name   string
 	apikey string
 }
 
 type usersState struct {
-	state map[string]*client
+	state map[string]*Client
 	mutex sync.RWMutex
 }
 
-func (rs *usersState) Get(id string) *client {
+func (rs *usersState) Get(id string) *Client {
 	rs.mutex.RLock()
 	defer rs.mutex.RUnlock()
 
@@ -29,7 +29,7 @@ func (rs *usersState) Add(name string, token string) error {
 	if ok {
 		return errors.New("already exist user")
 	} else {
-		rs.state[token] = &client{name: name}
+		rs.state[token] = &Client{Name: name, apikey: token}
 	}
 
 	return nil
