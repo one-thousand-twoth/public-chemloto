@@ -8,6 +8,7 @@ func (s *Server) configureRoutes() {
 		r.Post("/rooms", s.CreateRoom())
 		r.Post("/users", s.CreateUser())
 		r.Get("/users/{token}", s.GetUser())
+		r.Get("/ws", s.handleWS)
 
 		// // Subrouters:
 		// r.Route("/{articleID}", func(r chi.Router) {

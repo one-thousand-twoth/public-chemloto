@@ -6,7 +6,7 @@ import (
 	"errors"
 	"log"
 
-	"github.com/anrew1002/Tournament-ChemLoto/models"
+	"github.com/anrew1002/Tournament-ChemLoto/internal/models"
 	"github.com/mattn/go-sqlite3"
 )
 

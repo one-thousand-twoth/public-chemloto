@@ -96,7 +96,7 @@ func NewServer() *Server {
 	return server
 }
 
-func (s *Server) CheckToken(token string) (*hub.Client, error) {
+func (s *Server) CheckToken(token string) (*hub.User, error) {
 	if token == "" {
 		return nil, fmt.Errorf("bad token")
 	}

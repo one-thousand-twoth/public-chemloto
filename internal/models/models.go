@@ -15,3 +15,8 @@ type Room struct {
 	Elements   map[string]int `json:"elementCounts" validate:"required"`
 	IsAuto     bool           `json:"isAuto"`
 }
+
+type Message struct {
+	Type int
+	Body []byte
+}
