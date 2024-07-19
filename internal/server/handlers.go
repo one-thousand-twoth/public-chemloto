@@ -28,6 +28,7 @@ func (s *Server) CreateRoom() http.HandlerFunc {
 		}
 		if err := s.hub.Rooms.Add(name); err != nil {
 			encode(w, r, http.StatusConflict, s.hub.Rooms)
+			return
 		}
 		encode(w, r, http.StatusOK, s.hub.Rooms)
 	}
