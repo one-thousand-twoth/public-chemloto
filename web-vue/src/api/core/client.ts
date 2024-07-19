@@ -7,7 +7,7 @@ export class Client {
       this.baseUrl = baseUrl;
     }
     url(uri: string) {
-      return new URL(uri, this.baseUrl);
+      return new URL('/api/v1'+uri, this.baseUrl);
     }
   
     headers() {
@@ -25,6 +25,9 @@ export class Client {
       });
   
     get = async (uri: string) =>
-      fetch(this.url(uri), { method: "GET", headers: this.headers() });
-  }
+    {
+      return fetch(this.url(uri), { method: "GET", headers: this.headers() });
+       
+    }
+    }
   

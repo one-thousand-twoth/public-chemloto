@@ -1,8 +1,12 @@
 <script setup lang="ts">
+import type { FunctionalComponent, HTMLAttributes, VNodeProps } from 'vue';
 defineOptions({
   inheritAttrs: false,
 });
-defineProps(["icon"]);
+// defineProps(["icon"]);
+defineProps<{
+  icon: FunctionalComponent<HTMLAttributes & VNodeProps>
+}>()
 </script>
 <template>
   <div class="flex flex-col">

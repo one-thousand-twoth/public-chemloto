@@ -1,6 +1,7 @@
 package hub
 
 import (
+	"errors"
 	"sync"
 )
 
@@ -47,17 +48,17 @@ func (rs *usersState) Get(id string) *User {
 	return rs.state[id]
 }
 
+// TODO: Не работает для обнаружения конфликтов
 func (rs *usersState) Add(user *User) error {
 	rs.mutex.RLock()
 	defer rs.mutex.RUnlock()
 
-	// _, ok := rs.state[user.apikey]
-	// if ok {
-	// 	return errors.New("already exist user")
-	// } else {
+	for _, usr := range rs.state {
+		if usr.Name == user.Name {
+			return errors.New("already exists")
+		}
+	}
 	rs.state[user.apikey] = user
-	// }
-
 	return nil
 }
 

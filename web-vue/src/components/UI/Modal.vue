@@ -6,16 +6,18 @@
     </div>
 </template> -->
 
-<script setup>
+<script setup lang="ts">
 const props = defineProps({
   show: Boolean
 })
 </script>
 
 <template>
-  <Transition name="modal">
-    <div v-if="show" class="absolute flex justify-center items-center h-screen w-screen bg-opacity-20 bg-slate-500">
-      <div class="h-fit m-auto bg-white p-4 shadow-lg rounded-lg">
+  <Teleport to="body">
+    <Transition name="modal">
+    <div v-if="props.show"
+      class="fixed -z-50 top-0 left-0 flex justify-center items-center m-auto w-screen h-screen bg-opacity-20 bg-slate-500">
+      <div class="h-fit m-auto bg-white p-4 shadow-lg rounded-sm">
         <div class="modal-header">
           <slot name="header">default header</slot>
         </div>
@@ -26,16 +28,13 @@ const props = defineProps({
 
         <div class="modal-footer">
           <slot name="footer">
-            default footer
-            <button
-              class="modal-default-button"
-              @click="$emit('close')"
-            >OK</button>
+            <button class="modal-default-button" @click="$emit('close')">Закрыть</button>
           </slot>
         </div>
       </div>
     </div>
-  </Transition>
+    </Transition>
+  </Teleport>
 </template>
 
 <!-- <style>
@@ -73,7 +72,8 @@ const props = defineProps({
 .modal-default-button {
   float: right;
 }
-
+-->
+<style>
 /*
  * The following styles are auto-applied to elements with
  * transition="modal" when their visibility is toggled
@@ -96,4 +96,4 @@ const props = defineProps({
   -webkit-transform: scale(1.1);
   transform: scale(1.1);
 }
-</style> -->
+</style>

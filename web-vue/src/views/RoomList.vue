@@ -1,7 +1,7 @@
 <script lang="ts">
 import { defineComponent, computed, ref } from "vue"
-import { useRoomsStore } from '../store/index'
-import { IconButton} from '../components/UI/index'
+import { useRoomsStore } from '../stores/useRoomsStore'
+import { IconButton } from '../components/UI/index'
 import {
   ArrowPathIcon,
   LinkIcon,
@@ -10,14 +10,16 @@ import {
   ExclamationCircleIcon,
   InformationCircleIcon,
 } from "@heroicons/vue/24/outline";
+// import { useToasterStore } from "../stores/useToasterStore";
 // import store from "./store/index"
+// const toasterStore = useToasterStore();
 export default defineComponent({
   components: { IconButton },
   setup() {
-    const counterStore = useRoomsStore()
-    const rooms = computed(() => counterStore.RoomList)
-
+    const roomStore = useRoomsStore()
+    const rooms = computed(() => roomStore.RoomList)
     const showModal = ref(false)
+    const createGameInput = ref('')
 
     // const onDeleteNote = (noteId: number) => {
     //   showModal.value = true
@@ -36,9 +38,10 @@ export default defineComponent({
 
     return {
       rooms,
+      roomStore,
       ArrowPathIcon,
-      // onDeleteNote,
       showModal,
+      createGameInput,
       // closeModal,
       // confirmDelete
     }
@@ -46,36 +49,45 @@ export default defineComponent({
 })
 </script>
 <template>
-
-    <h3 class="font-bold text-center">Подключиться к игре</h3>
-
-    <table>
+  <div  style="position: relative;">
+    <table class="table-fixed">
       <thead>
         <tr>
-          <th>Имя</th>
+          <th class="min-w-30">Имя</th>
           <th>Статус</th>
           <th></th>
         </tr>
       </thead>
       <tbody>
-        <tr v-for="room in rooms" :key="room.name">
+        <tr v-if="roomStore.Fetching">
+          <td colspan="3">Загрузка...</td>
+        </tr>
+        <tr v-else-if="!rooms.length">
+          <td colspan="3">Пока нет доступных комнат</td>
+        </tr>
+        <tr v-else v-for="room in rooms" :key="room.name">
           <!-- <td>{{ ID }}</td>
           <td>{{ name }}</td>
           <td>{{ IP }}</td>
           <td>{{ status }}</td> -->
-          <td>{{ room.name }}</td>
-          <td>{{ room.status }}</td>
+          <td class="min-w-80">{{ room.name }}</td>
+          <!-- <td>{{ room.status }}</td> -->
           <td>
             <button>Подключиться</button>
           </td>
         </tr>
       </tbody>
     </table>
-
-    <div class="flex flex-row gap-2">
+    <div class="absolute bottom-4">
+    <input type="text" v-model="createGameInput" class="mb-2"
+     
+      />
+    <div class=" flex flex-row gap-2">
       <button>Создать</button>
-      <IconButton :icon="ArrowPathIcon" />
+      <IconButton :icon="ArrowPathIcon" @click="roomStore.Fetch()" />
     </div>
+  </div>
+  </div>
 </template>
 
 

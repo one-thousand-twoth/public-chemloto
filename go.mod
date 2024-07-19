@@ -9,7 +9,10 @@ require (
 	github.com/mattn/go-sqlite3 v1.14.18
 )
 
-require golang.org/x/net v0.17.0 // indirect
+require (
+	github.com/go-chi/cors v1.2.1 // indirect
+	golang.org/x/net v0.17.0 // indirect
+)
 
 require (
 	github.com/deckarep/golang-set/v2 v2.6.0
