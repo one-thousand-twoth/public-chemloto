@@ -12,11 +12,11 @@ export const useRoomsStore = defineStore('rooms', () => {
     // actions:
     // {
     const fetching = ref(false)
-    const RoomList = ref<Array<RoomInfo>>([])
+    const roomList = ref<Array<RoomInfo>>([])
 
     const toasterStore = useToasterStore();
     const userStore = useUserStore();
-
+    Fetch()
     async function Fetch() {
         fetching.value = true
         if (userStore.UserCreds == null) {
@@ -26,41 +26,41 @@ export const useRoomsStore = defineStore('rooms', () => {
         // const token = ref(localStorage.getItem("token") ?? "");
         try {
             const resp = await client.get("/rooms");
-            RoomList.value = Object.values(await resp.json())
+            roomList.value = Object.values(await resp.json())
         } catch (e) {
             toasterStore.error("Не удалось обновить информацию о доступных играх")
         }
-        fetching.value = false
+        fetching.value = false;
     }
-    async function CreateGame() {
+    async function CreateGame(roomname: string) {
         fetching.value = true
         if (userStore.UserCreds == null) {
-            return
+            return;
         }
         const client = new Client(APISettings.protocol + APISettings.baseURL, userStore.UserCreds.token);
         const resp = await fetch(client.url("/rooms"), {
             method: "POST",
             headers: client.headers(),
             body: new URLSearchParams({
-                name: "new-room",
-                IP: "172.16.1.126",
+                name: roomname,
             }),
         });
 
         if (!resp.ok) {
             toasterStore.error("не удалось создать игру!");
+            return;
         }
-    
+
         toasterStore.info("Новая игра успешно создана!");
-        await Fetch()
-        fetching.value = false
+        await Fetch();
+        fetching.value = false;
     }
     // state: () => {
     return {
-        RoomList: [] as RoomInfo[],
-        Fetching: false,
+        roomList,
+        fetching,
         CreateGame,
-        Fetch
+        Fetch,
     }
     // },
     // Add(r: RoomInfo) {

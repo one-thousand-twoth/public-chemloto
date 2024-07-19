@@ -17,8 +17,10 @@ export default defineComponent({
   components: { IconButton },
   setup() {
     const roomStore = useRoomsStore()
-    const rooms = computed(() => roomStore.RoomList)
+    const rooms = computed(() => roomStore.roomList)
     const showModal = ref(false)
+    const showCreateModal = ref(false)
+
     const createGameInput = ref('')
 
     // const onDeleteNote = (noteId: number) => {
@@ -49,51 +51,74 @@ export default defineComponent({
 })
 </script>
 <template>
-  <div  style="position: relative;">
-    <table class="table-fixed">
-      <thead>
-        <tr>
-          <th class="min-w-30">Имя</th>
-          <th>Статус</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-if="roomStore.Fetching">
-          <td colspan="3">Загрузка...</td>
-        </tr>
-        <tr v-else-if="!rooms.length">
-          <td colspan="3">Пока нет доступных комнат</td>
-        </tr>
-        <tr v-else v-for="room in rooms" :key="room.name">
-          <!-- <td>{{ ID }}</td>
-          <td>{{ name }}</td>
-          <td>{{ IP }}</td>
-          <td>{{ status }}</td> -->
-          <td class="min-w-80">{{ room.name }}</td>
-          <!-- <td>{{ room.status }}</td> -->
-          <td>
-            <button>Подключиться</button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
-    <div class="absolute bottom-4">
-    <input type="text" v-model="createGameInput" class="mb-2"
-     
-      />
-    <div class=" flex flex-row gap-2">
-      <button>Создать</button>
-      <IconButton :icon="ArrowPathIcon" @click="roomStore.Fetch()" />
+  <div style="position: relative;">
+    <div class="mb-5 ">
+      <table >
+        <thead>
+          <tr>
+            <th>Имя</th>
+            <th>Статус</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr v-if="roomStore.fetching">
+            <td colspan="3">Загрузка...</td>
+          </tr>
+          <tr v-else-if="!rooms.length">
+            <td colspan="3">Пока нет доступных комнат</td>
+          </tr>
+          <tr v-else v-for="room in rooms" :key="room.name">
+          <td class="">{{ room.name }}</td>
+          <td></td>
+            <td>
+              <button>Подключиться</button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
     </div>
-  </div>
+    <div class="mb-5">
+      <div class=" flex flex-row gap-2">
+        <input type="text" v-model="createGameInput" class="" />
+        <button @click="roomStore.CreateGame(createGameInput)">Создать</button>
+        <IconButton :icon="ArrowPathIcon" @click="roomStore.Fetch()" />
+      </div>
+    </div>
   </div>
 </template>
 
 
 
-<style>
-.completed {
-  text-decoration: line-through;
+<style scoped>
+table {
+  border-collapse: collapse;
+  width: 100%;
+}
+
+table {
+  display: flex;
+  flex-flow: column;
+  width: 100%;
+  height: 400px;
+
+}
+
+thead {
+  padding-right: 13px;
+  flex: 0 0 auto;
+}
+
+tbody {
+  flex: 1 1 auto;
+  display: block;
+  overflow-y: scroll;
+  overflow-x: scroll;
+}
+
+tr {
+  width: 100%;
+  display: table;
+  table-layout: fixed;
 }
 </style>

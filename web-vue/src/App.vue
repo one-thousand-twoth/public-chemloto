@@ -76,7 +76,7 @@ async function logout() {
     </template>
 
     <template #body>
-      <RoomList class="min-h-96 min-w-80" />
+      <RoomList />
     </template>
 
   </Modal>
