@@ -30,13 +30,9 @@ const router = createRouter({
   })
 
 router.beforeEach(async (to, from) => {
+    console.log(userStore.UserCreds)
     if (
-      // make sure the user is authenticated
-      !userStore.UserCreds &&
-      // ❗️ Avoid an infinite redirect
-      to.name !== 'Login'
-    ) {
-      // redirect the user to the login page
+      !userStore.UserCreds && to.name !== 'Login' ) {
       return { name: 'Login' }
     }
     if(userStore.UserCreds && to.name == 'Login'){

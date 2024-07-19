@@ -33,7 +33,6 @@ export const useRoomsStore = defineStore('rooms', () => {
         fetching.value = false;
     }
     async function CreateGame(roomname: string) {
-        fetching.value = true
         if (userStore.UserCreds == null) {
             return;
         }
@@ -53,7 +52,6 @@ export const useRoomsStore = defineStore('rooms', () => {
 
         toasterStore.info("Новая игра успешно создана!");
         await Fetch();
-        fetching.value = false;
     }
     // state: () => {
     return {
