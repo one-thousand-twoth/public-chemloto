@@ -26,7 +26,9 @@ export const useRoomsStore = defineStore('rooms', () => {
         // const token = ref(localStorage.getItem("token") ?? "");
         try {
             const resp = await client.get("/rooms");
-            roomList.value = Object.values(await resp.json())
+            if (resp.status == 200){
+                roomList.value = Object.values(await resp.json())
+            }
         } catch (e) {
             toasterStore.error("Не удалось обновить информацию о доступных играх")
         }
@@ -69,7 +71,7 @@ export const useRoomsStore = defineStore('rooms', () => {
     // },
 })
 
-interface RoomInfo {
+export interface RoomInfo {
     name: string
     // status: string
 } 

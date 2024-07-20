@@ -10,24 +10,19 @@ import {
   ExclamationCircleIcon,
   InformationCircleIcon,
 } from "@heroicons/vue/24/outline";
+import Modal from "@/components/UI/Modal.vue";
+import CreateRoom from "./CreateRoom.vue";
 export default defineComponent({
-  components: { IconButton },
+  components: { IconButton, Modal, CreateRoom },
   setup() {
     const roomStore = useRoomsStore()
     const rooms = computed(() => roomStore.roomList)
     const showModal = ref(false)
-    const showCreateModal = ref(false)
-
-    const createGameInput = ref('')
-
     return {
       rooms,
       roomStore,
       ArrowPathIcon,
       showModal,
-      createGameInput,
-      // closeModal,
-      // confirmDelete
     }
   }
 })
@@ -35,7 +30,7 @@ export default defineComponent({
 <template>
   <div class="h-screen flex items-center justify-center bg-opacity-5 bg-slate-500">
     <div class=" flex items-center  justify-center gap-4 flex-col">
-      <div class="p-4 shadow-lg bg-white"  style="width: 70%;">
+      <div class="p-4 shadow-lg bg-white" style="width: 70%;">
         <table class="mb-4">
           <thead>
             <tr>
@@ -63,13 +58,20 @@ export default defineComponent({
 
         <div class="mb-5">
           <div class=" flex flex-row gap-2">
-            <input type="text" v-model="createGameInput" class="" />
-            <button @click="roomStore.CreateGame(createGameInput)">Создать</button>
+            <button @click="showModal = !showModal">Создать</button>
             <IconButton :icon="ArrowPathIcon" @click="roomStore.Fetch()" />
           </div>
         </div>
       </div>
     </div>
+    <Modal :show="showModal" @close="showModal = !showModal">
+      <template #header>
+        <h3 class="font-bold text-center">Создать игру</h3>
+      </template>
+      <template #body>
+        <CreateRoom></CreateRoom>
+      </template>
+    </Modal>
   </div>
 </template>
 

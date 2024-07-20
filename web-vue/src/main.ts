@@ -14,6 +14,7 @@ const pinia = createPinia()
 const app = createApp(App)
 app.use(pinia)
 const userStore = useUserStore()
+await userStore.check()
 
 const router = createRouter({
     routes: [{
@@ -30,7 +31,7 @@ const router = createRouter({
   })
 
 router.beforeEach(async (to, from) => {
-    console.log(userStore.UserCreds)
+    // console.log(userStore.UserCreds)
     if (
       !userStore.UserCreds && to.name !== 'Login' ) {
       return { name: 'Login' }
