@@ -1,6 +1,7 @@
 package server
 
 import (
+	"fmt"
 	"net/http"
 	"sync"
 	"time"
@@ -30,6 +31,7 @@ func (s *Server) CreateRoom() http.HandlerFunc {
 			encode(w, r, http.StatusConflict, s.hub.Rooms)
 			return
 		}
+		s.hub.SendMessageOverChannel("default", models.Message{Type: websocket.TextMessage, Body: []byte(name)})
 		encode(w, r, http.StatusOK, s.hub.Rooms)
 	}
 }
@@ -48,7 +50,7 @@ func (s *Server) CreateUser() http.HandlerFunc {
 			return
 		}
 		channels := []string{"default"}
-		usr := hub.NewUser(name, token, nil, channels)
+		usr := hub.NewUser(name, token, "", channels)
 		if err := s.hub.Users.Add(usr); err != nil {
 			w.WriteHeader(http.StatusConflict)
 			return
@@ -68,9 +70,10 @@ func (s *Server) GetUser() http.HandlerFunc {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		clnt := s.hub.Users.Get(token)
-		if clnt == nil {
+		clnt, ok := s.hub.Users.GetByToken(token)
+		if !ok {
 			encode(w, r, http.StatusNotFound, clnt)
+			return
 		}
 		encode(w, r, http.StatusOK, clnt)
 
@@ -79,7 +82,7 @@ func (s *Server) GetUser() http.HandlerFunc {
 
 func (s *Server) handleWS(w http.ResponseWriter, r *http.Request) {
 	op := "handlers.handleWS"
-
+	log := s.log.With("op", op)
 	reqToken := r.URL.Query().Get("token")
 	if reqToken == "" {
 		http.Error(w, "Incorrect token", http.StatusBadRequest)
@@ -87,15 +90,14 @@ func (s *Server) handleWS(w http.ResponseWriter, r *http.Request) {
 	}
 	user, err := s.CheckToken(reqToken)
 	if err != nil {
-		s.log.Error(op, sl.Err(err))
+		log.Error(op, sl.Err(err))
 		http.Error(w, "Bad Token", http.StatusUnauthorized)
 		return
 	}
-
-	s.log.Debug("client connected", "op", op, "name", user.Name)
+	log = log.With("userWS", user.Name)
 	conn, err := s.upgrader.Upgrade(w, r, nil)
 	if err != nil {
-		s.log.Error("Failed to upgrade connection", sl.Err(err))
+		log.Error("Failed to upgrade connection", sl.Err(err))
 		return
 	}
 
@@ -105,11 +107,15 @@ func (s *Server) handleWS(w http.ResponseWriter, r *http.Request) {
 	// s.hub.Users.Add(client)]
 	// TODO: действительно ли оно надо?
 	// (2) Указываем новое соединение пользователю
-	user.SetConnection(connection)
+	user.SetConnection(connection.ID)
 
 	for _, channel := range user.GetChannels() {
 		// (3) Добавляем к необходимым каналам новое соединение
 		s.hub.Channels.Add(channel, connection.ID)
+	}
+	log.Debug("op", op, "user", "user channels:", fmt.Sprintf("%+v", user.GetChannels()))
+	if x, ok := s.hub.Channels.Get("default"); ok {
+		log.Debug("op", op, "hub", "hub channels:", fmt.Sprintf("%+v", x))
 	}
 	go func() {
 	ReceiveLoop:
@@ -130,8 +136,16 @@ func (s *Server) handleWS(w http.ResponseWriter, r *http.Request) {
 				}
 				break ReceiveLoop
 			case websocket.TextMessage:
-				connection.MessageChan <- models.Message{Type: websocket.TextMessage, Body: msg}
-				s.hub.Input(string(msg))
+				// connection.MessageChan <- models.Message{Type: websocket.TextMessage, Body: msg}
+				// s.hub.Input(msg, user)
+				msg, msgType, err := hub.GetMessageType(msg)
+				if err != nil {
+					log.Error("failed to get message type", "type", msgType)
+				}
+				log.Debug(fmt.Sprintf("got messageWS %+v", msg))
+				s.hub.SendEventToHub(hub.NewEventWrap(user.Name, user.Room, msg, msgType))
+
+			// TODO: Реализовать ping на клиенте
 			// Handling receiving ping/pong
 			case websocket.PingMessage:
 				fallthrough
@@ -140,21 +154,6 @@ func (s *Server) handleWS(w http.ResponseWriter, r *http.Request) {
 				// connection.lastPing = time.Now()
 				// connection.lock.Unlock()
 			}
-			// //  определение типа сообщения
-			// // fmt.Printf("InputUser: %s", string(payload))
-			// payload, payloadType, err := getMessageType(msg)
-			// if err != nil {
-			// 	h.log.Debug("Fail get messageType", sl.Err(err))
-			// 	h.RaiseWSError(err.Error(), client)
-			// 	continue
-			// }
-			// h.log.Debug("get payload", "struct", payload)
-
-			// switch payloadType {
-			// case "Input":
-			// 	h.InputGameLogic(payload, room, client)
-			// }
-
 		}
 	}()
 
@@ -165,13 +164,10 @@ SendLoop:
 		select {
 		case message := <-connection.MessageChan:
 			sendMutex.Lock()
-			_ = conn.WriteMessage(int(message.Type), message.Body)
+			_ = conn.WriteMessage(message.Type, message.Body)
 			sendMutex.Unlock()
 		case <-connection.CloseChannel:
-			// logger.Info("Disconnecting user",
-			// 	zap.String("requestId", requestid.Get(c)),
-			// 	zap.String("id", connId),
-			// )
+			log.Debug("Disconnecting client", "client", user)
 
 			//Сигнализируем что соединение было закрыто
 			connection.CloseChannel = nil
@@ -186,7 +182,7 @@ SendLoop:
 			// (1) Удаляем соединение из общего списка
 			s.hub.Connections.Remove(connection.ID)
 			// (2) Удаляем соединение у пользователя
-			user.SetConnection(nil)
+			user.SetConnection("")
 			// (3) Удаляем из подписок каналов соединие
 			for _, channel := range user.GetChannels() {
 				s.hub.Channels.Remove(channel, connection.ID)
@@ -195,9 +191,4 @@ SendLoop:
 			break SendLoop
 		}
 	}
-	// client.SetConnection(conn)
-	// client.StartTicker(room.TickerDuration)
-	// s.hub.Register(client, room)
-
-	// s.hub.ListenClient(client, room)
 }

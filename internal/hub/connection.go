@@ -15,9 +15,9 @@ type SockConnection struct {
 	Conn         *websocket.Conn
 	User         string
 	CloseChannel chan struct{}
+	MessageChan  chan models.Message
 
-	mutex       sync.RWMutex
-	MessageChan chan models.Message
+	mutex sync.RWMutex
 }
 
 func NewConnection(conn *websocket.Conn, user string) *SockConnection {
@@ -55,11 +55,11 @@ func (rs *connectionsState) MarshalJSON() ([]byte, error) {
 	return json.Marshal(rs.state)
 }
 
-func (rs *connectionsState) Get(id string) *SockConnection {
+func (rs *connectionsState) Get(id string) (*SockConnection, bool) {
 	rs.mutex.RLock()
 	defer rs.mutex.RUnlock()
-
-	return rs.state[id]
+	conn, ok := rs.state[id]
+	return conn, ok
 }
 
 func (rs *connectionsState) Add(sockConn *SockConnection) error {

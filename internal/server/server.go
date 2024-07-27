@@ -83,7 +83,8 @@ func NewServer() *Server {
 	storage := sqlite.NewStorage()
 
 	hub := hub.NewHub(storage, log)
-	// hub.Run()
+	hub.SetupHandlers()
+	hub.Run()
 
 	server := &Server{
 		upgrader: upgrader,
@@ -100,8 +101,9 @@ func (s *Server) CheckToken(token string) (*hub.User, error) {
 	if token == "" {
 		return nil, fmt.Errorf("bad token")
 	}
-	if clnt := s.hub.Users.Get(token); clnt != nil {
-		return clnt, nil
+	clnt, ok := s.hub.Users.GetByToken(token)
+	if !ok {
+		return nil, fmt.Errorf("bad token")
 	}
-	return nil, fmt.Errorf("bad token")
+	return clnt, nil
 }

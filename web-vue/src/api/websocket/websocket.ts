@@ -13,11 +13,18 @@ export class WebsocketConnector {
         this.connection = new WebSocket(`ws://${this.baseUrl}/api/v1/ws?token=${this.token}`)
         this.connection.onmessage = function (event) {
             console.log(event);
+            console.log(event.data)
         }
 
         this.connection.onopen = function (event) {
             console.log(event)
             console.log("Successfully connected to the echo websocket server...")
         }
+    }
+    Send(){
+        if (!this.connection){
+            return
+        }
+        this.connection.send
     }
 }

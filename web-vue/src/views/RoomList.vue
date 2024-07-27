@@ -12,17 +12,24 @@ import {
 } from "@heroicons/vue/24/outline";
 import Modal from "@/components/UI/Modal.vue";
 import CreateRoom from "./CreateRoom.vue";
+import { inject } from 'vue';
+import { WebsocketConnector } from "@/api/websocket/websocket";
 export default defineComponent({
   components: { IconButton, Modal, CreateRoom },
   setup() {
     const roomStore = useRoomsStore()
     const rooms = computed(() => roomStore.roomList)
     const showModal = ref(false)
+    const ws  = inject('connector') as WebsocketConnector
+    function ConnectGame() {
+      ws
+    }
     return {
       rooms,
       roomStore,
       ArrowPathIcon,
       showModal,
+      ConnectGame,
     }
   }
 })
@@ -50,7 +57,7 @@ export default defineComponent({
               <td class="">{{ room.name }}</td>
               <td></td>
               <td>
-                <button>Подключиться</button>
+                <button @click="ConnectGame()">Подключиться</button>
               </td>
             </tr>
           </tbody>

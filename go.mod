@@ -10,7 +10,7 @@ require (
 )
 
 require (
-	github.com/go-chi/cors v1.2.1 // indirect
+	github.com/go-chi/cors v1.2.1
 	golang.org/x/net v0.17.0 // indirect
 )
 
@@ -18,4 +18,5 @@ require (
 	github.com/deckarep/golang-set/v2 v2.6.0
 	github.com/gorilla/securecookie v1.1.2
 	github.com/gorilla/websocket v1.5.1
+	github.com/mitchellh/mapstructure v1.5.0
 )
