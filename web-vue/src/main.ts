@@ -7,6 +7,7 @@ import { createPinia } from 'pinia'
 import { createRouter, createWebHistory } from 'vue-router'
 import Login from '@/views/Login.vue'
 import RoomList from '@/views/RoomList.vue'
+import Room from '@/views/Room.vue'
 import { useUserStore } from './stores/useUserStore'
 
 const pinia = createPinia()
@@ -25,6 +26,11 @@ const router = createRouter({
       name: 'Login',
       path: '/login',
       component: Login,
+    },
+    {
+      name: 'Room',
+      path: '/room',
+      component: Room,
     }
   ],
     history: createWebHistory()

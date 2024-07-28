@@ -44,7 +44,7 @@ export const useUserStore = defineStore('users', {
 
             const token = await resp.text();
             // localStorage.setItem("token", token.value);
-            this.UserCreds = {username: input, token: token}
+            this.UserCreds = {username: input, token: token, role: Role.Admin}
             localStorage.setItem(USER_LOCAL_STORAGE_KEY, JSON.stringify(this.UserCreds));
           
             toasterStore.info(`Вы вошли под админом ${this.UserCreds.username}`);
@@ -76,7 +76,7 @@ export const useUserStore = defineStore('users', {
             
             const token = await resp.text();
             // localStorage.setItem("token", token.value);
-            this.UserCreds = {username: input, token: token}
+            this.UserCreds = {username: input, token: token, role: Role.Player}
             localStorage.setItem(USER_LOCAL_STORAGE_KEY, JSON.stringify(this.UserCreds));
           
             toasterStore.info(`Вы вошли под пользователем ${this.UserCreds.username}`);
