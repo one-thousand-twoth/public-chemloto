@@ -1,3 +1,5 @@
+import { json } from "stream/consumers";
+
 export class WebsocketConnector {
     baseUrl: string;
     token: string;
@@ -21,10 +23,10 @@ export class WebsocketConnector {
             console.log("Successfully connected to the echo websocket server...")
         }
     }
-    Send(){
+    Send(msg: Object){
         if (!this.connection){
             return
         }
-        this.connection.send
+        this.connection.send(JSON.stringify(msg))
     }
 }

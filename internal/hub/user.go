@@ -14,10 +14,21 @@ func remove[T comparable](l []T, item T) []T {
 	return l
 }
 
+type Role int
+
+//go:generate stringer -type=Role
+const (
+	NONE Role = iota
+	Admin_Role
+	Judge_Role
+	Player_Role
+)
+
 type User struct {
 	Name     string `json:"name"`
 	Apikey   string `json:"token"`
-	Room     string `json:room`
+	Room     string `json:"room"`
+	Role     Role   `json:"role"`
 	conn     string
 	channels []string
 	mutex    sync.Mutex
@@ -57,11 +68,12 @@ func (r *User) SetRoom(room string) string {
 	r.Room = room
 	return oldRoom
 }
-func (r *User) SetChannels(channel string) {
+func (r *User) SetChannels(channels ...string) {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
-
-	r.channels = append(r.channels, channel)
+	for _, chann := range channels {
+		r.channels = append(r.channels, chann)
+	}
 }
 
 type usersState struct {

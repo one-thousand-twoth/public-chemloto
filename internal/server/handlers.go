@@ -18,7 +18,11 @@ func (s *Server) GetRoom() http.HandlerFunc {
 		encode(w, r, http.StatusOK, s.hub.Rooms)
 	}
 }
-
+func (s *Server) GetUsers() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		encode(w, r, http.StatusOK, s.hub.Connections)
+	}
+}
 func (s *Server) CreateRoom() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		r.ParseForm()
@@ -77,6 +81,52 @@ func (s *Server) GetUser() http.HandlerFunc {
 		}
 		encode(w, r, http.StatusOK, clnt)
 
+	}
+}
+
+func (s *Server) AdminLogin(AdminCode string) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		usr := new(hub.User)
+		if err := r.ParseForm(); err != nil {
+			fmt.Fprintf(w, "ParseForm() err: %v", err)
+			return
+		}
+		formErrors := make(map[string]string)
+		var name string
+		if name = r.FormValue("name"); name == "" {
+			formErrors["name"] = "Имя должно быть заполнено"
+		}
+		var code string
+		if code = r.FormValue("code"); code == "" {
+			formErrors["code"] = "Код должнен быть указан"
+		}
+
+		if len(formErrors) != 0 {
+			http.Error(w, "Empty values", http.StatusBadRequest)
+			return
+		}
+
+		// seed := strconv.Itoa(rand.Intn(1000))
+		// data.Username = r.FormValue("name") + "#" + seed
+		if code == AdminCode {
+			usr.Role = hub.Admin_Role
+		}
+		usr.Name = name
+
+		token, err := GenerateRandomStringURLSafe(32)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+		usr.Apikey = token
+		usr.SetChannels([]string{"default"}...)
+		if err := s.hub.Users.Add(usr); err != nil {
+			w.WriteHeader(http.StatusConflict)
+			return
+		}
+		w.Header().Set("Content-Type", "text/plain")
+		w.WriteHeader(http.StatusCreated)
+		w.Write([]byte(token))
 	}
 }
 

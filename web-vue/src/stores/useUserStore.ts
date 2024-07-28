@@ -18,7 +18,39 @@ export const useUserStore = defineStore('users', {
         }
     },
     actions:
-     {
+     {  
+      async createaAdmin(input: string, code: string){
+        const toasterStore = useToasterStore();
+            const client = new Client(APISettings.protocol+APISettings.baseURL, "");
+            const resp = await fetch(client.url(`/admin`), {
+              method: "POST",
+              // headers: client.headers(),
+              body: new URLSearchParams({
+                name: input,
+                code: code,
+                // IP: "172.16.1.126",
+              }),
+            });
+            if (resp.status === 409) {
+              toasterStore.error(`Пользователь с именем ${input} уже существует!`);
+              return;
+            }
+          
+            if (!resp.ok) {
+              console.error("Failed to login with user");
+              toasterStore.error(`Не удалось войти под именем ${input}`);
+              return;
+            }
+
+            const token = await resp.text();
+            // localStorage.setItem("token", token.value);
+            this.UserCreds = {username: input, token: token}
+            localStorage.setItem(USER_LOCAL_STORAGE_KEY, JSON.stringify(this.UserCreds));
+          
+            toasterStore.info(`Вы вошли под админом ${this.UserCreds.username}`);
+            console.log(`Token for admin ${this.UserCreds.username} created: ${this.UserCreds.token}`);
+            
+      },
         async createUser(input: string) {
             const toasterStore = useToasterStore();
             const client = new Client(APISettings.protocol+APISettings.baseURL, "");
@@ -76,8 +108,14 @@ export const useUserStore = defineStore('users', {
     }
 })
 
+enum Role {
+  Admin = "Admin_Role",
+  Judge = "Judge_Role",
+  Player = "Player_Role",
+}
 interface UserInfo {
     username: string
     token: string
+    role: Role
     // status: string
 }

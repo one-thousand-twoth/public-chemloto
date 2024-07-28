@@ -21,8 +21,14 @@ export default defineComponent({
     const rooms = computed(() => roomStore.roomList)
     const showModal = ref(false)
     const ws  = inject('connector') as WebsocketConnector
-    function ConnectGame() {
-      ws
+    function ConnectGame(roomName: string) {
+      ws.Send(
+        {
+          "Type": "HUB_SUBSCRIBE",
+          "Target": "room",
+          "Name": roomName
+        }
+      )
     }
     return {
       rooms,
@@ -57,7 +63,7 @@ export default defineComponent({
               <td class="">{{ room.name }}</td>
               <td></td>
               <td>
-                <button @click="ConnectGame()">Подключиться</button>
+                <button @click="ConnectGame(room.name)">Подключиться</button>
               </td>
             </tr>
           </tbody>

@@ -4,17 +4,25 @@ import { ref } from 'vue';
 import { useRouter } from 'vue-router';
 
 const username = ref("")
+const code = ref("")
 
 const userStore = useUserStore();
 
-async function onSubmit(){
+async function onSubmit() {
+    if (isChecked) {
+        if (code.value != ""){
+            
+        }
+    }
     await userStore.createUser(username.value);
     if (userStore.UserCreds) {
-       console.log( await router.push({name: "RoomList"}))
+        console.log(await router.replace({ name: "RoomList" }))
     }
 }
 
 const router = useRouter()
+
+const isChecked = ref(false)
 
 </script>
 <template>
@@ -27,8 +35,18 @@ const router = useRouter()
                 <div>
                     <form @submit.prevent="onSubmit()" class="w-full flex items-start justify-center flex-col gap-4">
                         <h2>Вход</h2>
-                        <label for="name">Введите имя:</label>
-                        <input v-model="username" autocomplete="off" type="text" maxlength="25" required style="width: 95%;">
+                        <label>Введите имя:
+                            <input v-model="username" autocomplete="off" type="text" maxlength="25" required
+                                style="width: 95%;">
+                        </label>
+                        <label>
+                            <input type="checkbox" v-model="isChecked" />
+                            Я админ
+                        </label>
+                        <label v-show="isChecked">Введите код:
+                            <input  v-model="code" autocomplete="off" type="text" maxlength="25"
+                                 style="width: 95%;">
+                        </label>
                         <button type="submit">Войти</button>
                     </form>
                 </div>
