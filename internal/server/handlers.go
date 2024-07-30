@@ -20,7 +20,22 @@ func (s *Server) GetRoom() http.HandlerFunc {
 }
 func (s *Server) GetUsers() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		encode(w, r, http.StatusOK, s.hub.Connections)
+		encode(w, r, http.StatusOK, s.hub.Users)
+	}
+}
+func (s *Server) GetUser() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		token := chi.URLParam(r, "token")
+		if token == "" {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		clnt, ok := s.hub.Users.GetByToken(token)
+		if !ok {
+			encode(w, r, http.StatusNotFound, clnt)
+			return
+		}
+		encode(w, r, http.StatusOK, clnt)
 	}
 }
 func (s *Server) CreateRoom() http.HandlerFunc {
@@ -54,7 +69,7 @@ func (s *Server) CreateUser() http.HandlerFunc {
 			return
 		}
 		channels := []string{"default"}
-		usr := hub.NewUser(name, token, "", channels)
+		usr := hub.NewUser(name, token, "", hub.Player_Role, channels)
 		if err := s.hub.Users.Add(usr); err != nil {
 			w.WriteHeader(http.StatusConflict)
 			return
@@ -63,23 +78,6 @@ func (s *Server) CreateUser() http.HandlerFunc {
 		w.Header().Set("Content-Type", "text/plain")
 		w.WriteHeader(http.StatusCreated)
 		w.Write([]byte(token))
-
-	}
-}
-
-func (s *Server) GetUser() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		token := chi.URLParam(r, "token")
-		if token == "" {
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-		clnt, ok := s.hub.Users.GetByToken(token)
-		if !ok {
-			encode(w, r, http.StatusNotFound, clnt)
-			return
-		}
-		encode(w, r, http.StatusOK, clnt)
 
 	}
 }
@@ -110,6 +108,9 @@ func (s *Server) AdminLogin(AdminCode string) http.HandlerFunc {
 		// data.Username = r.FormValue("name") + "#" + seed
 		if code == AdminCode {
 			usr.Role = hub.Admin_Role
+		} else {
+			w.WriteHeader(http.StatusUnauthorized)
+			return
 		}
 		usr.Name = name
 
@@ -119,7 +120,7 @@ func (s *Server) AdminLogin(AdminCode string) http.HandlerFunc {
 			return
 		}
 		usr.Apikey = token
-		usr.SetChannels([]string{"default"}...)
+		usr.SetChannels([]string{"default", "admin"}...)
 		if err := s.hub.Users.Add(usr); err != nil {
 			w.WriteHeader(http.StatusConflict)
 			return

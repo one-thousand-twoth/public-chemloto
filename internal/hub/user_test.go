@@ -9,7 +9,7 @@ func Test_usersState_Add(t *testing.T) {
 	type args struct {
 		user *User
 	}
-	user := NewUser("Andrei", "test_apikey", "uuid_conn", []string{"default"})
+	user := NewUser("Andrei", "test_apikey", "uuid_conn", Player_Role, []string{"default"})
 	tests := []struct {
 		name    string
 		rs      *usersState

@@ -38,8 +38,8 @@ func (rs *roomsState) Get(id string) *room {
 	return rs.state[id]
 }
 func (rs *roomsState) Add(name string) error {
-	rs.mutex.RLock()
-	defer rs.mutex.RUnlock()
+	rs.mutex.Lock()
+	defer rs.mutex.Unlock()
 
 	_, ok := rs.state[name]
 	if ok {

@@ -1,6 +1,7 @@
 package hub
 
 import (
+	"encoding/json"
 	"fmt"
 
 	"github.com/anrew1002/Tournament-ChemLoto/internal/models"
@@ -71,6 +72,13 @@ func Subscribe(h *Hub, e internalEventWrap) {
 		return
 	}
 	log.Debug("current status", "channelSubs", channelSubs, "user", conn)
-	h.SendMessageOverChannel(data.Name, models.Message{Type: websocket.TextMessage, Body: []byte(fmt.Sprintf("You was added to the channel %s", data.Name))})
+	envelope, err := json.Marshal(data)
+	if err != nil {
+		log.Error("Marshaling data", "data", data)
+	}
+	h.SendMessageOverChannel(data.Name, models.Message{
+		Type: websocket.TextMessage,
+		Body: envelope,
+	})
 
 }

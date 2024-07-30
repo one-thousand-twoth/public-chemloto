@@ -63,8 +63,8 @@ func (rs *connectionsState) Get(id string) (*SockConnection, bool) {
 }
 
 func (rs *connectionsState) Add(sockConn *SockConnection) error {
-	rs.mutex.RLock()
-	defer rs.mutex.RUnlock()
+	rs.mutex.Lock()
+	defer rs.mutex.Unlock()
 
 	_, ok := rs.state[sockConn.ID]
 	if ok {

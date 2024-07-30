@@ -21,7 +21,7 @@ var (
 func TestSubscribe(t *testing.T) {
 	hub := NewHub(nil, MockLogger)
 	username := "Test User"
-	user := NewUser(username, "apikey", "uuid", []string{})
+	user := NewUser(username, "apikey", "uuid", Player_Role, []string{})
 	hub.Users.Add(user)
 	type args struct {
 		h *Hub

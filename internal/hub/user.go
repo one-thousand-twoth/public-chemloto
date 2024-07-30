@@ -1,6 +1,7 @@
 package hub
 
 import (
+	"encoding/json"
 	"errors"
 	"sync"
 )
@@ -16,7 +17,7 @@ func remove[T comparable](l []T, item T) []T {
 
 type Role int
 
-//go:generate stringer -type=Role
+//go:generate stringer -type=Role -output=./stringer_types.go
 const (
 	NONE Role = iota
 	Admin_Role
@@ -34,12 +35,24 @@ type User struct {
 	mutex    sync.Mutex
 }
 
-func NewUser(name string, apikey string, conn string, channels []string) *User {
+func (r *User) MarshalJSON() ([]byte, error) {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+	user := struct {
+		Name string `json:"username"`
+		Room string `json:"room"`
+		Role string `json:"role"`
+	}{r.Name, r.Room, r.Role.String()}
+	return json.Marshal(user)
+}
+
+func NewUser(name string, apikey string, conn string, role Role, channels []string) *User {
 	return &User{
 		Name:     name,
 		Apikey:   apikey,
 		conn:     conn,
 		channels: channels,
+		Role:     role,
 	}
 }
 
@@ -71,15 +84,20 @@ func (r *User) SetRoom(room string) string {
 func (r *User) SetChannels(channels ...string) {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
-	for _, chann := range channels {
-		r.channels = append(r.channels, chann)
-	}
+	r.channels = append(r.channels, channels...)
 }
 
 type usersState struct {
 	// map key is username
 	state map[string]*User
 	mutex sync.RWMutex
+}
+
+func (rs *usersState) MarshalJSON() ([]byte, error) {
+	rs.mutex.RLock()
+	defer rs.mutex.RUnlock()
+
+	return json.Marshal(rs.state)
 }
 
 func (rs *usersState) Get(name string) (*User, bool) {
@@ -102,8 +120,8 @@ func (rs *usersState) GetByToken(token string) (*User, bool) {
 
 // TODO: Не работает для обнаружения конфликтов
 func (rs *usersState) Add(user *User) error {
-	rs.mutex.RLock()
-	defer rs.mutex.RUnlock()
+	rs.mutex.Lock()
+	defer rs.mutex.Unlock()
 
 	for _, usr := range rs.state {
 		if usr.Name == user.Name {
