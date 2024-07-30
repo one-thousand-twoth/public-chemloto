@@ -11,40 +11,50 @@ import Room from '@/views/Room.vue'
 import { useUserStore } from './stores/useUserStore'
 
 const pinia = createPinia()
-
 const app = createApp(App)
-app.use(pinia)
-const userStore = useUserStore()
-await userStore.check()
+app.use(pinia);
+
+const userStore = useUserStore();
+
 
 const router = createRouter({
-    routes: [{
-      name: 'RoomList',
-      path: '/',
-      component: RoomList,
-    },{
-      name: 'Login',
-      path: '/login',
-      component: Login,
-    },
-    {
-      name: 'Room',
-      path: '/room',
-      component: Room,
-    }
+  routes: [
+  {
+    name: 'RoomList',
+    path: '/',
+    component: RoomList,
+  }, {
+    name: 'Login',
+    path: '/login',
+    component: Login,
+  },
+  {
+    name: 'Room',
+    path: '/room',
+    component: Room,
+  }
   ],
-    history: createWebHistory()
-  })
+  history: createWebHistory()
+});
+
+(async () => {
+  const ok = await userStore.check()
+  if (!ok) {
+    router.replace({name: "Login"})
+  }
+})();
+
 
 router.beforeEach(async (to, from) => {
-    // console.log(userStore.UserCreds)
-    if (
-      !userStore.UserCreds && to.name !== 'Login' ) {
-      return { name: 'Login' }
-    }
-    if(userStore.UserCreds && to.name == 'Login'){
-      return from
-    }
+  // userStore.check()
+  if (  
+    !userStore.UserCreds && to.name !== 'Login') {
+    console.log("to Logon")
+    return { name: 'Login' }
+  }
+  if (userStore.UserCreds && to.name == 'Login') {
+    return from
+  }
 })
 
 

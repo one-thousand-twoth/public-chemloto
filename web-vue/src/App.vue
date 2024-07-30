@@ -11,19 +11,17 @@ import { useRouter } from 'vue-router';
 defineOptions({
   inheritAttrs: false,
 });
+
 const userStore = useUserStore()
 const gameStore = useGameStore()
 const router = useRouter()
 const connector = new WebsocketConnector(APISettings.baseURL, '')
 provide('connector', connector)
-if (userStore.UserCreds) {
-    connector.token = userStore.UserCreds?.token
-    connector.Run()
-}
+
 const { UserCreds } = storeToRefs(userStore)
 watch(UserCreds, () => {
     if (userStore.UserCreds) {
-        connector.token = userStore.UserCreds?.token
+        connector.token = userStore.UserCreds.token
         connector.Run()
     }
     
