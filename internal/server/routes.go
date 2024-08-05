@@ -19,9 +19,9 @@ func (s *Server) configureRoutes() {
 	s.mux.Route("/api/v1", func(r chi.Router) {
 		r.Get("/rooms", s.GetRoom())
 		r.Post("/rooms", s.CreateRoom())
-		r.Post("/users", s.CreateUser())
+		// r.Post("/users", s.CreateUser())
 		r.Get("/users", s.GetUsers())
-		r.Post("/admin", s.AdminLogin("test_code"))
+		r.Post("/users", s.Login("test_code"))
 		r.Get("/users/{token}", s.GetUser())
 		r.Get("/ws", s.handleWS)
 

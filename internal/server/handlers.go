@@ -2,6 +2,7 @@ package server
 
 import (
 	"fmt"
+	"log/slog"
 	"net/http"
 	"sync"
 	"time"
@@ -9,7 +10,10 @@ import (
 	"github.com/anrew1002/Tournament-ChemLoto/internal/hub"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/models"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/sl"
+	"github.com/anrew1002/Tournament-ChemLoto/internal/validator"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/render"
+	valid "github.com/go-playground/validator/v10"
 	"github.com/gorilla/websocket"
 )
 
@@ -82,52 +86,53 @@ func (s *Server) CreateUser() http.HandlerFunc {
 	}
 }
 
-func (s *Server) AdminLogin(AdminCode string) http.HandlerFunc {
+func (s *Server) Login(AdminCode string) http.HandlerFunc {
+	type Request struct {
+		Name string `json:"name" validate:"required,safeinput"`
+		Code string `json:"code,omitempty"`
+	}
+	type Response struct {
+		Token string   `json:"token"`
+		Error []string `json:"error"`
+	}
+
 	return func(w http.ResponseWriter, r *http.Request) {
-		usr := new(hub.User)
-		if err := r.ParseForm(); err != nil {
-			fmt.Fprintf(w, "ParseForm() err: %v", err)
-			return
-		}
-		formErrors := make(map[string]string)
-		var name string
-		if name = r.FormValue("name"); name == "" {
-			formErrors["name"] = "Имя должно быть заполнено"
-		}
-		var code string
-		if code = r.FormValue("code"); code == "" {
-			formErrors["code"] = "Код должнен быть указан"
-		}
+		const op = "server.handlers.Login"
+		log := s.log.With(slog.String("op", op))
+		var req Request
 
-		if len(formErrors) != 0 {
-			http.Error(w, "Empty values", http.StatusBadRequest)
+		err := render.DecodeJSON(r.Body, &req)
+		if err != nil {
+			log.Error("failed to decode body")
+			encode(w, r, http.StatusBadRequest, Response{Error: []string{"Неправильный формат запроса"}})
 			return
 		}
-
-		// seed := strconv.Itoa(rand.Intn(1000))
-		// data.Username = r.FormValue("name") + "#" + seed
-		if code == AdminCode {
-			usr.Role = hub.Admin_Role
-		} else {
-			w.WriteHeader(http.StatusUnauthorized)
+		log.Debug("request body decoded", slog.Any("request", req))
+		validate := validator.Ins
+		if err := validate.Struct(req); err != nil {
+			validateErr := err.(valid.ValidationErrors)
+			encode(w, r, http.StatusBadRequest, Response{Error: validator.ValidationError(validateErr)})
 			return
 		}
-		usr.Name = name
+		var role hub.Role
+		role = hub.Player_Role
+		if req.Code == AdminCode {
+			role = hub.Admin_Role
+		}
 
 		token, err := GenerateRandomStringURLSafe(32)
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
+			encode(w, r, http.StatusInternalServerError, Response{Error: []string{"Ошибка сервера"}})
 			return
 		}
-		usr.Apikey = token
-		usr.SetChannels([]string{"default", "admin"}...)
+		channels := []string{"default"}
+		usr := hub.NewUser(req.Name, token, "", role, channels)
 		if err := s.hub.Users.Add(usr); err != nil {
-			w.WriteHeader(http.StatusConflict)
+			encode(w, r, http.StatusConflict, Response{Error: []string{"Пользователь с таким именем уже существует"}})
 			return
 		}
-		w.Header().Set("Content-Type", "text/plain")
-		w.WriteHeader(http.StatusCreated)
-		w.Write([]byte(token))
+		s.log.Info("user registred", "name", req.Name)
+		encode(w, r, http.StatusCreated, Response{Token: token})
 	}
 }
 

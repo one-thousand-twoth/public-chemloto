@@ -9,14 +9,14 @@ const code = ref("")
 const userStore = useUserStore();
 
 async function onSubmit() {
-    if (isChecked) {
-        if (code.value != ""){
+    // if (isChecked) {
+    //     if (code.value != ""){
             
-        }
-    }
-    await userStore.createUser(username.value);
+    //     }
+    // }
+    await userStore.createaAdmin(username.value, code.value);
     if (userStore.UserCreds) {
-        console.log(await router.replace({ name: "RoomList" }))
+        console.log(await router.replace({ name: "Hub" }))
     }
 }
 
