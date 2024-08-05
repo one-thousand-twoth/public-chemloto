@@ -9,12 +9,7 @@ const code = ref("")
 const userStore = useUserStore();
 
 async function onSubmit() {
-    // if (isChecked) {
-    //     if (code.value != ""){
-            
-    //     }
-    // }
-    await userStore.createaAdmin(username.value, code.value);
+    await userStore.Login(username.value, code.value);
     if (userStore.UserCreds) {
         console.log(await router.replace({ name: "Hub" }))
     }

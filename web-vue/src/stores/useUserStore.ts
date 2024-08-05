@@ -40,7 +40,7 @@ export const useUserStore = defineStore('users', {
         }
         this.fetching = false;
     },
-    async createaAdmin(input: string, code: string) {
+    async Login(input: string, code: string) {
       const toasterStore = useToasterStore();
       const client = new Client(APISettings.protocol + APISettings.baseURL, "");
       const resp = await fetch(client.url(`/users`), {
@@ -77,10 +77,12 @@ export const useUserStore = defineStore('users', {
       }
       const client = new Client(APISettings.protocol + APISettings.baseURL, "");
       try {
-        const resp = await client.get("/users/" + this.UserCreds?.token);
+        const token = this.UserCreds.token;
+        const resp = await client.get("/users/" + token);
         // console.log(resp.status)
         if (resp.status == 200) {
           const json = await resp.json();
+          json["token"] = token
           this.UserCreds = json
           return true
         } else {
