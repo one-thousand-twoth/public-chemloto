@@ -52,16 +52,18 @@ func Subscribe(h *Hub, e internalEventWrap) {
 	if !ok {
 		log.Error("Error getting usr")
 	}
-	log.Debug("Context", "user", usr, "data", data)
-	conn := usr.conn
+	usr.mutex.Lock()
+	defer usr.mutex.Unlock()
+	log.Debug("Context", "user", `usr`, "data", data)
+	connID := usr.conn
 	switch data.Target {
 	case "room":
 		oldRoom := usr.SetRoom(data.Name)
-		h.Channels.Remove(oldRoom, conn)
-		h.Channels.Add(data.Name, conn)
+		h.Channels.Remove(oldRoom, connID)
+		h.Channels.Add(data.Name, connID)
 	case "channel":
-		usr.SetChannels(data.Name)
-		h.Channels.Add(data.Name, conn)
+		usr.channels = append(usr.channels, data.Name)
+		h.Channels.Add(data.Name, connID)
 	default:
 		log.Error(fmt.Sprintf("unknown target %s", data.Target))
 		return
@@ -71,14 +73,18 @@ func Subscribe(h *Hub, e internalEventWrap) {
 		log.Error("Cant find channel")
 		return
 	}
-	log.Debug("current status", "channelSubs", channelSubs, "user", conn)
+	log.Debug("current status", "channelSubs", channelSubs, "user", connID)
 	envelope, err := json.Marshal(data)
 	if err != nil {
 		log.Error("Marshaling data", "data", data)
 	}
-	h.SendMessageOverChannel(data.Name, models.Message{
+	conn, ok := h.Connections.Get(connID)
+	conn.MessageChan <- models.Message{
 		Type: websocket.TextMessage,
 		Body: envelope,
-	})
-
+	}
+	// h.SendMessageOverChannel(data.Name, models.Message{
+	// 	Type: websocket.TextMessage,
+	// 	Body: envelope,
+	// })
 }

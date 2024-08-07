@@ -23,7 +23,8 @@ func (s *Server) configureRoutes() {
 		r.Get("/users", s.GetUsers())
 		r.Post("/users", s.Login("test_code"))
 		r.Get("/users/{token}", s.GetUser())
-		r.Get("/ws", s.handleWS)
+		r.Get("/ws", s.hub.HandleWS)
+		r.Get("/debug", s.Status())
 
 		// // Subrouters:
 		// r.Route("/{articleID}", func(r chi.Router) {

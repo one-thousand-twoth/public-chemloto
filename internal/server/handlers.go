@@ -1,21 +1,28 @@
 package server
 
 import (
-	"fmt"
 	"log/slog"
 	"net/http"
-	"sync"
-	"time"
 
 	"github.com/anrew1002/Tournament-ChemLoto/internal/hub"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/models"
-	"github.com/anrew1002/Tournament-ChemLoto/internal/sl"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/validator"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 	valid "github.com/go-playground/validator/v10"
 	"github.com/gorilla/websocket"
 )
+
+func (s *Server) Status() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		encode(w, r, http.StatusOK, map[string]any{
+			"Channels":    s.hub.Channels,
+			"Connections": s.hub.Connections,
+			"Rooms":       s.hub.Rooms,
+			"Users":       s.hub.Users,
+		})
+	}
+}
 
 func (s *Server) GetRoom() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -73,8 +80,8 @@ func (s *Server) CreateUser() http.HandlerFunc {
 			return
 		}
 		channels := []string{"default"}
-		usr := hub.NewUser(name, token, "", hub.Player_Role, channels)
-		if err := s.hub.Users.Add(usr); err != nil {
+		user := hub.NewUser(name, token, "", hub.Player_Role, channels)
+		if err := s.hub.Users.Add(user); err != nil {
 			w.WriteHeader(http.StatusConflict)
 			return
 		}
@@ -126,125 +133,12 @@ func (s *Server) Login(AdminCode string) http.HandlerFunc {
 			return
 		}
 		channels := []string{"default"}
-		usr := hub.NewUser(req.Name, token, "", role, channels)
-		if err := s.hub.Users.Add(usr); err != nil {
+		user := hub.NewUser(req.Name, token, "", role, channels)
+		if err := s.hub.Users.Add(user); err != nil {
 			encode(w, r, http.StatusConflict, Response{Error: []string{"Пользователь с таким именем уже существует"}})
 			return
 		}
 		s.log.Info("user registred", "name", req.Name)
 		encode(w, r, http.StatusCreated, Response{Token: token})
-	}
-}
-
-func (s *Server) handleWS(w http.ResponseWriter, r *http.Request) {
-	op := "handlers.handleWS"
-	log := s.log.With("op", op)
-	reqToken := r.URL.Query().Get("token")
-	if reqToken == "" {
-		http.Error(w, "Incorrect token", http.StatusBadRequest)
-		return
-	}
-	user, err := s.CheckToken(reqToken)
-	if err != nil {
-		log.Error(op, sl.Err(err))
-		http.Error(w, "Bad Token", http.StatusUnauthorized)
-		return
-	}
-	log = log.With("userWS", user.Name)
-	conn, err := s.upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		log.Error("Failed to upgrade connection", sl.Err(err))
-		return
-	}
-
-	connection := hub.NewConnection(conn, user.Name)
-	// (1) Добавляем соединение в общий список
-	s.hub.Connections.Add(connection)
-	// s.hub.Users.Add(client)]
-	// TODO: действительно ли оно надо?
-	// (2) Указываем новое соединение пользователю
-	user.SetConnection(connection.ID)
-
-	for _, channel := range user.GetChannels() {
-		// (3) Добавляем к необходимым каналам новое соединение
-		s.hub.Channels.Add(channel, connection.ID)
-	}
-	log.Debug("op", op, "user", "user channels:", fmt.Sprintf("%+v", user.GetChannels()))
-	if x, ok := s.hub.Channels.Get("default"); ok {
-		log.Debug("op", op, "hub", "hub channels:", fmt.Sprintf("%+v", x))
-	}
-	go func() {
-	ReceiveLoop:
-		for {
-			messageType, msg, err := connection.Conn.ReadMessage()
-			if err != nil {
-				// Disconnect on error
-				if connection.CloseChannel != nil {
-					connection.CloseChannel <- struct{}{}
-				}
-				break
-			}
-
-			switch messageType {
-			case websocket.CloseMessage:
-				if connection.CloseChannel != nil {
-					connection.CloseChannel <- struct{}{}
-				}
-				break ReceiveLoop
-			case websocket.TextMessage:
-				// connection.MessageChan <- models.Message{Type: websocket.TextMessage, Body: msg}
-				// s.hub.Input(msg, user)
-				msg, msgType, err := hub.GetMessageType(msg)
-				if err != nil {
-					log.Error("failed to get message type", "type", msgType)
-				}
-				log.Debug(fmt.Sprintf("got messageWS %+v", msg))
-				s.hub.SendEventToHub(hub.NewEventWrap(user.Name, user.Room, msg, msgType))
-
-			// TODO: Реализовать ping на клиенте
-			// Handling receiving ping/pong
-			case websocket.PingMessage:
-				fallthrough
-			case websocket.PongMessage:
-				// connection.lock.Lock()
-				// connection.lastPing = time.Now()
-				// connection.lock.Unlock()
-			}
-		}
-	}()
-
-	sendMutex := sync.Mutex{}
-
-SendLoop:
-	for {
-		select {
-		case message := <-connection.MessageChan:
-			sendMutex.Lock()
-			_ = conn.WriteMessage(message.Type, message.Body)
-			sendMutex.Unlock()
-		case <-connection.CloseChannel:
-			log.Debug("Disconnecting client", "client", user)
-
-			//Сигнализируем что соединение было закрыто
-			connection.CloseChannel = nil
-
-			sendMutex.Lock()
-
-			// Send close message with 1000
-			_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
-			// Sleep a tiny bit to allow message to be sent before closing connection
-			time.Sleep(time.Millisecond)
-			_ = conn.Close()
-			// (1) Удаляем соединение из общего списка
-			s.hub.Connections.Remove(connection.ID)
-			// (2) Удаляем соединение у пользователя
-			user.SetConnection("")
-			// (3) Удаляем из подписок каналов соединие
-			for _, channel := range user.GetChannels() {
-				s.hub.Channels.Remove(channel, connection.ID)
-			}
-
-			break SendLoop
-		}
 	}
 }

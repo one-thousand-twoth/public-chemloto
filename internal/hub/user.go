@@ -69,9 +69,9 @@ func (r *User) SetConnection(conn string) {
 
 	r.conn = conn
 }
+
+// SetRoom is not thread safe
 func (r *User) SetRoom(room string) string {
-	r.mutex.Lock()
-	defer r.mutex.Unlock()
 	oldRoom := r.Room
 	if oldRoom == room {
 		return ""

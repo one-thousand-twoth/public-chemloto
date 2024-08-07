@@ -2,7 +2,6 @@ package server
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
@@ -18,11 +17,10 @@ import (
 )
 
 type Server struct {
-	mux      *chi.Mux
-	upgrader websocket.Upgrader
-	hub      *hub.Hub
-	log      *slog.Logger
-	storage  *sqlite.Storage
+	mux     *chi.Mux
+	hub     *hub.Hub
+	log     *slog.Logger
+	storage *sqlite.Storage
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -82,28 +80,16 @@ func NewServer() *Server {
 	mux := chi.NewRouter()
 	storage := sqlite.NewStorage()
 
-	hub := hub.NewHub(storage, log)
+	hub := hub.NewHub(storage, log, upgrader)
 	hub.SetupHandlers()
 	hub.Run()
 
 	server := &Server{
-		upgrader: upgrader,
-		hub:      hub,
-		log:      log,
-		storage:  storage,
-		mux:      mux}
+		hub:     hub,
+		log:     log,
+		storage: storage,
+		mux:     mux}
 	server.configureRoutes()
 
 	return server
-}
-
-func (s *Server) CheckToken(token string) (*hub.User, error) {
-	if token == "" {
-		return nil, fmt.Errorf("bad token")
-	}
-	clnt, ok := s.hub.Users.GetByToken(token)
-	if !ok {
-		return nil, fmt.Errorf("bad token")
-	}
-	return clnt, nil
 }

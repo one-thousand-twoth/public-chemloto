@@ -6,6 +6,8 @@ import (
 	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/gorilla/websocket"
 )
 
 var (
@@ -19,7 +21,7 @@ var (
 )
 
 func TestSubscribe(t *testing.T) {
-	hub := NewHub(nil, MockLogger)
+	hub := NewHub(nil, MockLogger, websocket.Upgrader{})
 	username := "Test User"
 	user := NewUser(username, "apikey", "uuid", Player_Role, []string{})
 	hub.Users.Add(user)

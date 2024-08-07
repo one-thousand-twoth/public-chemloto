@@ -1,6 +1,7 @@
 package hub
 
 import (
+	"encoding/json"
 	"sync"
 
 	mapset "github.com/deckarep/golang-set/v2"
@@ -10,6 +11,13 @@ import (
 type channelsState struct {
 	state map[string]mapset.Set[string]
 	mutex sync.RWMutex
+}
+
+func (rs *channelsState) MarshalJSON() ([]byte, error) {
+	rs.mutex.RLock()
+	defer rs.mutex.RUnlock()
+
+	return json.Marshal(rs.state)
 }
 
 // Add добаляет ID соединения в подписчики канала

@@ -6,17 +6,23 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"net/http"
+	"sync"
+	"time"
 
 	"github.com/anrew1002/Tournament-ChemLoto/internal/models"
+	"github.com/anrew1002/Tournament-ChemLoto/internal/sl"
 	"github.com/anrew1002/Tournament-ChemLoto/sqlite"
 	mapset "github.com/deckarep/golang-set/v2"
+	"github.com/gorilla/websocket"
 )
 
 type Hub struct {
 	log *slog.Logger
 
-	Rooms *roomsState
-	Users *usersState
+	Rooms    *roomsState
+	Users    *usersState
+	upgrader websocket.Upgrader
 
 	Connections *connectionsState
 	Channels    *channelsState
@@ -35,8 +41,9 @@ type Hub struct {
 	// usersMutex     sync.RWMutex
 }
 
-func NewHub(storage *sqlite.Storage, log *slog.Logger) *Hub {
+func NewHub(storage *sqlite.Storage, log *slog.Logger, upgrader websocket.Upgrader) *Hub {
 	return &Hub{
+		upgrader:      upgrader,
 		log:           log,
 		Rooms:         &roomsState{state: make(map[string]*room)},
 		Users:         &usersState{state: make(map[string]*User)},
@@ -99,4 +106,133 @@ func GetMessageType(msg []byte) (map[string]interface{}, MessageType, error) {
 	}
 	// msgTyped, err := NewMessage(payloadType, payload)
 	return payload, msgType, err
+}
+
+func (h *Hub) CheckToken(token string) (*User, error) {
+	if token == "" {
+		return nil, fmt.Errorf("bad token")
+	}
+	clnt, ok := h.Users.GetByToken(token)
+	if !ok {
+		return nil, fmt.Errorf("bad token")
+	}
+	return clnt, nil
+}
+
+func (h *Hub) HandleWS(w http.ResponseWriter, r *http.Request) {
+	op := "handlers.handleWS"
+	log := h.log.With("op", op)
+	reqToken := r.URL.Query().Get("token")
+	if reqToken == "" {
+		http.Error(w, "Incorrect token", http.StatusBadRequest)
+		return
+	}
+	user, err := h.CheckToken(reqToken)
+	if err != nil {
+		log.Error(op, sl.Err(err))
+		http.Error(w, "Bad Token", http.StatusUnauthorized)
+		return
+	}
+	user.mutex.Lock()
+	defer user.mutex.Unlock()
+
+	username := user.Name
+	log = log.With("userWS", username)
+	conn, err := h.upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Error("Failed to upgrade connection", sl.Err(err))
+		return
+	}
+
+	connection := NewConnection(conn, username)
+	// (1) Добавляем соединение в общий список
+	h.Connections.Add(connection)
+	// h.Users.Add(client)]
+	// TODO: действительно ли оно надо?
+	// (2) Указываем новое соединение пользователю
+	user.conn = connection.ID
+
+	for _, channel := range user.channels {
+		// (3) Добавляем к необходимым каналам новое соединение
+		h.Channels.Add(channel, connection.ID)
+	}
+	log.Debug("op", op, "user", "user channels:", fmt.Sprintf("%+v", user.channels))
+	if x, ok := h.Channels.Get("default"); ok {
+		log.Debug("op", op, "hub", "hub channels:", fmt.Sprintf("%+v", x))
+	}
+	go func() {
+	ReceiveLoop:
+		for {
+			messageType, msg, err := connection.Conn.ReadMessage()
+			if err != nil {
+				// Disconnect on error
+				if connection.CloseChannel != nil {
+					connection.CloseChannel <- struct{}{}
+				}
+				break
+			}
+
+			switch messageType {
+			case websocket.CloseMessage:
+				if connection.CloseChannel != nil {
+					connection.CloseChannel <- struct{}{}
+				}
+				break ReceiveLoop
+			case websocket.TextMessage:
+				// connection.MessageChan <- models.Message{Type: websocket.TextMessage, Body: msg}
+				// h.Input(msg, user)
+				msg, msgType, err := GetMessageType(msg)
+				if err != nil {
+					log.Error("failed to get message type", "type", msgType)
+				}
+				log.Debug(fmt.Sprintf("got messageWS %+v", msg))
+				h.SendEventToHub(NewEventWrap(username, user.Room, msg, msgType))
+
+			// TODO: Реализовать ping на клиенте
+			// Handling receiving ping/pong
+			case websocket.PingMessage:
+				fallthrough
+			case websocket.PongMessage:
+				// connection.lock.Lock()
+				// connection.lastPing = time.Now()
+				// connection.lock.Unlock()
+			}
+		}
+	}()
+
+	sendMutex := sync.Mutex{}
+	go func() {
+	SendLoop:
+		for {
+			select {
+			case message := <-connection.MessageChan:
+				sendMutex.Lock()
+				_ = conn.WriteMessage(message.Type, message.Body)
+				sendMutex.Unlock()
+			case <-connection.CloseChannel:
+				log.Debug("Disconnecting client", "client", username)
+
+				//Сигнализируем что соединение было закрыто
+				connection.CloseChannel = nil
+
+				sendMutex.Lock()
+
+				// Send close message with 1000
+				_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
+				// Sleep a tiny bit to allow message to be sent before closing connection
+				time.Sleep(time.Millisecond)
+				_ = conn.Close()
+				// (1) Удаляем соединение из общего списка
+				h.Connections.Remove(connection.ID)
+				// (2) Удаляем соединение у пользователя
+				user.SetConnection("")
+				// (3) Удаляем из подписок каналов соединие
+				for _, channel := range user.GetChannels() {
+					h.Channels.Remove(channel, connection.ID)
+				}
+
+				break SendLoop
+			}
+		}
+	}()
 }
