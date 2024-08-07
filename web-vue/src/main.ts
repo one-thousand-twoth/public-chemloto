@@ -6,8 +6,8 @@ import App from './App.vue'
 import { createPinia } from 'pinia'
 import { createRouter, createWebHistory } from 'vue-router'
 import Login from '@/views/Login.vue'
-import RoomList from '@/views/RoomList.vue'
 import Room from '@/views/Room.vue'
+import Hub from '@/views/Hub.vue'
 import { useUserStore } from './stores/useUserStore'
 
 const pinia = createPinia()
@@ -19,20 +19,20 @@ const userStore = useUserStore();
 
 const router = createRouter({
   routes: [
-  {
-    name: 'RoomList',
-    path: '/',
-    component: RoomList,
-  }, {
-    name: 'Login',
-    path: '/login',
-    component: Login,
-  },
-  {
-    name: 'Room',
-    path: '/room',
-    component: Room,
-  }
+    {
+      name: 'Hub',
+      path: '/',
+      component: Hub,
+    }, {
+      name: 'Login',
+      path: '/login',
+      component: Login,
+    },
+    {
+      name: 'Room',
+      path: '/room',
+      component: Room,
+    }
   ],
   history: createWebHistory()
 });
@@ -40,14 +40,14 @@ const router = createRouter({
 (async () => {
   const ok = await userStore.check()
   if (!ok) {
-    router.replace({name: "Login"})
+    router.replace({ name: "Login" })
   }
 })();
 
 
 router.beforeEach(async (to, from) => {
   // userStore.check()
-  if (  
+  if (
     !userStore.UserCreds && to.name !== 'Login') {
     console.log("to Logon")
     return { name: 'Login' }

@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<!-- <script setup lang="ts">
 import { useUserStore } from "../stores/useUserStore";
 import {Modal} from './UI/index'
 
@@ -16,7 +16,7 @@ let usernameInput = ''
 	    <template #body>
 	      <div class="flex flex-row gap-2">
 	        <input type="text" v-model="usernameInput" />
-	        <button @click="userStore.createUser(usernameInput);">Войти</button>
+	        <button @click="userStore.Login(usernameInput);">Войти</button>
 	      </div>
 	    </template>
 	
@@ -25,4 +25,4 @@ let usernameInput = ''
 	    </template>
 	
 	  </Modal>
-</template>
+</template> -->

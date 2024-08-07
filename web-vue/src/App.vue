@@ -3,9 +3,9 @@ import Toaster from './components/Toaster.vue'
 import { WebsocketConnector } from './api/websocket/websocket';
 import { APISettings } from './api/config';
 import { provide } from 'vue';
+import { watch } from 'vue';
 import { useUserStore } from './stores/useUserStore';
 import { storeToRefs } from 'pinia';
-import { watch } from 'vue';
 import { useGameStore } from './stores/useGameStore';
 import { useRouter } from 'vue-router';
 defineOptions({
@@ -21,8 +21,10 @@ provide('connector', connector)
 const { UserCreds } = storeToRefs(userStore)
 watch(UserCreds, () => {
     if (userStore.UserCreds) {
-        connector.token = userStore.UserCreds.token
-        connector.Run()
+        if (userStore.UserCreds.token != ""){
+            connector.token = userStore.UserCreds.token
+            connector.Run()
+        }
     }
     
 })
