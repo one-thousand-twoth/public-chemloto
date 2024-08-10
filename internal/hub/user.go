@@ -17,7 +17,7 @@ func remove[T comparable](l []T, item T) []T {
 
 type Role int
 
-//go:generate stringer -type=Role -output=./stringer_types.go
+//go:generate stringer -type=Role
 const (
 	NONE Role = iota
 	Admin_Role

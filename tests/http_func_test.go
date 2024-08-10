@@ -24,14 +24,14 @@ func TestCreateUser(t *testing.T) {
 	resp.Value("error").IsNull()
 	checkUserInfo(t, username, resp.Value("token").String().Raw(), "", "Player_Role")
 
-	// test crate admin
+	// test create admin
 	username = getRandomUsername()
 
 	resp = Createuser(e, username, "test_code")
 	resp.Value("error").IsNull()
 	checkUserInfo(t, username, resp.Value("token").String().Raw(), "", "Admin_Role")
 
-	// test crate  with same name is not null
+	// test create  with same name is not null
 	username = username
 
 	resp = Createuser(e, username, "test_code")

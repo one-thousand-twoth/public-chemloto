@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 
+	"github.com/anrew1002/Tournament-ChemLoto/internal/engines/engine"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/models"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/sl"
 	"github.com/gorilla/websocket"
@@ -18,6 +19,7 @@ func (f HandlerFunc) HandleEvent(h *Hub, msg internalEventWrap) {
 
 func (h *Hub) SetupHandlers() {
 	h.UseHandler(HUB_SUBSCRIBE, Subscribe)
+	h.UseHandler(ENGINE_ACTION, EngineEvent)
 }
 
 func (h *Hub) UseHandler(t MessageType, f HandlerFunc) {
@@ -39,11 +41,7 @@ func Subscribe(h *Hub, e internalEventWrap) {
 		log.Error("failed to decode event body", sl.Err(err))
 		return
 	}
-	if data.Target == "" {
-		log.Error("empty field")
-		return
-	}
-	if data.Name == "" {
+	if data.Target == "" || data.Name == "" {
 		log.Error("empty field")
 		return
 	}
@@ -83,8 +81,12 @@ func Subscribe(h *Hub, e internalEventWrap) {
 		Type: websocket.TextMessage,
 		Body: envelope,
 	}
-	// h.SendMessageOverChannel(data.Name, models.Message{
-	// 	Type: websocket.TextMessage,
-	// 	Body: envelope,
-	// })
+}
+
+func EngineEvent(h *Hub, e internalEventWrap) {
+	room := h.Rooms.Get(e.room)
+	room.engine.Input(engine.Action{
+		Player:   e.userId,
+		Envelope: e.msg,
+	})
 }

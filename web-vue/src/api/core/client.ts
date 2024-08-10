@@ -13,7 +13,7 @@ export class Client {
     headers() {
       return {
         Authorization: `Bearer ${this.token}`,
-        "Content-Type": "application/x-www-form-urlencoded",
+        "Content-Type": "application/json",
       };
     }
   

@@ -49,6 +49,8 @@ func ValidationError(errs validator.ValidationErrors) []string {
 			errMsgs = append(errMsgs, fmt.Sprintf("field %s is not a valid URL", err.Field()))
 		case "safeinput":
 			errMsgs = append(errMsgs, fmt.Sprintf("Поле %s должно содержать только буквы и цифры", err.Field()))
+		case "min":
+			errMsgs = append(errMsgs, fmt.Sprintf("Поле %s должно быть больше 2 символов", err.Field()))
 		default:
 			errMsgs = append(errMsgs, fmt.Sprintf("field %s is not valid", err.Field()))
 		}

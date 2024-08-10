@@ -31,7 +31,7 @@ const isChecked = ref(false)
                     <form @submit.prevent="onSubmit()" class="w-full flex items-start justify-center flex-col gap-4">
                         <h2>Вход</h2>
                         <label>Введите имя:
-                            <input v-model="username" autocomplete="off" type="text" maxlength="25" required
+                            <input v-model.trim="username" autocomplete="off" type="text" maxlength="25" required
                                 style="width: 95%;">
                         </label>
                         <label>

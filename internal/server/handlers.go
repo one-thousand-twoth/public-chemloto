@@ -4,13 +4,13 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/anrew1002/Tournament-ChemLoto/internal/engines/polymers"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/hub"
-	"github.com/anrew1002/Tournament-ChemLoto/internal/models"
+	"github.com/anrew1002/Tournament-ChemLoto/internal/sl"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/validator"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
 	valid "github.com/go-playground/validator/v10"
-	"github.com/gorilla/websocket"
 )
 
 func (s *Server) Status() http.HandlerFunc {
@@ -24,7 +24,7 @@ func (s *Server) Status() http.HandlerFunc {
 	}
 }
 
-func (s *Server) GetRoom() http.HandlerFunc {
+func (s *Server) GetRooms() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		encode(w, r, http.StatusOK, s.hub.Rooms)
 	}
@@ -50,52 +50,42 @@ func (s *Server) GetUser() http.HandlerFunc {
 	}
 }
 func (s *Server) CreateRoom() http.HandlerFunc {
-	return func(w http.ResponseWriter, r *http.Request) {
-		r.ParseForm()
-		var name string
-		if name = r.Form.Get("name"); name == "" {
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-		if err := s.hub.Rooms.Add(name); err != nil {
-			encode(w, r, http.StatusConflict, s.hub.Rooms)
-			return
-		}
-		s.hub.SendMessageOverChannel("default", models.Message{Type: websocket.TextMessage, Body: []byte(name)})
-		encode(w, r, http.StatusOK, s.hub.Rooms)
+	type Request struct {
+		Name       string         `json:"name" validate:"required,min=3,safeinput"`
+		MaxPlayers int            `json:"maxPlayers" validate:"required"`
+		Elements   map[string]int `json:"elementCounts" validate:"required"`
+		Time       int            `validate:"required_if=isAuto true,gt=0"`
+		IsAuto     bool           `json:"isAuto"`
 	}
-}
-
-func (s *Server) CreateUser() http.HandlerFunc {
+	type Response struct {
+		Rooms any      `json:"rooms"`
+		Error []string `json:"error"`
+	}
 	return func(w http.ResponseWriter, r *http.Request) {
-		r.ParseForm()
-		var name string
-		if name = r.Form.Get("name"); name == "" {
-			w.WriteHeader(http.StatusBadRequest)
-			return
-		}
-		token, err := GenerateRandomStringURLSafe(32)
+		const op = "server.handlers.CreateRoom"
+		log := s.log.With(slog.String("op", op))
+		var req Request
+		err := render.DecodeJSON(r.Body, &req)
 		if err != nil {
-			w.WriteHeader(http.StatusInternalServerError)
+			log.Error("failed to decode body", sl.Err(err))
+			encode(w, r, http.StatusBadRequest, Response{Error: []string{"Неправильный формат запроса"}})
 			return
 		}
-		channels := []string{"default"}
-		user := hub.NewUser(name, token, "", hub.Player_Role, channels)
-		if err := s.hub.Users.Add(user); err != nil {
-			w.WriteHeader(http.StatusConflict)
+		room := hub.NewRoom(req.Name, req.MaxPlayers, req.Elements, req.Time, req.IsAuto, polymers.New(s.log.With(slog.String("room", req.Name))))
+		// TODO: добавить обработку уже имеющейся комнаты
+		if err := s.hub.Rooms.Add(room); err != nil {
+			log.Error("failed to add room", sl.Err(err))
+			encode(w, r, http.StatusConflict, Response{Error: []string{"Сервер не смог создать комнату"}})
 			return
 		}
-		s.log.Info("user registred", "name", name)
-		w.Header().Set("Content-Type", "text/plain")
-		w.WriteHeader(http.StatusCreated)
-		w.Write([]byte(token))
-
+		// s.hub.SendMessageOverChannel("default", models.Message{Type: websocket.TextMessage, Body: []byte(req.Name)})
+		encode(w, r, http.StatusOK, Response{Rooms: s.hub.Rooms, Error: []string{}})
 	}
 }
 
 func (s *Server) Login(AdminCode string) http.HandlerFunc {
 	type Request struct {
-		Name string `json:"name" validate:"required,safeinput"`
+		Name string `json:"name" validate:"required,min=3,safeinput"`
 		Code string `json:"code,omitempty"`
 	}
 	type Response struct {

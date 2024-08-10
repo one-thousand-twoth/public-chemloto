@@ -58,9 +58,6 @@ func (s *Server) Run(port string) {
 		)
 	}
 
-	// Allow time to disconnect & clear from Redis
-	time.Sleep(time.Second)
-
 	s.log.Info("Stopped")
 }
 
@@ -75,7 +72,7 @@ func NewServer() *Server {
 		},
 	}
 	log := slog.New(
-		slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{Level: slog.LevelDebug}),
+		sl.NewPrettyHandler(os.Stdout),
 	)
 	mux := chi.NewRouter()
 	storage := sqlite.NewStorage()

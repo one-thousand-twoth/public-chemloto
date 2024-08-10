@@ -63,6 +63,7 @@ func (h *Hub) Run() {
 				h.log.Error("error find event handler ", "message type", event.msgType.String())
 				continue eventLoop
 			}
+			h.log.Debug("start handle event in Hub.Run", "event", event.msgType.String())
 			handler.HandleEvent(h, event)
 		}
 	}()
@@ -137,7 +138,7 @@ func (h *Hub) HandleWS(w http.ResponseWriter, r *http.Request) {
 	defer user.mutex.Unlock()
 
 	username := user.Name
-	log = log.With("userWS", username)
+	log = h.log.With("userWS", username)
 	conn, err := h.upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Error("Failed to upgrade connection", sl.Err(err))

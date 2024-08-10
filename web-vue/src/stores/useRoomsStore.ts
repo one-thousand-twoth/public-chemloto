@@ -26,7 +26,7 @@ export const useRoomsStore = defineStore('rooms', () => {
         // const token = ref(localStorage.getItem("token") ?? "");
         try {
             const resp = await client.get("/rooms");
-            if (resp.status == 200){
+            if (resp.status == 200) {
                 roomList.value = Object.values(await resp.json())
             }
         } catch (e) {
@@ -34,17 +34,16 @@ export const useRoomsStore = defineStore('rooms', () => {
         }
         fetching.value = false;
     }
-    async function CreateGame(roomname: string) {
+    async function CreateGame(room: RoomInfo) {
         if (userStore.UserCreds == null) {
             return;
         }
+        console.log(room)
         const client = new Client(APISettings.protocol + APISettings.baseURL, userStore.UserCreds.token);
         const resp = await fetch(client.url("/rooms"), {
             method: "POST",
             headers: client.headers(),
-            body: new URLSearchParams({
-                name: roomname,
-            }),
+            body: JSON.stringify(room),
         });
 
         if (!resp.ok) {
@@ -73,5 +72,8 @@ export const useRoomsStore = defineStore('rooms', () => {
 
 export interface RoomInfo {
     name: string
-    // status: string
+    maxPlayers: number
+    elements: { [id: string]: number; }
+    time: number
+    isAuto: boolean
 } 

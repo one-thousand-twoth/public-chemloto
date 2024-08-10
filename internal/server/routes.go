@@ -17,7 +17,7 @@ func (s *Server) configureRoutes() {
 		MaxAge:           300, // Maximum value not ignored by any of major browsers
 	}))
 	s.mux.Route("/api/v1", func(r chi.Router) {
-		r.Get("/rooms", s.GetRoom())
+		r.Get("/rooms", s.GetRooms())
 		r.Post("/rooms", s.CreateRoom())
 		// r.Post("/users", s.CreateUser())
 		r.Get("/users", s.GetUsers())

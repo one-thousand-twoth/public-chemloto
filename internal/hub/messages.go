@@ -6,6 +6,7 @@ type MessageType int
 const UNDEFINED MessageType = -1
 const (
 	HUB_SUBSCRIBE MessageType = iota + 1
+	ENGINE_ACTION
 	HUB_NEW_ROOM
 )
 
