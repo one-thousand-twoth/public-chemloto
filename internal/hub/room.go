@@ -13,6 +13,7 @@ type Engine interface {
 	PreHook()
 	// Обработать событие
 	Input(engine.Action)
+	Start()
 }
 
 type room struct {
@@ -65,11 +66,11 @@ func (rs *roomsState) MarshalJSON() ([]byte, error) {
 	return json.Marshal(rs.state)
 }
 
-func (rs *roomsState) Get(id string) *room {
+func (rs *roomsState) Get(id string) (r *room, ok bool) {
 	rs.mutex.RLock()
 	defer rs.mutex.RUnlock()
-
-	return rs.state[id]
+	r, ok = rs.state[id]
+	return
 }
 func (rs *roomsState) Add(room *room) error {
 	rs.mutex.Lock()

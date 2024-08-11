@@ -13,7 +13,7 @@ func New(log *slog.Logger) *PolymersEngine {
 	// var src cryptorand.CryptoSource
 	src := rand.NewSource(time.Now().UnixNano())
 	return &PolymersEngine{
-		log:              log.With(slog.String("source", "PulymersEngine")),
+		log:              log.With(slog.String("source", "PolymersEngine")),
 		lastElementsKeys: []string{},
 		Elements:         map[string]int{},
 		pushedElements:   []string{},
@@ -43,6 +43,7 @@ type PolymersEngine struct {
 }
 
 func (engine *PolymersEngine) Start() {
+	engine.SetupHandlers()
 	go func() {
 		for e := range engine.ActionChan {
 			action, ok := e.Envelope["Action"].(string)

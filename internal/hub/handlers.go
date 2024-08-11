@@ -20,6 +20,7 @@ func (f HandlerFunc) HandleEvent(h *Hub, msg internalEventWrap) {
 func (h *Hub) SetupHandlers() {
 	h.UseHandler(HUB_SUBSCRIBE, Subscribe)
 	h.UseHandler(ENGINE_ACTION, EngineEvent)
+	h.UseHandler(HUB_STARTGAME, StartGame)
 }
 
 func (h *Hub) UseHandler(t MessageType, f HandlerFunc) {
@@ -35,7 +36,7 @@ func Subscribe(h *Hub, e internalEventWrap) {
 	}
 	op := "Subscribe handler"
 	log := h.log.With("op", op)
-	log.Debug("Start Handle Event", "usr", e.userId, "room", e.room, "data", e.msg)
+	log.Debug("Start Handle Event", "usr", e.userId, "room", e.room, "data", fmt.Sprintf("%v", e.msg))
 	var data dataT
 	if err := mapstructure.Decode(e.msg, &data); err != nil {
 		log.Error("failed to decode event body", sl.Err(err))
@@ -84,9 +85,30 @@ func Subscribe(h *Hub, e internalEventWrap) {
 }
 
 func EngineEvent(h *Hub, e internalEventWrap) {
-	room := h.Rooms.Get(e.room)
+	room, ok := h.Rooms.Get(e.room)
+	if !ok {
+		h.log.Error("Cannot find room for EngineEvent", "room", e.room)
+		return
+	}
 	room.engine.Input(engine.Action{
 		Player:   e.userId,
 		Envelope: e.msg,
 	})
+}
+
+func StartGame(h *Hub, e internalEventWrap) {
+	type dataT struct {
+		Type string
+		Name string
+	}
+	op := "StartGame handler"
+	log := h.log.With("op", op)
+	log.Debug("Start Handle Event", "usr", e.userId, "room", e.room, "data", fmt.Sprintf("%v", e.msg))
+
+	room, ok := h.Rooms.Get(e.room)
+	if !ok {
+		log.Error("Failed getting room")
+		return
+	}
+	room.engine.Start()
 }

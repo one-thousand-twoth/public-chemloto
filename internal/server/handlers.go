@@ -78,6 +78,7 @@ func (s *Server) CreateRoom() http.HandlerFunc {
 			encode(w, r, http.StatusConflict, Response{Error: []string{"Сервер не смог создать комнату"}})
 			return
 		}
+		s.log.Info("Room created", "name", req.Name)
 		// s.hub.SendMessageOverChannel("default", models.Message{Type: websocket.TextMessage, Body: []byte(req.Name)})
 		encode(w, r, http.StatusOK, Response{Rooms: s.hub.Rooms, Error: []string{}})
 	}

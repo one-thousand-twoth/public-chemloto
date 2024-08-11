@@ -13,6 +13,7 @@ import (
 	"github.com/anrew1002/Tournament-ChemLoto/internal/sl"
 	"github.com/anrew1002/Tournament-ChemLoto/sqlite"
 	"github.com/go-chi/chi/v5"
+	"github.com/golang-cz/devslog"
 	"github.com/gorilla/websocket"
 )
 
@@ -71,9 +72,21 @@ func NewServer() *Server {
 			return true
 		},
 	}
-	log := slog.New(
-		sl.NewPrettyHandler(os.Stdout),
-	)
+	slogOpts := &slog.HandlerOptions{
+		AddSource: true,
+		Level:     slog.LevelDebug,
+	}
+	// new logger with options
+	opts := &devslog.Options{
+		HandlerOptions:    slogOpts,
+		MaxSlicePrintSize: 4,
+		SortKeys:          true,
+		TimeFormat:        "[15:04:05]",
+		NewLineAfterLog:   true,
+		DebugColor:        devslog.Magenta,
+	}
+
+	log := slog.New(devslog.NewHandler(os.Stdout, opts))
 	mux := chi.NewRouter()
 	storage := sqlite.NewStorage()
 

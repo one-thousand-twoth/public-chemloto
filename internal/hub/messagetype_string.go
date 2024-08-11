@@ -11,23 +11,24 @@ func _() {
 	_ = x[UNDEFINED - -1]
 	_ = x[HUB_SUBSCRIBE-1]
 	_ = x[ENGINE_ACTION-2]
-	_ = x[HUB_NEW_ROOM-3]
+	_ = x[HUB_STARTGAME-3]
+	_ = x[HUB_NEW_ROOM-4]
 }
 
 const (
 	_MessageType_name_0 = "UNDEFINED"
-	_MessageType_name_1 = "HUB_SUBSCRIBEENGINE_ACTIONHUB_NEW_ROOM"
+	_MessageType_name_1 = "HUB_SUBSCRIBEENGINE_ACTIONHUB_STARTGAMEHUB_NEW_ROOM"
 )
 
 var (
-	_MessageType_index_1 = [...]uint8{0, 13, 26, 38}
+	_MessageType_index_1 = [...]uint8{0, 13, 26, 39, 51}
 )
 
 func (i MessageType) String() string {
 	switch {
 	case i == -1:
 		return _MessageType_name_0
-	case 1 <= i && i <= 3:
+	case 1 <= i && i <= 4:
 		i -= 1
 		return _MessageType_name_1[_MessageType_index_1[i]:_MessageType_index_1[i+1]]
 	default:
