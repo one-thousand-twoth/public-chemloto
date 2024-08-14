@@ -5,7 +5,7 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/anrew1002/Tournament-ChemLoto/internal/models"
+	"github.com/anrew1002/Tournament-ChemLoto/internal/common"
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 )
@@ -15,7 +15,7 @@ type SockConnection struct {
 	Conn         *websocket.Conn
 	User         string
 	CloseChannel chan struct{}
-	MessageChan  chan models.Message
+	MessageChan  chan common.Message
 
 	mutex sync.RWMutex
 }
@@ -26,7 +26,7 @@ func NewConnection(conn *websocket.Conn, user string) *SockConnection {
 		Conn:         conn,
 		User:         user,
 		CloseChannel: make(chan struct{}),
-		MessageChan:  make(chan models.Message),
+		MessageChan:  make(chan common.Message),
 	}
 }
 
@@ -44,6 +44,7 @@ func (r *SockConnection) MarshalJSON() ([]byte, error) {
 
 // connectionsState - map структура с RWmutex
 type connectionsState struct {
+	// map key is connID
 	state map[string]*SockConnection
 	mutex sync.RWMutex
 }

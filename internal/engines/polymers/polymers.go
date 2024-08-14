@@ -1,69 +1,109 @@
 package polymers
 
 import (
-	"fmt"
 	"log/slog"
 	"math/rand"
 	"time"
 
-	"github.com/anrew1002/Tournament-ChemLoto/internal/engines/engine"
+	"github.com/anrew1002/Tournament-ChemLoto/internal/common"
+	"github.com/anrew1002/Tournament-ChemLoto/internal/engines/models"
+	"github.com/anrew1002/Tournament-ChemLoto/internal/sl"
 )
 
-func New(log *slog.Logger) *PolymersEngine {
+func New(log *slog.Logger, cfg PolymersEngineConfig) *PolymersEngine {
 	// var src cryptorand.CryptoSource
 	src := rand.NewSource(time.Now().UnixNano())
-	return &PolymersEngine{
-		log:              log.With(slog.String("source", "PolymersEngine")),
-		lastElementsKeys: []string{},
-		Elements:         map[string]int{},
-		pushedElements:   []string{},
-		ActionChan:       make(chan engine.Action),
-		handlers:         map[string]HandlerFunc{},
-		rnd:              rand.New(src),
+
+	eng := &PolymersEngine{
+		log:        log.With(slog.String("engine", "PolymersEngine")),
+		Bag:        NewGameBag(cfg.Elements),
+		ActionChan: make(chan models.Action),
+		handlers:   map[string]HandlerFunc{},
+		unicast:    cfg.Unicast,
+		broadcast:  cfg.Broadcast,
+		timerInt:   cfg.TimerInt,
+		rnd:        rand.New(src),
 	}
+	eng.StateMachine = stateMachine{
+		Current: OBTAIN,
+		States: map[stateInt]State{
+			OBTAIN: {
+				handlers: map[string]HandlerFunc{
+					"GetElement": eng.GetElement(),
+				},
+			},
+		},
+	}
+
+	return eng
 }
 
-type Event struct {
-	Action string
+type PolymersEngineConfig struct {
+	Elements  map[string]int
+	TimerInt  int
+	Unicast   unicastFunction
+	Broadcast broadcastFunction
 }
 
 type PolymersEngine struct {
-	log *slog.Logger
-	// Названия элементов в игре
-	lastElementsKeys []string
-	// Общий мешок
-	Elements map[string]int
-	// Элементы которые достали из мешка
-	pushedElements []string
-	// Обработка действий игроков
-	ActionChan chan engine.Action
+	log          *slog.Logger
+	started      bool
+	StateMachine stateMachine
+	Bag          GameBag
+	// Канал для обработки действий игроков
+	ActionChan chan models.Action
 	handlers   map[string]HandlerFunc
+
+	players []string
+
+	unicast   unicastFunction
+	broadcast broadcastFunction
+
+	timerInt int
 
 	rnd *rand.Rand
 }
 
+// unicastFunction accepts first argument userID
+type unicastFunction func(string, common.Message)
+type broadcastFunction func(common.Message)
+
+// TODO: OnlyOnce запустить только раз.
 func (engine *PolymersEngine) Start() {
-	engine.SetupHandlers()
+	engine.started = true
 	go func() {
 		for e := range engine.ActionChan {
-			action, ok := e.Envelope["Action"].(string)
-			if !ok {
-				engine.log.Error("failed to extract Action field")
+			state, err := engine.StateMachine.States[engine.StateMachine.Current].Input(e)
+			if err != nil {
+				engine.log.Error("error while handling action with state %s", sl.Err(err), engine.StateMachine.Current)
 			}
-			handle, ok := engine.handlers[action]
-			if !ok {
-				engine.log.Error(fmt.Sprintf("No handler for event %s", action))
-				continue
+			// Changing state if needed
+			if state > NO_TRANSITION {
+				engine.StateMachine.Current = state
 			}
-			engine.log.Debug("Start Handling Engine Event")
-			handle(e)
 		}
 	}()
+	engine.log.Debug("Broadcast for starting engine")
+	engine.broadcast(common.Message{Type: common.HUB_STARTGAME, Ok: true})
 }
 
-func (engine *PolymersEngine) Input(e engine.Action) {
+func (engine *PolymersEngine) Input(e models.Action) {
 	engine.ActionChan <- e
 }
 func (engine *PolymersEngine) PreHook() {
 
+}
+
+func (engine *PolymersEngine) AddPlayer(name string) {
+	if engine.started {
+		return
+	}
+	engine.players = append(engine.players, name)
+}
+
+func (engine *PolymersEngine) RemovePlayer(name string) {
+	if engine.started {
+		return
+	}
+	engine.players = removeByValue(engine.players, name)
 }

@@ -1,4 +1,11 @@
-import { Subscribe } from "./handlers";
+import { EngineAction, Subscribe } from "./handlers";
+
+export interface WEBSOCKET_EVENT {
+    Type:   string
+	Ok :    boolean
+	Errors: Array<string>
+	Body  : { [id: string]: any; }
+}
 
 export class WebsocketConnector {
     baseUrl: string;
@@ -17,9 +24,16 @@ export class WebsocketConnector {
         // const gameStore = useGameStore()
         this.connection = new WebSocket(`ws://${this.baseUrl}/api/v1/ws?token=${this.token}`)
         this.connection.onmessage = function (event) {
-            const data = JSON.parse( event.data )
-            if (data["Type"] == "HUB_SUBSCRIBE"){
-                Subscribe(data)
+            const data = JSON.parse( event.data ) as WEBSOCKET_EVENT
+            switch (data.Type){
+                case "HUB_SUBSCRIBE": 
+                    Subscribe(data)
+                    break;
+                
+                case "ENGINE_ACTION":
+                    EngineAction(data)
+                    break;
+                
             }
             console.log(data)
         }

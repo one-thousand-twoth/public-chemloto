@@ -50,9 +50,11 @@ func ValidationError(errs validator.ValidationErrors) []string {
 		case "safeinput":
 			errMsgs = append(errMsgs, fmt.Sprintf("Поле %s должно содержать только буквы и цифры", err.Field()))
 		case "min":
-			errMsgs = append(errMsgs, fmt.Sprintf("Поле %s должно быть больше 2 символов", err.Field()))
+			errMsgs = append(errMsgs, fmt.Sprintf("Поле %s должно быть больше %s символов", err.Field(), err.Param()))
+		case "gt":
+			errMsgs = append(errMsgs, fmt.Sprintf("Поле %s должно быть больше %s", err.Field(), err.Param()))
 		default:
-			errMsgs = append(errMsgs, fmt.Sprintf("field %s is not valid", err.Field()))
+			errMsgs = append(errMsgs, fmt.Sprintf("field %s is not valid: %s", err.Field(), err.Error()))
 		}
 	}
 

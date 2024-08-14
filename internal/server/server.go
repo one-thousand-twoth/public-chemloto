@@ -11,17 +11,15 @@ import (
 
 	"github.com/anrew1002/Tournament-ChemLoto/internal/hub"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/sl"
-	"github.com/anrew1002/Tournament-ChemLoto/sqlite"
 	"github.com/go-chi/chi/v5"
 	"github.com/golang-cz/devslog"
 	"github.com/gorilla/websocket"
 )
 
 type Server struct {
-	mux     *chi.Mux
-	hub     *hub.Hub
-	log     *slog.Logger
-	storage *sqlite.Storage
+	mux *chi.Mux
+	hub *hub.Hub
+	log *slog.Logger
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -88,17 +86,15 @@ func NewServer() *Server {
 
 	log := slog.New(devslog.NewHandler(os.Stdout, opts))
 	mux := chi.NewRouter()
-	storage := sqlite.NewStorage()
 
-	hub := hub.NewHub(storage, log, upgrader)
+	hub := hub.NewHub(log, upgrader)
 	hub.SetupHandlers()
 	hub.Run()
 
 	server := &Server{
-		hub:     hub,
-		log:     log,
-		storage: storage,
-		mux:     mux}
+		hub: hub,
+		log: log,
+		mux: mux}
 	server.configureRoutes()
 
 	return server

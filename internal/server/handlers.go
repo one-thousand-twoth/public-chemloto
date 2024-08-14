@@ -4,6 +4,7 @@ import (
 	"log/slog"
 	"net/http"
 
+	"github.com/anrew1002/Tournament-ChemLoto/internal/common"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/engines/polymers"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/hub"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/sl"
@@ -54,7 +55,7 @@ func (s *Server) CreateRoom() http.HandlerFunc {
 		Name       string         `json:"name" validate:"required,min=3,safeinput"`
 		MaxPlayers int            `json:"maxPlayers" validate:"required"`
 		Elements   map[string]int `json:"elementCounts" validate:"required"`
-		Time       int            `validate:"required_if=isAuto true,gt=0"`
+		Time       int            `validate:"excluded_if=isAuto false,gte=0"`
 		IsAuto     bool           `json:"isAuto"`
 	}
 	type Response struct {
@@ -71,14 +72,46 @@ func (s *Server) CreateRoom() http.HandlerFunc {
 			encode(w, r, http.StatusBadRequest, Response{Error: []string{"Неправильный формат запроса"}})
 			return
 		}
-		room := hub.NewRoom(req.Name, req.MaxPlayers, req.Elements, req.Time, req.IsAuto, polymers.New(s.log.With(slog.String("room", req.Name))))
+		log.Debug("request body decoded", slog.Any("request", req))
+		validate := validator.Ins
+		if err := validate.Struct(req); err != nil {
+			validateErr := err.(valid.ValidationErrors)
+			encode(w, r, http.StatusBadRequest, Response{Error: validator.ValidationError(validateErr)})
+			return
+		}
+		if !req.IsAuto {
+			req.Time = 0
+		}
+		room := hub.NewRoom(req.Name, req.MaxPlayers, req.Elements, req.Time, req.IsAuto,
+			polymers.New(
+				s.log.With(slog.String("room", req.Name)),
+				polymers.PolymersEngineConfig{
+					Elements: req.Elements,
+					TimerInt: req.Time,
+					Unicast: func(userID string, msg common.Message) {
+						s.log.Debug("Unicast message")
+						usr, ok := s.hub.Users.Get(userID)
+						if !ok {
+							s.log.Error("failed to get user while Unicast message from engine")
+						}
+						connID := usr.GetConnection()
+						conn, ok := s.hub.Connections.Get(connID)
+						conn.MessageChan <- msg
+					},
+					Broadcast: func(msg common.Message) {
+						s.log.Debug("Broadcast message")
+						s.hub.SendMessageOverChannel(req.Name, msg)
+					},
+				},
+			))
+
 		// TODO: добавить обработку уже имеющейся комнаты
 		if err := s.hub.Rooms.Add(room); err != nil {
 			log.Error("failed to add room", sl.Err(err))
 			encode(w, r, http.StatusConflict, Response{Error: []string{"Сервер не смог создать комнату"}})
 			return
 		}
-		s.log.Info("Room created", "name", req.Name)
+		s.log.Info("Room created", "name", req.Name, "time", req.Time)
 		// s.hub.SendMessageOverChannel("default", models.Message{Type: websocket.TextMessage, Body: []byte(req.Name)})
 		encode(w, r, http.StatusOK, Response{Rooms: s.hub.Rooms, Error: []string{}})
 	}

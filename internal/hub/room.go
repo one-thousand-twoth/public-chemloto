@@ -5,14 +5,14 @@ import (
 	"errors"
 	"sync"
 
-	"github.com/anrew1002/Tournament-ChemLoto/internal/engines/engine"
+	"github.com/anrew1002/Tournament-ChemLoto/internal/engines/models"
 )
 
 type Engine interface {
 	// Получить текущее состояние, например при перезагрузке страницы
 	PreHook()
 	// Обработать событие
-	Input(engine.Action)
+	Input(models.Action)
 	Start()
 }
 
@@ -55,6 +55,7 @@ func (r *room) MarshalJSON() ([]byte, error) {
 }
 
 type roomsState struct {
+	// map key is a room name
 	state map[string]*room
 	mutex sync.RWMutex
 }

@@ -1,4 +1,4 @@
-// hub отвечает за контроль над вебсокет клиентами
+// hub отвечает за контроль над пользователями и вебсокет-клиентами
 package hub
 
 import (
@@ -10,9 +10,8 @@ import (
 	"sync"
 	"time"
 
-	"github.com/anrew1002/Tournament-ChemLoto/internal/models"
+	"github.com/anrew1002/Tournament-ChemLoto/internal/common"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/sl"
-	"github.com/anrew1002/Tournament-ChemLoto/sqlite"
 	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/gorilla/websocket"
 )
@@ -41,7 +40,7 @@ type Hub struct {
 	// usersMutex     sync.RWMutex
 }
 
-func NewHub(storage *sqlite.Storage, log *slog.Logger, upgrader websocket.Upgrader) *Hub {
+func NewHub(log *slog.Logger, upgrader websocket.Upgrader) *Hub {
 	return &Hub{
 		upgrader:      upgrader,
 		log:           log,
@@ -72,7 +71,7 @@ func (h *Hub) SendEventToHub(e internalEventWrap) {
 	h.eventChan <- e
 }
 
-func (h *Hub) SendMessageOverChannel(channel string, message models.Message) error {
+func (h *Hub) SendMessageOverChannel(channel string, message common.Message) error {
 	op := "SendMessageOverChannel"
 	log := h.log.With("op", op)
 	connections, ok := h.Channels.Get(channel)
@@ -89,23 +88,23 @@ func (h *Hub) SendMessageOverChannel(channel string, message models.Message) err
 	return nil
 }
 
-func GetMessageType(msg []byte) (map[string]interface{}, MessageType, error) {
+func GetMessageType(msg []byte) (payload map[string]interface{}, msgType common.MessageType, err error) {
 
-	var payload map[string]interface{}
-
-	err := json.Unmarshal(msg, &payload)
+	err = json.Unmarshal(msg, &payload)
 	if err != nil {
-		return nil, UNDEFINED, errors.New("fail to unmarshal struct")
+		err = errors.New("fail to unmarshal struct")
+		return
 	}
 	payloadType, ok := payload["Type"]
 	if !ok {
-		return nil, UNDEFINED, errors.New("поле Type не указано")
+		err = errors.New("поле Type не указано")
+		return
 	}
-	msgType, ok := MapEnumStringToMessageType[payloadType.(string)]
+	msgType, ok = common.MapEnumStringToMessageType[payloadType.(string)]
 	if !ok {
-		return nil, UNDEFINED, errors.New("неизвестный тип сообщения")
+		err = errors.New("неизвестный тип сообщения")
+		return
 	}
-	// msgTyped, err := NewMessage(payloadType, payload)
 	return payload, msgType, err
 }
 
@@ -138,7 +137,7 @@ func (h *Hub) HandleWS(w http.ResponseWriter, r *http.Request) {
 	defer user.mutex.Unlock()
 
 	username := user.Name
-	log = h.log.With("userWS", username)
+	log = log.With("userWS", username)
 	conn, err := h.upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Error("Failed to upgrade connection", sl.Err(err))
@@ -157,9 +156,9 @@ func (h *Hub) HandleWS(w http.ResponseWriter, r *http.Request) {
 		// (3) Добавляем к необходимым каналам новое соединение
 		h.Channels.Add(channel, connection.ID)
 	}
-	log.Debug("op", op, "user", "user channels:", fmt.Sprintf("%+v", user.channels))
+	log.Debug("user", "user channels:", fmt.Sprintf("%+v", user.channels))
 	if x, ok := h.Channels.Get("default"); ok {
-		log.Debug("op", op, "hub", "hub channels:", fmt.Sprintf("%+v", x))
+		log.Debug("hub", "hub channels:", fmt.Sprintf("%+v", x))
 	}
 	go func() {
 	ReceiveLoop:
@@ -180,8 +179,6 @@ func (h *Hub) HandleWS(w http.ResponseWriter, r *http.Request) {
 				}
 				break ReceiveLoop
 			case websocket.TextMessage:
-				// connection.MessageChan <- models.Message{Type: websocket.TextMessage, Body: msg}
-				// h.Input(msg, user)
 				msg, msgType, err := GetMessageType(msg)
 				if err != nil {
 					log.Error("failed to get message type", "type", msgType)
@@ -207,8 +204,13 @@ func (h *Hub) HandleWS(w http.ResponseWriter, r *http.Request) {
 		for {
 			select {
 			case message := <-connection.MessageChan:
+				envelope, err := json.Marshal(message)
+				if err != nil {
+					log.Error("Marshaling data", slog.Any("data", message))
+				}
+				log.Debug("envelope", "env", string(envelope))
 				sendMutex.Lock()
-				_ = conn.WriteMessage(message.Type, message.Body)
+				_ = conn.WriteMessage(websocket.TextMessage, envelope)
 				sendMutex.Unlock()
 			case <-connection.CloseChannel:
 				log.Debug("Disconnecting client", "client", username)

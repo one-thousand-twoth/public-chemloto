@@ -1,4 +1,4 @@
-package engine
+package models
 
 type Action struct {
 	Player   string

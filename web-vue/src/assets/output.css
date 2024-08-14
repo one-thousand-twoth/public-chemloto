@@ -570,6 +570,10 @@ video {
   position: sticky;
 }
 
+.bottom-3 {
+  bottom: 0.75rem;
+}
+
 .bottom-4 {
   bottom: 1rem;
 }
@@ -580,6 +584,10 @@ video {
 
 .left-14 {
   left: 3.5rem;
+}
+
+.right-3 {
+  right: 0.75rem;
 }
 
 .right-4 {
@@ -620,6 +628,18 @@ video {
 
 .mt-4 {
   margin-top: 1rem;
+}
+
+.ml-1 {
+  margin-left: 0.25rem;
+}
+
+.mr-1 {
+  margin-right: 0.25rem;
+}
+
+.mr-2 {
+  margin-right: 0.5rem;
 }
 
 .block {
@@ -882,6 +902,14 @@ td {
 h2 {
   font-size: 1.875rem;
   line-height: 2.25rem;
+  font-weight: 700;
+  --tw-text-opacity: 1;
+  color: rgb(0 0 0 / var(--tw-text-opacity));
+}
+
+h3 {
+  font-size: 1.125rem;
+  line-height: 1.75rem;
   font-weight: 700;
   --tw-text-opacity: 1;
   color: rgb(0 0 0 / var(--tw-text-opacity));

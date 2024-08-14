@@ -62,6 +62,12 @@ func (r *User) GetChannels() []string {
 
 	return r.channels
 }
+func (r *User) GetConnection() string {
+	r.mutex.Lock()
+	defer r.mutex.Unlock()
+
+	return r.conn
+}
 
 func (r *User) SetConnection(conn string) {
 	r.mutex.Lock()

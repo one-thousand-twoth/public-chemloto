@@ -7,6 +7,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/anrew1002/Tournament-ChemLoto/internal/common"
 	"github.com/gorilla/websocket"
 )
 
@@ -21,7 +22,7 @@ var (
 )
 
 func TestSubscribe(t *testing.T) {
-	hub := NewHub(nil, MockLogger, websocket.Upgrader{})
+	hub := NewHub(MockLogger, websocket.Upgrader{})
 	username := "Test User"
 	user := NewUser(username, "apikey", "uuid", Player_Role, []string{})
 	hub.Users.Add(user)
@@ -40,7 +41,7 @@ func TestSubscribe(t *testing.T) {
 		{
 			name: "New subscription",
 			args: args{h: hub, e: internalEventWrap{
-				msgType: HUB_SUBSCRIBE,
+				msgType: common.HUB_SUBSCRIBE,
 				msg: map[string]interface{}{
 					"Type":   "HUB_SUBSCRIBE",
 					"Target": "room",
@@ -52,7 +53,7 @@ func TestSubscribe(t *testing.T) {
 		{
 			name: "Old subscription",
 			args: args{h: hub, e: internalEventWrap{
-				msgType: HUB_SUBSCRIBE,
+				msgType: common.HUB_SUBSCRIBE,
 				msg: map[string]interface{}{
 					"Type":   "HUB_SUBSCRIBE",
 					"Target": "channel",

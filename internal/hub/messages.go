@@ -1,32 +1,15 @@
 package hub
 
-type MessageType int
-
-//go:generate stringer -type=MessageType
-const UNDEFINED MessageType = -1
-const (
-	HUB_SUBSCRIBE MessageType = iota + 1
-	ENGINE_ACTION
-	HUB_STARTGAME
-	HUB_NEW_ROOM
-)
-
-var MapEnumStringToMessageType = func() map[string]MessageType {
-	m := make(map[string]MessageType)
-	for i := HUB_SUBSCRIBE; i <= HUB_NEW_ROOM; i++ {
-		m[i.String()] = i
-	}
-	return m
-}()
+import "github.com/anrew1002/Tournament-ChemLoto/internal/common"
 
 type internalEventWrap struct {
 	userId  string
 	room    string
-	msgType MessageType
+	msgType common.MessageType
 	msg     map[string]interface{}
 }
 
-func NewEventWrap(userID string, room string, msg map[string]interface{}, msgType MessageType) internalEventWrap {
+func NewEventWrap(userID string, room string, msg map[string]interface{}, msgType common.MessageType) internalEventWrap {
 	return internalEventWrap{
 		userId:  userID,
 		room:    room,

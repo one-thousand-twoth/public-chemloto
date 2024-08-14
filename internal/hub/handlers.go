@@ -1,13 +1,11 @@
 package hub
 
 import (
-	"encoding/json"
 	"fmt"
 
-	"github.com/anrew1002/Tournament-ChemLoto/internal/engines/engine"
-	"github.com/anrew1002/Tournament-ChemLoto/internal/models"
+	"github.com/anrew1002/Tournament-ChemLoto/internal/common"
+	enmodels "github.com/anrew1002/Tournament-ChemLoto/internal/engines/models"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/sl"
-	"github.com/gorilla/websocket"
 	"github.com/mitchellh/mapstructure"
 )
 
@@ -18,12 +16,12 @@ func (f HandlerFunc) HandleEvent(h *Hub, msg internalEventWrap) {
 }
 
 func (h *Hub) SetupHandlers() {
-	h.UseHandler(HUB_SUBSCRIBE, Subscribe)
-	h.UseHandler(ENGINE_ACTION, EngineEvent)
-	h.UseHandler(HUB_STARTGAME, StartGame)
+	h.UseHandler(common.HUB_SUBSCRIBE, Subscribe)
+	h.UseHandler(common.ENGINE_ACTION, EngineAction)
+	h.UseHandler(common.HUB_STARTGAME, StartGame)
 }
 
-func (h *Hub) UseHandler(t MessageType, f HandlerFunc) {
+func (h *Hub) UseHandler(t common.MessageType, f HandlerFunc) {
 	h.eventHandlers[t.String()] = f
 }
 
@@ -50,6 +48,7 @@ func Subscribe(h *Hub, e internalEventWrap) {
 	usr, ok := h.Users.Get(e.userId)
 	if !ok {
 		log.Error("Error getting usr")
+		return
 	}
 	usr.mutex.Lock()
 	defer usr.mutex.Unlock()
@@ -73,24 +72,29 @@ func Subscribe(h *Hub, e internalEventWrap) {
 		return
 	}
 	log.Debug("current status", "channelSubs", channelSubs, "user", connID)
-	envelope, err := json.Marshal(data)
-	if err != nil {
-		log.Error("Marshaling data", "data", data)
-	}
+
 	conn, ok := h.Connections.Get(connID)
-	conn.MessageChan <- models.Message{
-		Type: websocket.TextMessage,
-		Body: envelope,
+	if !ok {
+		log.Error("Failed getting connection of user")
+		return
+	}
+	conn.MessageChan <- common.Message{
+		Type: common.HUB_SUBSCRIBE,
+		Ok:   true,
+		Body: map[string]any{
+			"Target": "room",
+			"Name":   data.Name,
+		},
 	}
 }
 
-func EngineEvent(h *Hub, e internalEventWrap) {
+func EngineAction(h *Hub, e internalEventWrap) {
 	room, ok := h.Rooms.Get(e.room)
 	if !ok {
 		h.log.Error("Cannot find room for EngineEvent", "room", e.room)
 		return
 	}
-	room.engine.Input(engine.Action{
+	room.engine.Input(enmodels.Action{
 		Player:   e.userId,
 		Envelope: e.msg,
 	})

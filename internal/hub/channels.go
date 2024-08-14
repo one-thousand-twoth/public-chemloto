@@ -9,6 +9,7 @@ import (
 
 // channelsState содержит карту со списками ID соединений подписанных на канал
 type channelsState struct {
+	// map key is a channel name
 	state map[string]mapset.Set[string]
 	mutex sync.RWMutex
 }

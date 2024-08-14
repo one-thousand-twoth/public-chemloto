@@ -4,31 +4,39 @@ import (
 	"errors"
 	"log/slog"
 
-	"github.com/anrew1002/Tournament-ChemLoto/internal/engines/engine"
+	"github.com/anrew1002/Tournament-ChemLoto/internal/common"
+	"github.com/anrew1002/Tournament-ChemLoto/internal/engines/models"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/sl"
 )
 
-type HandlerFunc func(engine.Action)
+type HandlerFunc func(models.Action) stateInt
 
-func (eng *PolymersEngine) SetupHandlers() {
-	eng.UseHandler("GetElement", eng.GetElement())
-}
-func (eng *PolymersEngine) UseHandler(eventName string, handler HandlerFunc) {
-	eng.handlers[eventName] = handler
-}
+// func (engine *PolymersEngine) SetupHandlers() {
+// 	engine.UseHandler("GetElement", engine.GetElement())
+// }
+// func (engine *PolymersEngine) UseHandler(eventName string, handler HandlerFunc) {
+// 	engine.handlers[eventName] = handler
+// }
 
-func (eng *PolymersEngine) GetElement() HandlerFunc {
-	return func(e engine.Action) {
-		elem, err := eng.getRandomElement()
+func (engine *PolymersEngine) GetElement() HandlerFunc {
+	return func(e models.Action) stateInt {
+		elem, err := engine.Bag.getRandomElement()
 		if err != nil {
 			if errors.Is(err, ErrEmptyBag) {
-				eng.log.Info("Empty bag!")
-				return
+				engine.log.Info("Empty bag!")
+				elem = "Empty bag!"
+			} else {
+				engine.log.Error("Error Get Element", sl.Err(err))
+				return NO_TRANSITION
 			}
-			eng.log.Error("Error Get Element", sl.Err(err))
-			return
 		}
-		eng.log.Debug("Got element", slog.String("elem", elem))
+		engine.log.Debug("Got element", slog.String("elem", elem))
+		engine.broadcast(common.Message{Type: common.ENGINE_ACTION, Ok: true, Body: map[string]any{
+			"Action":       "GetElement",
+			"Element":      elem,
+			"LastElements": engine.Bag.LastElements(),
+		}})
+		return NO_TRANSITION
 	}
 
 }

@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/anrew1002/Tournament-ChemLoto/internal/hub"
+	"github.com/anrew1002/Tournament-ChemLoto/internal/common"
 	"github.com/gavv/httpexpect/v2"
 	"github.com/gorilla/websocket"
 	"github.com/stretchr/testify/assert"
@@ -29,7 +29,7 @@ func TestWebsocketSubscribe(t *testing.T) {
 		Target string
 		Name   string
 	}
-	data := dataT{Type: hub.HUB_SUBSCRIBE.String(), Target: "room", Name: "roomname"}
+	data := dataT{Type: common.HUB_SUBSCRIBE.String(), Target: "room", Name: "roomname"}
 	conn.WriteJSON(data)
 
 	messageType, msg, err := conn.ReadMessage()

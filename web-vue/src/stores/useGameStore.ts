@@ -10,6 +10,8 @@ export const useGameStore = defineStore('game', () => {
     const fetching = ref(false)
     const connected = ref(false)
     const roomList = ref<Array<GameInfo>>([])
+    const LastElements = ref<Array<string>>(Array.from({ length: 5 }, () => "UNDEFINED"))
+    const currElement = ref('UNDEFINED')
 
     // const toasterStore = useToasterStore();
     
@@ -18,6 +20,8 @@ export const useGameStore = defineStore('game', () => {
         roomList,
         fetching,
         connected,
+        currElement,
+        LastElements
     }
     // },
     // Add(r: RoomInfo) {
