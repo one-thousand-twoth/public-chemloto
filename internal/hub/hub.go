@@ -28,28 +28,23 @@ type Hub struct {
 
 	eventHandlers map[string]HandlerFunc
 	eventChan     chan internalEventWrap
-
-	// registerChan   chan Instruction
-	// unregisterChan chan Instruction
-	// broadcastChan  chan Message
-	// castChan       chan CastMessage
-	// storage        *sqlite.Storage
-	// rooms          map[string]*Room
-	// roomMutex      sync.RWMutex
-	// freeUsers      map[string]*Client
-	// usersMutex     sync.RWMutex
 }
 
 func NewHub(log *slog.Logger, upgrader websocket.Upgrader) *Hub {
 	return &Hub{
-		upgrader:      upgrader,
-		log:           log,
-		Rooms:         &roomsState{state: make(map[string]*room)},
-		Users:         &usersState{state: make(map[string]*User)},
-		Connections:   &connectionsState{state: make(map[string]*SockConnection)},
-		Channels:      &channelsState{state: make(map[string]mapset.Set[string])},
+		upgrader:    upgrader,
+		log:         log,
+		Rooms:       &roomsState{state: make(map[string]*room)},
+		Users:       &usersState{state: make(map[string]*User)},
+		Connections: &connectionsState{state: make(map[string]*SockConnection)},
+		Channels: &channelsState{
+			state: make(map[string]mapset.Set[string]),
+			initFunctions: map[string]func(chan common.Message){
+				"default": func(c chan common.Message) {},
+			},
+		},
 		eventHandlers: make(map[string]HandlerFunc),
-		eventChan:     make(chan internalEventWrap),
+		eventChan:     make(chan internalEventWrap, 10),
 	}
 }
 
@@ -155,10 +150,20 @@ func (h *Hub) HandleWS(w http.ResponseWriter, r *http.Request) {
 	for _, channel := range user.channels {
 		// (3) Добавляем к необходимым каналам новое соединение
 		h.Channels.Add(channel, connection.ID)
+		channel := channel
+		// Вызываем Init функцию для канала, если есть
+		go func() {
+			initChan, ok := h.Channels.GetChannelFunc(channel)
+			if !ok {
+				return
+			}
+			log.Debug("init func start Hub")
+			initChan(connection.MessageChan)
+		}()
 	}
-	log.Debug("user", "user channels:", fmt.Sprintf("%+v", user.channels))
+	log.Debug("user", "user current channels:", fmt.Sprintf("%+v", user.channels))
 	if x, ok := h.Channels.Get("default"); ok {
-		log.Debug("hub", "hub channels:", fmt.Sprintf("%+v", x))
+		log.Debug("hub current channels", "hub channels:", fmt.Sprintf("%+#v", x))
 	}
 	go func() {
 	ReceiveLoop:

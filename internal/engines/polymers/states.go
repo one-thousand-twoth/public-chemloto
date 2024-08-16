@@ -11,6 +11,7 @@ var (
 	ErrNoHandler = errors.New("no handler")
 )
 
+//go:generate stringer -type=stateInt
 const (
 	NO_TRANSITION stateInt = iota
 	OBTAIN

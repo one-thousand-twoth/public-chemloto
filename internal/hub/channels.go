@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"sync"
 
+	"github.com/anrew1002/Tournament-ChemLoto/internal/common"
 	mapset "github.com/deckarep/golang-set/v2"
 )
 
@@ -11,7 +12,10 @@ import (
 type channelsState struct {
 	// map key is a channel name
 	state map[string]mapset.Set[string]
-	mutex sync.RWMutex
+	// Функции каналов срабатывающие при первом подключении.
+	// key: channel name
+	initFunctions map[string]func(chan common.Message)
+	mutex         sync.RWMutex
 }
 
 func (rs *channelsState) MarshalJSON() ([]byte, error) {
@@ -19,6 +23,18 @@ func (rs *channelsState) MarshalJSON() ([]byte, error) {
 	defer rs.mutex.RUnlock()
 
 	return json.Marshal(rs.state)
+}
+
+func (channels *channelsState) GetChannelFunc(channel string) (func(chan common.Message), bool) {
+	channels.mutex.Lock()
+	defer channels.mutex.Unlock()
+	fun, ok := channels.initFunctions[channel]
+	return fun, ok
+}
+func (channels *channelsState) SetChannelFunc(channel string, fun func(chan common.Message)) {
+	channels.mutex.Lock()
+	defer channels.mutex.Unlock()
+	channels.initFunctions[channel] = fun
 }
 
 // Add добаляет ID соединения в подписчики канала

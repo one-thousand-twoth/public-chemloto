@@ -2,6 +2,7 @@ package hub
 
 import (
 	"fmt"
+	"log/slog"
 
 	"github.com/anrew1002/Tournament-ChemLoto/internal/common"
 	enmodels "github.com/anrew1002/Tournament-ChemLoto/internal/engines/models"
@@ -52,13 +53,47 @@ func Subscribe(h *Hub, e internalEventWrap) {
 	}
 	usr.mutex.Lock()
 	defer usr.mutex.Unlock()
-	log.Debug("Context", "user", `usr`, "data", data)
+
+	log.Debug("Context for Subscribe Event", "user", usr.Name, "data", data)
 	connID := usr.conn
+	conn, ok := h.Connections.Get(connID)
+	if !ok {
+		log.Error("Failed getting connection of user")
+		return
+	}
 	switch data.Target {
 	case "room":
-		oldRoom := usr.SetRoom(data.Name)
-		h.Channels.Remove(oldRoom, connID)
+		room, ok := h.Rooms.get(data.Name)
+		if !ok {
+			conn.MessageChan <- common.Message{
+				Type:   common.HUB_SUBSCRIBE,
+				Ok:     false,
+				Errors: []string{"Не существующая комната"},
+			}
+			return
+		}
+		if err := room.engine.AddPlayer(e.userId); err != nil {
+			conn.MessageChan <- common.Message{
+				Type:   common.HUB_SUBSCRIBE,
+				Ok:     false,
+				Errors: []string{"Комната уже запущена, неё нельзя войти"},
+			}
+			return
+		}
+
+		oldRoomID := usr.SetRoom(data.Name)
+		oldRoom, ok := h.Rooms.get(oldRoomID)
+		if ok {
+			if err := oldRoom.engine.RemovePlayer(e.userId); err != nil {
+				log.Error("Failed to delete player", sl.Err(err))
+				return
+			}
+		} else {
+			log.Error("Failed to get room")
+		}
+		h.Channels.Remove(oldRoomID, connID)
 		h.Channels.Add(data.Name, connID)
+		// h.Channels.
 	case "channel":
 		usr.channels = append(usr.channels, data.Name)
 		h.Channels.Add(data.Name, connID)
@@ -71,13 +106,8 @@ func Subscribe(h *Hub, e internalEventWrap) {
 		log.Error("Cant find channel")
 		return
 	}
-	log.Debug("current status", "channelSubs", channelSubs, "user", connID)
+	log.Debug("current status", "channelSubs", channelSubs, slog.Any("user", usr))
 
-	conn, ok := h.Connections.Get(connID)
-	if !ok {
-		log.Error("Failed getting connection of user")
-		return
-	}
 	conn.MessageChan <- common.Message{
 		Type: common.HUB_SUBSCRIBE,
 		Ok:   true,
@@ -86,10 +116,14 @@ func Subscribe(h *Hub, e internalEventWrap) {
 			"Name":   data.Name,
 		},
 	}
+	fun, ok := h.Channels.GetChannelFunc(data.Name)
+	if !ok {
+		return
+	}
+	fun(conn.MessageChan)
 }
-
 func EngineAction(h *Hub, e internalEventWrap) {
-	room, ok := h.Rooms.Get(e.room)
+	room, ok := h.Rooms.get(e.room)
 	if !ok {
 		h.log.Error("Cannot find room for EngineEvent", "room", e.room)
 		return
@@ -109,7 +143,7 @@ func StartGame(h *Hub, e internalEventWrap) {
 	log := h.log.With("op", op)
 	log.Debug("Start Handle Event", "usr", e.userId, "room", e.room, "data", fmt.Sprintf("%v", e.msg))
 
-	room, ok := h.Rooms.Get(e.room)
+	room, ok := h.Rooms.get(e.room)
 	if !ok {
 		log.Error("Failed getting room")
 		return

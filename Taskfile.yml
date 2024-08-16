@@ -8,3 +8,6 @@ tasks:
     cmds:
       - go build -v .\\cmd\\tournament\\
       - .\\tournament.exe
+  run:race:
+    cmds:
+      - go run -race .\\cmd\\tournament\\

@@ -1,6 +1,7 @@
 package polymers
 
 import (
+	"encoding/json"
 	"errors"
 	"math/rand"
 	"time"
@@ -24,6 +25,16 @@ type GameBag struct {
 	rnd          *rand.Rand
 }
 
+func (b GameBag) MarshalJSON() ([]byte, error) {
+	bag := struct {
+		Elements     map[string]int
+		LastElements []string
+	}{
+		b.Elements,
+		b.LastElements(),
+	}
+	return json.Marshal(bag)
+}
 func NewGameBag(elements map[string]int) GameBag {
 	keys := make([]string, 0, 12)
 	for k, v := range elements {

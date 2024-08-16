@@ -53,7 +53,7 @@ func (s *Server) GetUser() http.HandlerFunc {
 func (s *Server) CreateRoom() http.HandlerFunc {
 	type Request struct {
 		Name       string         `json:"name" validate:"required,min=3,safeinput"`
-		MaxPlayers int            `json:"maxPlayers" validate:"required"`
+		MaxPlayers int            `json:"maxPlayers" validate:"required,gt=2,lt=100"`
 		Elements   map[string]int `json:"elementCounts" validate:"required"`
 		Time       int            `validate:"excluded_if=isAuto false,gte=0"`
 		IsAuto     bool           `json:"isAuto"`
@@ -86,8 +86,9 @@ func (s *Server) CreateRoom() http.HandlerFunc {
 			polymers.New(
 				s.log.With(slog.String("room", req.Name)),
 				polymers.PolymersEngineConfig{
-					Elements: req.Elements,
-					TimerInt: req.Time,
+					Elements:   req.Elements,
+					TimerInt:   req.Time,
+					MaxPlayers: req.MaxPlayers,
 					Unicast: func(userID string, msg common.Message) {
 						s.log.Debug("Unicast message")
 						usr, ok := s.hub.Users.Get(userID)
@@ -106,7 +107,7 @@ func (s *Server) CreateRoom() http.HandlerFunc {
 			))
 
 		// TODO: добавить обработку уже имеющейся комнаты
-		if err := s.hub.Rooms.Add(room); err != nil {
+		if err := s.hub.AddNewRoom(room); err != nil {
 			log.Error("failed to add room", sl.Err(err))
 			encode(w, r, http.StatusConflict, Response{Error: []string{"Сервер не смог создать комнату"}})
 			return

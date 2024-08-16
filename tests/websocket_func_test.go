@@ -3,7 +3,6 @@ package tests
 import (
 	"encoding/json"
 	"net/url"
-	"reflect"
 	"testing"
 
 	"github.com/anrew1002/Tournament-ChemLoto/internal/common"
@@ -36,9 +35,16 @@ func TestWebsocketSubscribe(t *testing.T) {
 	assert.Nil(t, err, "Ошибка при чтении сообщения")
 	assert.Equal(t, messageType, websocket.TextMessage)
 	t.Log(string(msg))
-	var output dataT
-	json.Unmarshal(msg, &output)
-	if !reflect.DeepEqual(data, output) {
-		t.Error("Не пришло подтверждение  о подписке")
+	var output common.Message
+	err = json.Unmarshal(msg, &output)
+	if err != nil {
+		t.Error(err)
 	}
+	t.Log(output)
+	assert.Equal(t, common.HUB_SUBSCRIBE, output.Type)
+	assert.Equal(t, output.Ok, true)
+
+	val := httpexpect.NewValue(t, output.Body)
+	val.Object().Value("Name").IsEqual("roomname")
+	val.Object().Value("Target").IsEqual("room")
 }

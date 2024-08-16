@@ -25,7 +25,7 @@ func NewConnection(conn *websocket.Conn, user string) *SockConnection {
 		ID:           uuid.New().String(),
 		Conn:         conn,
 		User:         user,
-		CloseChannel: make(chan struct{}),
+		CloseChannel: make(chan struct{}, 10),
 		MessageChan:  make(chan common.Message),
 	}
 }
