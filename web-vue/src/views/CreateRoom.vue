@@ -12,7 +12,7 @@ function onSubmit() {
 const room = ref<RoomInfo>({
     name: '',
     maxPlayers: 0,
-    elements: {
+    elementCounts: {
         "TRADE": 4,
         "O": 28,
         "N": 16,
@@ -55,7 +55,7 @@ const room = ref<RoomInfo>({
                 <input v-model="room.maxPlayers" type="number" id="maxPlayers" min="2" placeholder="Например, 24">
             </section>
             <div class="flex flex-wrap justify-between m-3" >
-                <ChemicalElementFormInput v-for="(name , _) in Object.entries(room.elements)" :elname="name[0]" :value="name[1]" v-model="room.elements[name[1]]" />
+                <ChemicalElementFormInput v-for="(name , _) in Object.entries(room.elementCounts)" :elname="name[0]" :value="name[1]" v-model="room.elementCounts[name[1]]" />
             </div>
             <button type="submit">Создать</button>
         </div>

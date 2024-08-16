@@ -1,10 +1,12 @@
-import { EngineAction, Subscribe } from "./handlers";
+import { useToasterStore } from "@/stores/useToasterStore";
+import { EngineAction, StartGame, Subscribe } from "./handlers";
+import { useGameStore } from "@/stores/useGameStore";
 
 export interface WEBSOCKET_EVENT {
-    Type:   string
-	Ok :    boolean
-	Errors: Array<string>
-	Body  : { [id: string]: any; }
+    Type: string
+    Ok: boolean
+    Errors: Array<string>
+    Body: { [id: string]: any; }
 }
 
 export class WebsocketConnector {
@@ -21,19 +23,31 @@ export class WebsocketConnector {
         this.active = false;
     }
     Run() {
-        // const gameStore = useGameStore()
+        const gameStore = useGameStore()
+        const toaster = useToasterStore()
         this.connection = new WebSocket(`ws://${this.baseUrl}/api/v1/ws?token=${this.token}`)
         this.connection.onmessage = function (event) {
-            const data = JSON.parse( event.data ) as WEBSOCKET_EVENT
-            switch (data.Type){
-                case "HUB_SUBSCRIBE": 
+            const data = JSON.parse(event.data) as WEBSOCKET_EVENT
+            if (!data.Ok){
+                data.Errors.forEach((err) => {
+                    toaster.error(err)
+                })
+                return
+            }
+            switch (data.Type) {
+                case "HUB_SUBSCRIBE":
                     Subscribe(data)
                     break;
-                
+                case "HUB_STARTGAME":
+                    StartGame(data)
+                    break;
+
                 case "ENGINE_ACTION":
                     EngineAction(data)
                     break;
-                
+                case "ENGINE_INFO":
+                    gameStore.EngineInfo(data)
+
             }
             console.log(data)
         }
@@ -43,8 +57,9 @@ export class WebsocketConnector {
             console.log("Successfully connected to the echo websocket server...")
         }
     }
-    Send(msg: Object){
-        if (!this.connection){
+    Send(msg: Object) {
+        if (!this.connection) {
+            console.error("error sending message to websocket, no connecttion")
             return
         }
         this.connection.send(JSON.stringify(msg))

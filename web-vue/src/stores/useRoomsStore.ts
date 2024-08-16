@@ -47,7 +47,10 @@ export const useRoomsStore = defineStore('rooms', () => {
         });
 
         if (!resp.ok) {
-            toasterStore.error("не удалось создать игру!");
+            const json = await resp.json()
+            json['error'].forEach((element: string) => {
+                toasterStore.error(element);
+            });
             return;
         }
 
@@ -61,19 +64,12 @@ export const useRoomsStore = defineStore('rooms', () => {
         CreateGame,
         Fetch,
     }
-    // },
-    // Add(r: RoomInfo) {
-    //     this.RoomList.push(r)
-    // },
-    // AddAll(r: RoomInfo[]) {
-    //     this.RoomList.push(...r)
-    // },
 })
 
 export interface RoomInfo {
     name: string
     maxPlayers: number
-    elements: { [id: string]: number; }
+    elementCounts: { [id: string]: number; }
     time: number
     isAuto: boolean
 } 
