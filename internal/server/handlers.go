@@ -1,8 +1,11 @@
 package server
 
 import (
+	"encoding/json"
+	"io"
 	"log/slog"
 	"net/http"
+	"os"
 
 	"github.com/anrew1002/Tournament-ChemLoto/internal/common"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/engines/polymers"
@@ -82,11 +85,26 @@ func (s *Server) CreateRoom() http.HandlerFunc {
 		if !req.IsAuto {
 			req.Time = 0
 		}
+		jsonFile, err := os.Open("polymers.json")
+		defer jsonFile.Close()
+		if err != nil {
+			s.log.Error("Cannot open polymers config", sl.Err(err))
+		}
+		byteValue, err := io.ReadAll(jsonFile)
+		if err != nil {
+			s.log.Error("Error reading polymers", sl.Err(err))
+		}
+		var checks polymers.Checks
+		err = json.Unmarshal(byteValue, &checks.Fields)
+		if err != nil {
+			s.log.Error("polymers.json have errors", sl.Err(err))
+		}
 		room := hub.NewRoom(req.Name, req.MaxPlayers, req.Elements, req.Time, req.IsAuto,
 			polymers.New(
 				s.log.With(slog.String("room", req.Name)),
 				polymers.PolymersEngineConfig{
 					Elements:   req.Elements,
+					Checks:     checks,
 					TimerInt:   req.Time,
 					MaxPlayers: req.MaxPlayers,
 					Unicast: func(userID string, msg common.Message) {
@@ -146,10 +164,10 @@ func (s *Server) Login(AdminCode string) http.HandlerFunc {
 			encode(w, r, http.StatusBadRequest, Response{Error: validator.ValidationError(validateErr)})
 			return
 		}
-		var role hub.Role
-		role = hub.Player_Role
+		var role common.Role
+		role = common.Player_Role
 		if req.Code == AdminCode {
-			role = hub.Admin_Role
+			role = common.Admin_Role
 		}
 
 		token, err := GenerateRandomStringURLSafe(32)

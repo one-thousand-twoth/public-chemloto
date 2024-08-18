@@ -22,6 +22,7 @@ func (h *Hub) SetupHandlers() {
 	h.UseHandler(common.HUB_STARTGAME, StartGame)
 }
 
+// use handler f for messages t
 func (h *Hub) UseHandler(t common.MessageType, f HandlerFunc) {
 	h.eventHandlers[t.String()] = f
 }
@@ -72,11 +73,14 @@ func Subscribe(h *Hub, e internalEventWrap) {
 			}
 			return
 		}
-		if err := room.engine.AddPlayer(e.userId); err != nil {
+		if err := room.engine.AddPlayer(enmodels.Player{
+			Name: usr.Name,
+			Role: usr.Role,
+		}); err != nil {
 			conn.MessageChan <- common.Message{
 				Type:   common.HUB_SUBSCRIBE,
 				Ok:     false,
-				Errors: []string{"Комната уже запущена, неё нельзя войти"},
+				Errors: []string{"Комната уже запущена, в неё нельзя войти"},
 			}
 			return
 		}
@@ -93,6 +97,11 @@ func Subscribe(h *Hub, e internalEventWrap) {
 		}
 		h.Channels.Remove(oldRoomID, connID)
 		h.Channels.Add(data.Name, connID)
+		go h.SendMessageOverChannel(data.Name, common.Message{
+			Type: common.ENGINE_INFO,
+			Ok:   true,
+			Body: room.engine.PreHook(),
+		})
 		// h.Channels.
 	case "channel":
 		usr.channels = append(usr.channels, data.Name)
@@ -142,10 +151,13 @@ func StartGame(h *Hub, e internalEventWrap) {
 	op := "StartGame handler"
 	log := h.log.With("op", op)
 	log.Debug("Start Handle Event", "usr", e.userId, "room", e.room, "data", fmt.Sprintf("%v", e.msg))
-
+	if e.role < common.Judge_Role {
+		log.Error("No permission")
+		return
+	}
 	room, ok := h.Rooms.get(e.room)
 	if !ok {
-		log.Error("Failed getting room")
+		log.Error("Failed getting room", "roomname", e.room)
 		return
 	}
 	room.engine.Start()

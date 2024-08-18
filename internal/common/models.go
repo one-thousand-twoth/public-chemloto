@@ -18,3 +18,13 @@ type Room struct {
 	Elements   map[string]int `json:"elementCounts" validate:"required"`
 	IsAuto     bool           `json:"isAuto"`
 }
+
+type Role int
+
+//go:generate stringer -type=Role
+const (
+	NONE Role = iota
+	Player_Role
+	Judge_Role
+	Admin_Role
+)

@@ -1,61 +1,83 @@
 <script setup lang="ts">
-import { inject } from 'vue';
+import { inject } from 'vue'
 import { ElementImage } from '../components/UI/index'
 import { useGameStore } from '@/stores/useGameStore'
-import { WebsocketConnector } from '@/api/websocket/websocket';
+import { WebsocketConnector } from '@/api/websocket/websocket'
+import { Role, useUserStore } from '@/stores/useUserStore';
 
 const GameStore = useGameStore()
+const userStore = useUserStore()
 
 const ws = inject('connector') as WebsocketConnector
 function StartGame() {
-    ws.Send(
-        {
-            "Type": "HUB_STARTGAME",
-            "Name": GameStore.name
-        }
-    )
+    ws.Send({
+        Type: 'HUB_STARTGAME',
+        Name: GameStore.name
+    })
 }
 
 function GetElement() {
-    console.log("Get element!")
-    ws.Send(
-        {
-            "Type": "ENGINE_ACTION",
-            "Action": "GetElement"
-        }
-    )
+    console.log('Get element!')
+    ws.Send({
+        Type: 'ENGINE_ACTION',
+        Action: 'GetElement'
+    })
 }
-
+function RaiseHand() {
+    console.log('Get element!')
+    ws.Send({
+        Type: 'ENGINE_ACTION',
+        Action: 'RaiseHand'
+    })
+}
 </script>
 <template>
-    <div class="relative flex min-h-lvh 
-        flex-col items-center overflow-x-hidden 
-    ">
+    <div class="relative flex min-h-lvh flex-col items-center overflow-x-hidden">
         <main class="flex justify-between w-lvw grow gap-20 bg-gray-100">
-            <div class="bars p-3 w-[20%] bg-gray-50">
+            <div class="bars p-3 min-w-[135px] w-[20%] bg-gray-50">
                 <h2>Топ игроков</h2>
                 <ul class="list-none p-0 font-bold m-0">
                     <li class="break-words flex justify-between items-center p-2
-                    hover:underline
-                [&:nth-child(1)]:bg-amber-300
-                [&:nth-child(2)]:bg-stone-300
-                [&:nth-child(3)]:bg-yellow-500
-                rounded-md
-                my-2
-                " v-for="pl in GameStore.gameState.Players"> {{ pl }}</li>
+                    hover:underline 
+                    [&:nth-child(1)]:bg-amber-300
+                    [&:nth-child(2)]:bg-stone-300
+                    [&:nth-child(3)]:bg-yellow-500
+                    
+                    rounded-md my-2" v-for="pl in GameStore.gameState.Players">
+                        {{ pl.Name }} - {{ pl.RaisedHand }}
+                    </li>
                 </ul>
             </div>
             <div class="flex flex-col items-center max-w-[900px] gap-2 p-5 grow-[3]">
                 <!-- There should be a timer -->
-                <ElementImage class="h-auto w-full max-w-2xl " :elname="GameStore.currElement" />
-                <button @click="">Поднять руку</button>
-                <button @click="GetElement()">Достать элемент</button>
-                <button @click="StartGame()">Начать игру</button>
+                <ElementImage class="h-auto w-full max-w-2xl" :elname="GameStore.currElement" />
+                <button v-if="!GameStore.gameState.Started" @click="StartGame()">
+                    Начать игру
+                </button>
+                <template v-else>
+                    <template v-if="GameStore.gameState.State == 'OBTAIN'">
+                        <button v-if="userStore.UserCreds?.role == Role.Player" @click="RaiseHand()">Поднять
+                            руку</button>
+                        <button v-if="userStore.UserCreds?.role != Role.Player" @click="GetElement()">Достать
+                            элемент</button>
+                    </template>
+                    <template v-if="GameStore.gameState.State == 'HAND'">
+                        <button v-if="userStore.UserCreds?.role == Role.Player" @click="RaiseHand()">Поднять
+                            руку</button>
+                        <button disabled v-if="userStore.UserCreds?.role != Role.Player" @click="GetElement()">Ждем
+                            проверки</button>
+                    </template>
+                </template>
             </div>
-            <div class="bars p-3 bg-gray-50 w-[20%]">
+            <div class="bars min-w-[135px] p-3 bg-gray-50 w-[20%]">
                 <h2>Поднятые руки</h2>
-                <div class="messages">
-                </div>
+                <ul class="list-none p-0 font-bold m-0">
+                    <li class="break-words flex justify-between items-center p-2 hover:underline rounded-md my-2 mx-0
+                    border-solid border-2 border-gray-600 m-3"
+                        v-for="pl in GameStore.gameState.Players.filter((pl) => pl.RaisedHand == true)">
+                        {{ pl.Name }} - {{ pl.RaisedHand }}
+                    </li>
+                </ul>
             </div>
         </main>
         <div class="fixed bottom-3 right-3 flex flex-wrap items-center" id="lastElementsContainer">

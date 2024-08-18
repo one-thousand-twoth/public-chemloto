@@ -24,7 +24,7 @@ var (
 func TestSubscribe(t *testing.T) {
 	hub := NewHub(MockLogger, websocket.Upgrader{})
 	username := "Test User"
-	user := NewUser(username, "apikey", "uuid", Player_Role, []string{})
+	user := NewUser(username, "apikey", "uuid", common.Player_Role, []string{})
 	hub.Users.Add(user)
 	type args struct {
 		h *Hub

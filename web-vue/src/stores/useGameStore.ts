@@ -54,9 +54,15 @@ export interface Bag {
     Elements: any,
     LastElements: Array<string>
 }
+export interface Player{
+    Name: string,
+    Role: number,
+    RaisedHand: boolean,
+
+}
 export interface GameInfo {
     Bag: Bag,
-    Players: Array<string>,
+    Players: Array<Player>,
     Started: boolean,
     State: String
 } 

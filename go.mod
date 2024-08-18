@@ -5,8 +5,6 @@ go 1.21.0
 require (
 	github.com/go-chi/chi/v5 v5.0.10
 	github.com/google/uuid v1.4.0
-	github.com/gorilla/sessions v1.2.2
-	github.com/mattn/go-sqlite3 v1.14.18
 )
 
 require (
@@ -17,7 +15,6 @@ require (
 require (
 	github.com/deckarep/golang-set/v2 v2.6.0
 	github.com/go-playground/validator/v10 v10.22.0
-	github.com/gorilla/securecookie v1.1.2
 	github.com/gorilla/websocket v1.5.1
 	github.com/mitchellh/mapstructure v1.5.0
 )
@@ -57,7 +54,7 @@ require (
 	github.com/pmezard/go-difflib v1.0.0 // indirect
 	github.com/sanity-io/litter v1.5.5 // indirect
 	github.com/sergi/go-diff v1.0.0 // indirect
-	github.com/stretchr/testify v1.9.0 // indirect
+	github.com/stretchr/testify v1.9.0
 	github.com/valyala/bytebufferpool v1.0.0 // indirect
 	github.com/valyala/fasthttp v1.34.0 // indirect
 	github.com/xeipuuv/gojsonpointer v0.0.0-20190905194746-02993c407bfb // indirect
@@ -66,7 +63,6 @@ require (
 	github.com/yalp/jsonpath v0.0.0-20180802001716-5cc68e5049a0 // indirect
 	github.com/yudai/gojsondiff v1.0.0 // indirect
 	github.com/yudai/golcs v0.0.0-20170316035057-ecda9a501e82 // indirect
-	golang.org/x/exp v0.0.0-20240808152545-0cdaa3abc0fa
 	golang.org/x/sys v0.18.0 // indirect
 	moul.io/http2curl/v2 v2.3.0 // indirect
 )

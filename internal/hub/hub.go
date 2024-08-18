@@ -52,6 +52,7 @@ func (h *Hub) Run() {
 	go func() {
 	eventLoop:
 		for event := range h.eventChan {
+			h.log.Debug("finding handler...")
 			handler, ok := h.eventHandlers[event.msgType.String()]
 			if !ok {
 				h.log.Error("error find event handler ", "message type", event.msgType.String())
@@ -59,10 +60,12 @@ func (h *Hub) Run() {
 			}
 			h.log.Debug("start handle event in Hub.Run", "event", event.msgType.String())
 			handler.HandleEvent(h, event)
+			h.log.Debug("exit handler")
 		}
 	}()
 }
 func (h *Hub) SendEventToHub(e internalEventWrap) {
+	h.log.Debug("send event to Hub")
 	h.eventChan <- e
 }
 
@@ -130,16 +133,15 @@ func (h *Hub) HandleWS(w http.ResponseWriter, r *http.Request) {
 	}
 	user.mutex.Lock()
 	defer user.mutex.Unlock()
-
 	username := user.Name
-	log = log.With("userWS", username)
+	log = log.With("userWS", user.Name)
 	conn, err := h.upgrader.Upgrade(w, r, nil)
 	if err != nil {
 		log.Error("Failed to upgrade connection", sl.Err(err))
 		return
 	}
 
-	connection := NewConnection(conn, username)
+	connection := NewConnection(conn, user.Room)
 	// (1) Добавляем соединение в общий список
 	h.Connections.Add(connection)
 	// h.Users.Add(client)]
@@ -189,8 +191,12 @@ func (h *Hub) HandleWS(w http.ResponseWriter, r *http.Request) {
 					log.Error("failed to get message type", "type", msgType)
 				}
 				log.Debug(fmt.Sprintf("got messageWS %+v", msg))
-				h.SendEventToHub(NewEventWrap(username, user.Room, msg, msgType))
-
+				user.mutex.Lock()
+				h.SendEventToHub(NewEventWrap(user.Name,
+					user.Room,
+					user.Role,
+					msg, msgType))
+				user.mutex.Unlock()
 			// TODO: Реализовать ping на клиенте
 			// Handling receiving ping/pong
 			case websocket.PingMessage:

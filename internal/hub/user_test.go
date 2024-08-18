@@ -3,13 +3,15 @@ package hub
 import (
 	"reflect"
 	"testing"
+
+	"github.com/anrew1002/Tournament-ChemLoto/internal/common"
 )
 
 func Test_usersState_Add(t *testing.T) {
 	type args struct {
 		user *User
 	}
-	user := NewUser("Andrei", "test_apikey", "uuid_conn", Player_Role, []string{"default"})
+	user := NewUser("Andrei", "test_apikey", "uuid_conn", common.Player_Role, []string{"default"})
 	tests := []struct {
 		name    string
 		rs      *usersState

@@ -26,6 +26,10 @@ export function EngineAction(e: WEBSOCKET_EVENT) {
             store.gameState.Bag.LastElements = e.Body["LastElements"]; 
             break;
         }
+        case "RaiseHand":{
+            store.gameState.Players = e.Body["Players"]
+            break;
+        }
         default:
             console.log("Unresolved EngineAction", e.Body["Action"])
 

@@ -8,7 +8,8 @@ body {
 }
 
 button {
-    @apply rounded-lg bg-blue-500 text-white font-bold px-4 py-2 w-fit hover:bg-blue-600 hover:cursor-pointer transition-colors
+    @apply rounded-lg bg-blue-500 text-white font-bold px-4 py-2 w-fit hover:bg-blue-600 hover:cursor-pointer transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed disabled:opacity-90
+
 }
 
 input {

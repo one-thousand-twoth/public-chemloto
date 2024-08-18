@@ -6,16 +6,16 @@ import (
 	"sync"
 
 	"github.com/anrew1002/Tournament-ChemLoto/internal/common"
-	"github.com/anrew1002/Tournament-ChemLoto/internal/engines/models"
+	enmodels "github.com/anrew1002/Tournament-ChemLoto/internal/engines/models"
 )
 
 type Engine interface {
 	// Получить текущее состояние, например при перезагрузке страницы
 	PreHook() map[string]any
 	// Обработать событие
-	Input(models.Action)
+	Input(enmodels.Action)
 	Start()
-	AddPlayer(name string) error
+	AddPlayer(enmodels.Player) error
 	RemovePlayer(name string) error
 }
 

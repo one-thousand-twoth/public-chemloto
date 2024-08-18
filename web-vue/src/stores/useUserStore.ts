@@ -101,7 +101,7 @@ export const useUserStore = defineStore('users', {
   }
 })
 
-enum Role {
+export enum Role {
   Admin = "Admin_Role",
   Judge = "Judge_Role",
   Player = "Player_Role",

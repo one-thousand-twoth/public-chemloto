@@ -10,13 +10,13 @@ func _() {
 	var x [1]struct{}
 	_ = x[NO_TRANSITION-0]
 	_ = x[OBTAIN-1]
-	_ = x[HANDLE-2]
+	_ = x[HAND-2]
 	_ = x[COMPLETED-3]
 }
 
-const _stateInt_name = "NO_TRANSITIONOBTAINHANDLECOMPLETED"
+const _stateInt_name = "NO_TRANSITIONOBTAINHANDCOMPLETED"
 
-var _stateInt_index = [...]uint8{0, 13, 19, 25, 34}
+var _stateInt_index = [...]uint8{0, 13, 19, 23, 32}
 
 func (i stateInt) String() string {
 	if i < 0 || i >= stateInt(len(_stateInt_index)-1) {

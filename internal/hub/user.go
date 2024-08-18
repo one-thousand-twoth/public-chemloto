@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"errors"
 	"sync"
+
+	"github.com/anrew1002/Tournament-ChemLoto/internal/common"
 )
 
 func remove[T comparable](l []T, item T) []T {
@@ -15,21 +17,11 @@ func remove[T comparable](l []T, item T) []T {
 	return l
 }
 
-type Role int
-
-//go:generate stringer -type=Role
-const (
-	NONE Role = iota
-	Admin_Role
-	Judge_Role
-	Player_Role
-)
-
 type User struct {
-	Name     string `json:"name"`
-	Apikey   string `json:"token"`
-	Room     string `json:"room"`
-	Role     Role   `json:"role"`
+	Name     string      `json:"name"`
+	Apikey   string      `json:"token"`
+	Room     string      `json:"room"`
+	Role     common.Role `json:"role"`
 	conn     string
 	channels []string
 	mutex    sync.Mutex
@@ -46,7 +38,7 @@ func (r *User) MarshalJSON() ([]byte, error) {
 	return json.Marshal(user)
 }
 
-func NewUser(name string, apikey string, conn string, role Role, channels []string) *User {
+func NewUser(name string, apikey string, conn string, role common.Role, channels []string) *User {
 	return &User{
 		Name:     name,
 		Apikey:   apikey,
@@ -124,7 +116,6 @@ func (rs *usersState) GetByToken(token string) (*User, bool) {
 	return nil, false
 }
 
-// TODO: Не работает для обнаружения конфликтов
 func (rs *usersState) Add(user *User) error {
 	rs.mutex.Lock()
 	defer rs.mutex.Unlock()
