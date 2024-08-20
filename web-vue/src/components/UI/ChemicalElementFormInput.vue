@@ -1,15 +1,21 @@
 <script setup lang="ts">
+import ElementImage from './ElementImage.vue';
 const props = defineProps<{
+	// modelValue: number;
 	elname: string;
-	value: number
+	max: number;
 }>()
-const emit = defineEmits(['input'])
-const url = `../items/${props.elname}.svg`
+// const emit = defineEmits(['update:modelValue'])
+// const url = `../items/${props.elname}.svg`
+// const updateValue = (event) => {
+    
+// }
+const model = defineModel()
 </script>
 <template>
-	<div class="flex items-center mb-3">
-		<img :src=url :alt=elname class="element-img">
+	<div class="flex items-center mb-3 gap-3">
+		<ElementImage class="w-8" :elname="elname" />
 
-		<input type="number"  min="0" :value="value" @input="$emit('input', value)" />
+		<input type="number" :max="max" min="0" v-model="model" />
 	</div>
 </template>

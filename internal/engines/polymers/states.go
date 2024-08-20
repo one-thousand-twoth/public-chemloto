@@ -48,7 +48,7 @@ func (s State) Add(state string, fun HandlerFunc, secure bool) State {
 
 // Handle can return ErrNoAuthorized if action cannot be sent by player.
 // ErrNoHandler if no handler was found for action
-func (s State) Handle(e models.Action, player models.Player) (stateInt, error) {
+func (s State) Handle(e models.Action, player *Participant) (stateInt, error) {
 	// Default not to transition to another state
 	st := NO_TRANSITION
 

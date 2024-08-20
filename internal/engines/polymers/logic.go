@@ -9,6 +9,14 @@ func removeByValue(slice []string, value string) []string {
 	}
 	return slice
 }
+func removeZeroValues(m map[string]int) map[string]int {
+	for k := range m {
+		if m[k] == 0 {
+			delete(m, k)
+		}
+	}
+	return m
+}
 
 // Keys returns the keys of the map m.
 // The keys will be an indeterminate order.

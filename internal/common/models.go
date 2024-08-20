@@ -1,5 +1,7 @@
 package common
 
+import "encoding/json"
+
 //  at that time - deprecated
 type User struct {
 	// Id       string
@@ -20,6 +22,10 @@ type Room struct {
 }
 
 type Role int
+
+func (r Role) MarshalJSON() ([]byte, error) {
+	return json.Marshal(r.String())
+}
 
 //go:generate stringer -type=Role
 const (

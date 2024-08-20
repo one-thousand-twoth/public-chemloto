@@ -54,8 +54,8 @@ const room = ref<RoomInfo>({
                 <label for="maxPlayers">Макс. количество игроков:</label>
                 <input v-model="room.maxPlayers" type="number" id="maxPlayers" min="2" placeholder="Например, 24">
             </section>
-            <div class="flex flex-wrap justify-between m-3" >
-                <ChemicalElementFormInput v-for="(name , _) in Object.entries(room.elementCounts)" :elname="name[0]" :value="name[1]" v-model="room.elementCounts[name[1]]" />
+            <div class="flex flex-wrap justify-between " >
+                <ChemicalElementFormInput v-for="[name, _] in Object.entries(room.elementCounts)" :max="100" :elname="name"  v-model="room.elementCounts[name]" />
             </div>
             <button type="submit">Создать</button>
         </div>

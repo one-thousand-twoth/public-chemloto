@@ -632,6 +632,11 @@ video {
   margin-bottom: 0.5rem;
 }
 
+.my-3 {
+  margin-top: 0.75rem;
+  margin-bottom: 0.75rem;
+}
+
 .mb-3 {
   margin-bottom: 0.75rem;
 }
@@ -684,6 +689,10 @@ video {
 
 .min-h-lvh {
   min-height: 100lvh;
+}
+
+.w-8 {
+  width: 2rem;
 }
 
 .w-\[20\%\] {
@@ -750,6 +759,10 @@ video {
   align-items: center;
 }
 
+.justify-start {
+  justify-content: flex-start;
+}
+
 .justify-center {
   justify-content: center;
 }
@@ -758,12 +771,20 @@ video {
   justify-content: space-between;
 }
 
+.gap-1 {
+  gap: 0.25rem;
+}
+
 .gap-2 {
   gap: 0.5rem;
 }
 
 .gap-20 {
   gap: 5rem;
+}
+
+.gap-3 {
+  gap: 0.75rem;
 }
 
 .gap-4 {

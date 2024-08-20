@@ -24,6 +24,7 @@ export function EngineAction(e: WEBSOCKET_EVENT) {
         case "GetElement":{
             console.log(e.Body["Element"])
             store.gameState.Bag.LastElements = e.Body["LastElements"]; 
+            store.gameState.Players.forEach((pl) => {pl.Bag[store.currElement] = (pl.Bag[store.currElement] || 0) + 1;} )
             break;
         }
         case "RaiseHand":{

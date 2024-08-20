@@ -64,10 +64,10 @@ export const useUserStore = defineStore('users', {
         return;
       }
       // localStorage.setItem("token", token.value);
-      this.UserCreds = { username: input, token: json["token"], role: Role.Admin, room: "" }
+      this.UserCreds = { username: input, token: json["token"], role: json["role"], room: "" }
       localStorage.setItem(USER_LOCAL_STORAGE_KEY, JSON.stringify(this.UserCreds));
 
-      toasterStore.info(`Вы вошли под админом ${this.UserCreds.username}`);
+      toasterStore.info(`Вы вошли под именем ${this.UserCreds.username}`);
       console.log(`Token for admin ${this.UserCreds.username} created: ${this.UserCreds.token}`);
 
     },

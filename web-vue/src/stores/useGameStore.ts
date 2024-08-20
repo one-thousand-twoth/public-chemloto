@@ -1,6 +1,7 @@
 import { WEBSOCKET_EVENT } from '@/api/websocket/websocket'
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
+import { Role, useUserStore } from './useUserStore'
 
 
 
@@ -12,13 +13,15 @@ export const useGameStore = defineStore('game', () => {
     const name = ref("")
     const gameState = ref<GameInfo>({
         Bag: {
-            Elements: undefined,
+            Elements: {},
             LastElements: []
         },
         Players: [],
         Started: false,
-        State: "none"
+        State: "none",
+        RaisedHands: []
     })
+    const userStore = useUserStore()
     // const LastElements = ref<Array<string>>(Array.from({ length: 5 }, () => "UNDEFINED"))
     // const currElement = ref('UNDEFINED')
     const LastElements = computed(() => {
@@ -32,17 +35,24 @@ export const useGameStore = defineStore('game', () => {
         const elems: Array<string> = gameState.value.Bag.LastElements;
         return elems[elems.length - 1] ? gameState.value.Bag.LastElements[elems.length - 1] : "UNDEFINED"
     })
+   
+    const SelfPlayer = computed(() => {
+
+        return  gameState.value.Players.find((player) =>  player.Name == userStore.UserCreds?.username) as Player
+    })
 
     function EngineInfo(e: WEBSOCKET_EVENT) {
         // console.log("changing to room")
         const b = e.Body["engine"] as GameInfo
         gameState.value = b
+
     }
     return {
         fetching,
         connected,
         name,
         currElement,
+        SelfPlayer,
         LastElements,
         gameState,
         EngineInfo
@@ -51,18 +61,26 @@ export const useGameStore = defineStore('game', () => {
 })
 
 export interface Bag {
-    Elements: any,
+    Elements:  {[id: string] : number; },
     LastElements: Array<string>
 }
 export interface Player{
     Name: string,
-    Role: number,
+    Role: Role,
+    Score: number,
     RaisedHand: boolean,
-
+    Bag:  {[id: string] : number; }
+}
+export interface Hand {
+    Player: Player
+    Field: string,
+    Name: string,
+    Structure: { [id: string]: number; }
 }
 export interface GameInfo {
     Bag: Bag,
     Players: Array<Player>,
+    RaisedHands: Array<Hand>
     Started: boolean,
     State: String
 } 

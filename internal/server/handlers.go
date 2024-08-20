@@ -142,8 +142,9 @@ func (s *Server) Login(AdminCode string) http.HandlerFunc {
 		Code string `json:"code,omitempty"`
 	}
 	type Response struct {
-		Token string   `json:"token"`
-		Error []string `json:"error"`
+		Token string      `json:"token"`
+		Role  common.Role `json:"role"`
+		Error []string    `json:"error"`
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -181,7 +182,7 @@ func (s *Server) Login(AdminCode string) http.HandlerFunc {
 			encode(w, r, http.StatusConflict, Response{Error: []string{"Пользователь с таким именем уже существует"}})
 			return
 		}
-		s.log.Info("user registred", "name", req.Name)
-		encode(w, r, http.StatusCreated, Response{Token: token})
+		s.log.Info("user registred", "name", req.Name, "role", role)
+		encode(w, r, http.StatusCreated, Response{Token: token, Role: role})
 	}
 }
