@@ -18,6 +18,7 @@ const (
 	NO_TRANSITION stateInt = iota
 	OBTAIN
 	HAND
+	TRADE
 	COMPLETED
 )
 

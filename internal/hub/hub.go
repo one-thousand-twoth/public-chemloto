@@ -159,7 +159,7 @@ func (h *Hub) HandleWS(w http.ResponseWriter, r *http.Request) {
 			if !ok {
 				return
 			}
-			log.Debug("init func start Hub")
+			log.Debug(fmt.Sprintf("Running initFunction for %s", channel))
 			initChan(connection.MessageChan)
 		}()
 	}

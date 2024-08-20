@@ -11,12 +11,13 @@ func _() {
 	_ = x[NO_TRANSITION-0]
 	_ = x[OBTAIN-1]
 	_ = x[HAND-2]
-	_ = x[COMPLETED-3]
+	_ = x[TRADE-3]
+	_ = x[COMPLETED-4]
 }
 
-const _stateInt_name = "NO_TRANSITIONOBTAINHANDCOMPLETED"
+const _stateInt_name = "NO_TRANSITIONOBTAINHANDTRADECOMPLETED"
 
-var _stateInt_index = [...]uint8{0, 13, 19, 23, 32}
+var _stateInt_index = [...]uint8{0, 13, 19, 23, 28, 37}
 
 func (i stateInt) String() string {
 	if i < 0 || i >= stateInt(len(_stateInt_index)-1) {

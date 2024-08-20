@@ -48,6 +48,9 @@ func New(log *slog.Logger, cfg PolymersEngineConfig) *PolymersEngine {
 			HAND: NewState().
 				Add("RaiseHand", eng.RaiseHand(), false).
 				Add("Check", eng.Check(), true),
+			TRADE: NewState().
+				Add("Trade", eng.Trade(), true).
+				Add("Continue", func(a models.Action) stateInt { return OBTAIN }, true),
 		},
 	}
 
@@ -168,6 +171,7 @@ func (engine *PolymersEngine) Start() {
 	}()
 	engine.log.Debug("Broadcast for starting engine")
 	engine.broadcast(common.Message{Type: common.HUB_STARTGAME, Ok: true})
+	engine.broadcast(common.Message{Type: common.ENGINE_INFO, Ok: true, Body: engine.PreHook()})
 }
 
 func (engine *PolymersEngine) Input(e models.Action) {
