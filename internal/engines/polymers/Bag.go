@@ -55,6 +55,7 @@ func NewGameBag(elements map[string]int) GameBag {
 func (b *GameBag) getRandomElement() (string, error) {
 
 	if len(b.Values) == 0 {
+
 		return "", ErrEmptyBag
 	}
 

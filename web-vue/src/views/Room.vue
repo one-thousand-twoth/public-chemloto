@@ -65,7 +65,7 @@ const RaiseHandButton = ref(false)
                     [&:nth-child(2)]:bg-stone-300
                     [&:nth-child(3)]:bg-yellow-500
                     
-                    rounded-md my-2" v-for="pl in GameStore.gameState.Players.filter((pl) => pl.Role === Role.Player)" :key="pl.Score">
+                    rounded-md my-2" v-for="pl in GameStore.gameState.Players.filter((pl) => pl.Role === Role.Player).sort((a,b)=> b.Score - a.Score ) " :key="pl.Name">
                         {{ pl.Name }} - {{ pl.Score }}
                     </li>
                 </ul>

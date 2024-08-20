@@ -62,6 +62,12 @@ func (engine *PolymersEngine) RaiseHand() HandlerFunc {
 				Ok:     false,
 				Errors: []string{"Неправильный состав элементов", "Вычитается один балл"},
 			})
+			engine.broadcast(common.Message{
+				Type: common.ENGINE_INFO,
+				Ok:   true,
+				Body: engine.PreHook(),
+			})
+			return NO_TRANSITION
 		}
 		player.RaisedHand = true
 		engine.RaisedHands = append(engine.RaisedHands, Hand{Player: player, Field: data.Field, Name: data.Name, Structure: data.Structure})
@@ -155,6 +161,7 @@ func (engine *PolymersEngine) GetElement() HandlerFunc {
 			if errors.Is(err, ErrEmptyBag) {
 				engine.log.Info("Empty bag!")
 				elem = "Empty bag!"
+				engine.Bag.PushedValues = append(engine.Bag.PushedValues, elem)
 			} else {
 				engine.log.Error("Error Get Element", sl.Err(err))
 				return NO_TRANSITION
@@ -170,6 +177,9 @@ func (engine *PolymersEngine) GetElement() HandlerFunc {
 			"Element":      elem,
 			"LastElements": engine.Bag.LastElements(),
 		}})
+		if elem == "Empty bag!" {
+			return COMPLETED
+		}
 		return NO_TRANSITION
 	}
 
