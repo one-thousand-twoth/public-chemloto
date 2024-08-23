@@ -13,19 +13,14 @@ import (
 	"github.com/anrew1002/Tournament-ChemLoto/internal/sl"
 )
 
-var (
-	ErrAlreadyStarted = errors.New("engine was started")
-	ErrMaxPlayers     = errors.New("all players places are filled")
-)
-
 func New(log *slog.Logger, cfg PolymersEngineConfig) *PolymersEngine {
-	// var src cryptorand.CryptoSource
 	src := rand.NewSource(time.Now().UnixNano())
 
 	eng := &PolymersEngine{
 		log:    log.With(slog.String("engine", "PolymersEngine")),
 		Checks: cfg.Checks,
 		Bag:    NewGameBag(cfg.Elements),
+		// Fields will be filled latly on [[Start]]
 		Fields: map[string]*Field{
 			"Альфа": {Score: 0},
 			"Бета":  {Score: 0},
@@ -54,6 +49,7 @@ func New(log *slog.Logger, cfg PolymersEngineConfig) *PolymersEngine {
 	return eng
 }
 
+// Use to Configure all Engine params.
 type PolymersEngineConfig struct {
 	Elements   map[string]int
 	Checks     Checks
@@ -74,6 +70,7 @@ type PolymersEngine struct {
 	ActionChan chan models.Action
 	handlers   map[string]HandlerFunc
 	Checks     Checks
+	TimerChan  chan struct{}
 
 	Participants []*Participant
 	MaxPlayers   int
@@ -95,7 +92,7 @@ type Field struct {
 	Score int
 }
 
-// getter
+// getter. Score field will be decriadsed by one
 func (f *Field) getScore() int {
 	o := f.Score
 	f.Score -= 1
@@ -113,6 +110,8 @@ type Participant struct {
 type unicastFunction func(string, common.Message)
 type broadcastFunction func(common.Message)
 
+// Start Game
+// All inputs should lock engine mutex.
 func (engine *PolymersEngine) Start() {
 	if engine.started {
 		// TODO:
@@ -125,7 +124,7 @@ func (engine *PolymersEngine) Start() {
 	go func() {
 		for {
 			select {
-			case e := <-engine.ActionChan:
+			case e, _ := <-engine.ActionChan:
 				engine.mu.Lock()
 				engine.log.Debug("locked engine")
 				func() {
@@ -138,7 +137,10 @@ func (engine *PolymersEngine) Start() {
 					if err != nil {
 						if errors.Is(err, ErrNoAuthorized) {
 							engine.log.Error("no authorized")
-							engine.unicast(e.Player, common.Message{Type: common.UNDEFINED, Ok: false, Errors: []string{"Недостаточно прав"}})
+							engine.unicast(e.Player,
+								common.Message{Type: common.UNDEFINED,
+									Ok:     false,
+									Errors: []string{"Недостаточно прав"}})
 						}
 						engine.log.Error(
 							"error while handling action with state",
@@ -147,7 +149,7 @@ func (engine *PolymersEngine) Start() {
 
 						return
 					}
-					// Changing state if needed
+					// Changing state if needed and notificate users.
 					if state > NO_TRANSITION {
 						engine.log.Info("Changing game state",
 							slog.String("new state", state.String()),
@@ -189,11 +191,11 @@ func (engine *PolymersEngine) AddPlayer(player models.Player) error {
 	engine.mu.Lock()
 	defer engine.mu.Unlock()
 	if engine.started {
-		return ErrAlreadyStarted
+		return models.ErrAlreadyStarted
 	}
 	if player.Role == common.Player_Role {
 		if len(engine.players()) >= engine.MaxPlayers {
-			return ErrMaxPlayers
+			return models.ErrMaxPlayers
 		}
 	}
 	engine.Participants = append(engine.Participants, &Participant{Player: player, Bag: make(map[string]int)})
@@ -204,7 +206,7 @@ func (engine *PolymersEngine) RemovePlayer(name string) error {
 	engine.mu.Lock()
 	defer engine.mu.Unlock()
 	if engine.started {
-		return ErrAlreadyStarted
+		return models.ErrAlreadyStarted
 	}
 	for i := 0; i < len(engine.Participants); i++ {
 		if engine.Participants[i].Name == name {
@@ -214,6 +216,8 @@ func (engine *PolymersEngine) RemovePlayer(name string) error {
 	}
 	return nil
 }
+
+// getPlayer internal. Not conccurent safe
 func (engine *PolymersEngine) getPlayer(name string) (*Participant, error) {
 	for i := 0; i < len(engine.Participants); i++ {
 		if engine.Participants[i].Name == name {
@@ -222,6 +226,8 @@ func (engine *PolymersEngine) getPlayer(name string) (*Participant, error) {
 	}
 	return &Participant{}, errors.New("unknown player")
 }
+
+// players() return engine.Participants with Player Role
 func (engine *PolymersEngine) players() []*Participant {
 	players := make([]*Participant, 0, len(engine.Participants))
 	for i := 0; i < len(engine.Participants); i++ {
@@ -243,6 +249,7 @@ func (engine *PolymersEngine) unchecked() []*Participant {
 	return players
 }
 
+// Control what data will be send on [ENGINE_INFO] Message and etc.
 func (engine *PolymersEngine) MarshalJSON() ([]byte, error) {
 	engine.mu.Lock()
 	defer engine.mu.Unlock()

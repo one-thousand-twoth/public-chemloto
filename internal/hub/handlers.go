@@ -1,6 +1,7 @@
 package hub
 
 import (
+	"errors"
 	"fmt"
 	"log/slog"
 
@@ -77,10 +78,19 @@ func Subscribe(h *Hub, e internalEventWrap) {
 			Name: usr.Name,
 			Role: usr.Role,
 		}); err != nil {
-			conn.MessageChan <- common.Message{
-				Type:   common.HUB_SUBSCRIBE,
-				Ok:     false,
-				Errors: []string{"Комната уже запущена, в неё нельзя войти"},
+			if errors.Is(err, enmodels.ErrAlreadyStarted) {
+				conn.MessageChan <- common.Message{
+					Type:   common.HUB_SUBSCRIBE,
+					Ok:     false,
+					Errors: []string{"Комната уже запущена, в неё нельзя войти"},
+				}
+			}
+			if errors.Is(err, enmodels.ErrMaxPlayers) {
+				conn.MessageChan <- common.Message{
+					Type:   common.HUB_SUBSCRIBE,
+					Ok:     false,
+					Errors: []string{"В комнате заняты все места"},
+				}
 			}
 			return
 		}
