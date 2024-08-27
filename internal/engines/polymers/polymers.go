@@ -27,22 +27,22 @@ func New(log *slog.Logger, cfg PolymersEngineConfig) *PolymersEngine {
 			"Гамма": {Score: 0}},
 		RaisedHands: make([]Hand, 0),
 		ActionChan:  make(chan models.Action),
-		handlers:    map[string]HandlerFunc{},
-		unicast:     cfg.Unicast,
-		broadcast:   cfg.Broadcast,
-		timerInt:    cfg.TimerInt,
-		MaxPlayers:  cfg.MaxPlayers,
-		rnd:         rand.New(src),
+		// handlers:    map[string]HandlerFunc{},
+		// ticker will be filled latly on [[Start]]
+		ticker:     &time.Ticker{},
+		unicast:    cfg.Unicast,
+		broadcast:  cfg.Broadcast,
+		timerInt:   cfg.TimerInt,
+		MaxPlayers: cfg.MaxPlayers,
+		rnd:        rand.New(src),
 	}
 	eng.StateMachine = stateMachine{
 		Current: OBTAIN,
 		States: map[stateInt]State{
-			OBTAIN: NewState().
-				Add("GetElement", eng.GetElement(), true).
-				Add("RaiseHand", eng.RaiseHand(), false),
+			OBTAIN: eng.NewObtainState(),
 			HAND: NewState().
-				Add("RaiseHand", eng.RaiseHand(), false).
-				Add("Check", eng.Check(), true),
+				Add("RaiseHand", RaiseHand(eng), false).
+				Add("Check", Check(eng), true),
 		},
 	}
 
@@ -68,9 +68,11 @@ type PolymersEngine struct {
 	RaisedHands  []Hand
 	// Канал для обработки действий игроков
 	ActionChan chan models.Action
-	handlers   map[string]HandlerFunc
-	Checks     Checks
-	TimerChan  chan struct{}
+	// handlers   map[string]HandlerFunc
+	Checks   Checks
+	Internal chan time.Time
+	// TODO: depr
+	ticker *time.Ticker
 
 	Participants []*Participant
 	MaxPlayers   int
@@ -121,6 +123,9 @@ func (engine *PolymersEngine) Start() {
 	for _, field := range engine.Fields {
 		field.Score = len(engine.players())
 	}
+	if engine.timerInt > 0 {
+		engine.ticker = time.NewTicker(time.Duration(engine.timerInt) * time.Second)
+	}
 	go func() {
 		for {
 			select {
@@ -155,6 +160,7 @@ func (engine *PolymersEngine) Start() {
 							slog.String("new state", state.String()),
 							slog.String("old state", engine.StateMachine.Current.String()))
 						engine.StateMachine.Current = state
+						engine.StateMachine.States[state].PreHook()
 						engine.broadcast(common.Message{
 							Type: common.ENGINE_INFO,
 							Ok:   true,
@@ -164,6 +170,18 @@ func (engine *PolymersEngine) Start() {
 				}()
 				engine.mu.Unlock()
 				engine.log.Debug("unlocked engine")
+			case _ = <-engine.ticker.C:
+				engine.mu.Lock()
+				func() {
+					// Избыточная проверка, потому что предполагаю, что
+					// есть маленький шанс, когда тик может прийти после смены state
+					if engine.StateMachine.Current != OBTAIN {
+						return
+					}
+					engine.StateMachine.States[OBTAIN].Handlers()["GetElement"](models.Action{})
+
+				}()
+				engine.mu.Unlock()
 			}
 			engine.log.Debug("Engine selected action")
 		}

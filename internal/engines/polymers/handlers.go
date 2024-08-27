@@ -14,7 +14,7 @@ import (
 
 type HandlerFunc func(models.Action) stateInt
 
-func (engine *PolymersEngine) RaiseHand() HandlerFunc {
+func RaiseHand(engine *PolymersEngine) HandlerFunc {
 	type Data struct {
 		Type      string
 		Action    string
@@ -84,7 +84,7 @@ func (engine *PolymersEngine) RaiseHand() HandlerFunc {
 	}
 }
 
-func (engine *PolymersEngine) Check() HandlerFunc {
+func Check(engine *PolymersEngine) HandlerFunc {
 	type Data struct {
 		Type      string
 		Action    string
@@ -154,7 +154,7 @@ func (engine *PolymersEngine) Check() HandlerFunc {
 		return HAND
 	}
 }
-func (engine *PolymersEngine) GetElement() HandlerFunc {
+func GetElement(engine *PolymersEngine) HandlerFunc {
 	return func(e models.Action) stateInt {
 		elem, err := engine.Bag.getRandomElement()
 		if err != nil {
