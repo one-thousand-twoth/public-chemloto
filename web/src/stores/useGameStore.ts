@@ -19,7 +19,10 @@ export const useGameStore = defineStore('game', () => {
         Players: [],
         Started: false,
         State: "none",
-        RaisedHands: []
+        RaisedHands: [],
+        Fields: {
+            
+        }
     })
     const userStore = useUserStore()
     // const LastElements = ref<Array<string>>(Array.from({ length: 5 }, () => "UNDEFINED"))
@@ -82,5 +85,6 @@ export interface GameInfo {
     Players: Array<Player>,
     RaisedHands: Array<Hand>
     Started: boolean,
-    State: String
+    State: String,
+    Fields: { [id: string]: {Score: number}; }
 } 

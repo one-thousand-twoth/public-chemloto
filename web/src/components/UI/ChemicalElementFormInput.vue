@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import ElementImage from './ElementImage.vue';
-const props = defineProps<{
+defineProps<{
 	// modelValue: number;
 	elname: string;
 	max: number;

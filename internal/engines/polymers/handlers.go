@@ -180,7 +180,49 @@ func GetElement(engine *PolymersEngine) HandlerFunc {
 		if elem == "Empty bag!" {
 			return COMPLETED
 		}
+		if elem == "TRADE" {
+			return TRADE
+		}
 		return NO_TRANSITION
 	}
 
+}
+func (engine *PolymersEngine) Trade() HandlerFunc {
+	type Data struct {
+		Type     string
+		Action   string
+		Player1  string
+		Element1 string
+		Player2  string
+		Element2 string
+	}
+	return func(e models.Action) stateInt {
+		var data Data
+		if err := mapstructure.Decode(e.Envelope, &data); err != nil {
+			engine.log.Error("Failed to decode Check data", sl.Err(err))
+		}
+		pl1, err := engine.getPlayer(data.Player1)
+		if err != nil {
+			engine.log.Error("Failed to get user", "user", data.Player1)
+			return NO_TRANSITION
+		}
+		pl2, err := engine.getPlayer(data.Player2)
+		if err != nil {
+			engine.log.Error("Failed to get user", "user", data.Player2)
+			return NO_TRANSITION
+		}
+		if pl1.Bag[data.Element1] <= 1 {
+			engine.log.Error("found no element", "user", pl1, "element", data.Element1)
+			return NO_TRANSITION
+		}
+		if pl2.Bag[data.Element2] <= 1 {
+			engine.log.Error("found no element", "user", pl1, "element", data.Element1)
+			return NO_TRANSITION
+		}
+		pl1.Bag[data.Element1] -= 1
+		pl2.Bag[data.Element2] -= 1
+		pl1.Bag[data.Element2] += 1
+		pl2.Bag[data.Element1] += 1
+		return TRADE
+	}
 }
