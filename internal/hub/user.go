@@ -31,10 +31,11 @@ func (r *User) MarshalJSON() ([]byte, error) {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 	user := struct {
-		Name string `json:"username"`
-		Room string `json:"room"`
-		Role string `json:"role"`
-	}{r.Name, r.Room, r.Role.String()}
+		Name     string   `json:"username"`
+		Room     string   `json:"room"`
+		Role     string   `json:"role"`
+		Channels []string `json:"channels"`
+	}{r.Name, r.Room, r.Role.String(), r.channels}
 	return json.Marshal(user)
 }
 
@@ -68,8 +69,8 @@ func (r *User) SetConnection(conn string) {
 	r.conn = conn
 }
 
-// SetRoom is not thread safe
-func (r *User) SetRoom(room string) string {
+// setRoom is not thread safe
+func (r *User) setRoom(room string) string {
 	oldRoom := r.Room
 	if oldRoom == room {
 		return ""

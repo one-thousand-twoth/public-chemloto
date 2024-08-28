@@ -1,5 +1,5 @@
 import { useToasterStore } from "@/stores/useToasterStore";
-import { EngineAction, StartGame, Subscribe } from "./handlers";
+import { EngineAction, StartGame, Subscribe, UNSubscribe as UnSubscribe } from "./handlers";
 import { useGameStore } from "@/stores/useGameStore";
 
 export interface WEBSOCKET_EVENT {
@@ -28,7 +28,7 @@ export class WebsocketConnector {
         this.connection = new WebSocket(`ws://${this.baseUrl}/api/v1/ws?token=${this.token}`)
         this.connection.onmessage = function (event) {
             const data = JSON.parse(event.data) as WEBSOCKET_EVENT
-            if (!data.Ok){
+            if (!data.Ok) {
                 data.Errors.forEach((err) => {
                     toaster.error(err)
                 })
@@ -37,6 +37,9 @@ export class WebsocketConnector {
             switch (data.Type) {
                 case "HUB_SUBSCRIBE":
                     Subscribe(data)
+                    break;
+                case "HUB_UNSUBSCRIBE":
+                    UnSubscribe(data)
                     break;
                 case "HUB_STARTGAME":
                     StartGame(data)

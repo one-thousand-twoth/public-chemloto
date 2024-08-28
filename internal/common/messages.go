@@ -37,6 +37,7 @@ func (m *MessageType) UnmarshalJSON(data []byte) error {
 const UNDEFINED MessageType = -1
 const (
 	HUB_SUBSCRIBE MessageType = iota + 1
+	HUB_UNSUBSCRIBE
 	ENGINE_ACTION
 	ENGINE_INFO
 	HUB_STARTGAME

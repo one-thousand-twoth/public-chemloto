@@ -3,7 +3,7 @@ import { defineComponent, computed, ref } from "vue"
 import { useRoomsStore } from '../stores/useRoomsStore'
 import { IconButton } from '../components/UI/index'
 import {
-  ArrowPathIcon,
+  ArrowPathIcon
 } from "@heroicons/vue/24/outline";
 import Modal from "@/components/UI/Modal.vue";
 import CreateRoom from "./CreateRoom.vue";

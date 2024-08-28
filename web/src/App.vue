@@ -31,8 +31,10 @@ watch(UserCreds, () => {
 const {connected} = storeToRefs(gameStore)
 watch(connected, () => {
     console.log("Hello")
-    if (connected) {
+    if (connected.value) {
         router.replace({name: "Room"})
+    }else{
+        router.replace({name: "Hub"})
     }
 })
 </script>

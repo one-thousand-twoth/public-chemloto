@@ -33,5 +33,5 @@ h3 {
 }
 
 .bars{
-    @apply border-solid border-2 border-blue-400 rounded-lg m-3;
+    @apply border-solid border-2 border-blue-400 rounded-lg ;
 }

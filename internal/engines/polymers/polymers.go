@@ -27,25 +27,35 @@ func New(log *slog.Logger, cfg PolymersEngineConfig) *PolymersEngine {
 			"Гамма": {Score: 0}},
 		RaisedHands: make([]Hand, 0),
 		ActionChan:  make(chan models.Action),
-		// handlers:    map[string]HandlerFunc{},
-		// ticker will be filled latly on [[Start]]
-		ticker:     &time.Ticker{},
-		unicast:    cfg.Unicast,
-		broadcast:  cfg.Broadcast,
-		timerInt:   cfg.TimerInt,
-		MaxPlayers: cfg.MaxPlayers,
-		rnd:        rand.New(src),
+		Internal:    make(chan time.Time),
+		unicast:     cfg.Unicast,
+		broadcast:   cfg.Broadcast,
+		timerInt:    cfg.TimerInt,
+		MaxPlayers:  cfg.MaxPlayers,
+		rnd:         rand.New(src),
 	}
+
+	var obtainState State
+	if cfg.TimerInt > 0 {
+		obtainState = eng.NewObtainState(cfg.TimerInt)
+	}
+	if cfg.TimerInt == 0 {
+		obtainState = NewState().
+			Add("GetElement", GetElement(eng), true).
+			Add("RaiseHand", RaiseHand(eng), false)
+	}
+
 	eng.StateMachine = stateMachine{
 		Current: OBTAIN,
 		States: map[stateInt]State{
-			OBTAIN: eng.NewObtainState(),
+			OBTAIN: obtainState,
 			HAND: NewState().
 				Add("RaiseHand", RaiseHand(eng), false).
 				Add("Check", Check(eng), true),
 			TRADE: NewState().
 				Add("Trade", eng.Trade(), true).
 				Add("Continue", func(a models.Action) stateInt { return OBTAIN }, true),
+			COMPLETED: NewState(),
 		},
 	}
 
@@ -54,8 +64,9 @@ func New(log *slog.Logger, cfg PolymersEngineConfig) *PolymersEngine {
 
 // Use to Configure all Engine params.
 type PolymersEngineConfig struct {
-	Elements   map[string]int
-	Checks     Checks
+	Elements map[string]int
+	Checks   Checks
+	// Should be >= 0
 	TimerInt   int
 	Unicast    unicastFunction
 	Broadcast  broadcastFunction
@@ -74,8 +85,6 @@ type PolymersEngine struct {
 	// handlers   map[string]HandlerFunc
 	Checks   Checks
 	Internal chan time.Time
-	// TODO: depr
-	ticker *time.Ticker
 
 	Participants []*Participant
 	MaxPlayers   int
@@ -126,13 +135,11 @@ func (engine *PolymersEngine) Start() {
 	for _, field := range engine.Fields {
 		field.Score = len(engine.players())
 	}
-	if engine.timerInt > 0 {
-		engine.ticker = time.NewTicker(time.Duration(engine.timerInt) * time.Second)
-	}
+	engine.StateMachine.States[engine.StateMachine.Current].PreHook()
 	go func() {
 		for {
 			select {
-			case e, _ := <-engine.ActionChan:
+			case e := <-engine.ActionChan:
 				engine.mu.Lock()
 				engine.log.Debug("locked engine")
 				func() {
@@ -173,16 +180,35 @@ func (engine *PolymersEngine) Start() {
 				}()
 				engine.mu.Unlock()
 				engine.log.Debug("unlocked engine")
-			case _ = <-engine.ticker.C:
+			case <-engine.Internal:
 				engine.mu.Lock()
 				func() {
+					engine.log.Debug("recieve tick from timer")
 					// Избыточная проверка, потому что предполагаю, что
 					// есть маленький шанс, когда тик может прийти после смены state
 					if engine.StateMachine.Current != OBTAIN {
 						return
 					}
-					engine.StateMachine.States[OBTAIN].Handlers()["GetElement"](models.Action{})
-
+					state, err := engine.StateMachine.States[OBTAIN].Update()
+					if err != nil {
+						engine.log.Error(
+							"error while handling action with state",
+							sl.Err(err),
+							slog.String("state", engine.StateMachine.Current.String()))
+						return
+					}
+					if state > NO_TRANSITION {
+						engine.log.Info("Changing game state by timer",
+							slog.String("new state", state.String()),
+							slog.String("old state", engine.StateMachine.Current.String()))
+						engine.StateMachine.Current = state
+						engine.StateMachine.States[state].PreHook()
+						engine.broadcast(common.Message{
+							Type: common.ENGINE_INFO,
+							Ok:   true,
+							Body: engine.PreHook(),
+						})
+					}
 				}()
 				engine.mu.Unlock()
 			}
@@ -292,6 +318,7 @@ func (engine *PolymersEngine) MarshalJSON() ([]byte, error) {
 		Players     []Participant
 		RaisedHands []Hand
 		Fields      map[string]Field
+		StateStruct State
 	}{
 		engine.started,
 		engine.StateMachine.Current.String(),
@@ -299,6 +326,7 @@ func (engine *PolymersEngine) MarshalJSON() ([]byte, error) {
 		players,
 		engine.RaisedHands,
 		fields,
+		engine.StateMachine.States[engine.StateMachine.Current],
 	}
 	return json.Marshal(eng)
 }

@@ -16,6 +16,16 @@ export function Subscribe(e: WEBSOCKET_EVENT) {
         store.name = b.Name
     }
 }
+export function UNSubscribe(e: WEBSOCKET_EVENT) {
+    const store = useGameStore()
+    console.log("exiting room")
+    const b = e.Body as HUB_SUBSCRIBE_EVENT
+    if (b.Target == "room"){
+        console.log("Hi")
+        store.connected = false
+        store.name = ""
+    }
+}
 
 export function EngineAction(e: WEBSOCKET_EVENT) {
     const store = useGameStore()
@@ -29,6 +39,10 @@ export function EngineAction(e: WEBSOCKET_EVENT) {
         }
         case "RaiseHand":{
             store.gameState.Players = e.Body["Players"]
+            break;
+        }
+        case "NewTimer":{
+            store.timer = e.Body["Value"] as number
             break;
         }
         default:
