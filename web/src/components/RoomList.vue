@@ -1,17 +1,19 @@
 <script lang="ts">
 import { defineComponent, computed, ref } from "vue"
 import { useRoomsStore } from '../stores/useRoomsStore'
-import { IconButton } from '../components/UI/index'
+import { IconButton } from './UI/index'
 import {
   ArrowPathIcon
 } from "@heroicons/vue/24/outline";
 import Modal from "@/components/UI/Modal.vue";
-import CreateRoom from "./CreateRoom.vue";
+import CreateRoom from "@/components/CreateRoom.vue";
 import { inject } from 'vue';
 import { WebsocketConnector } from "@/api/websocket/websocket";
+import { Role, useUserStore } from "@/stores/useUserStore";
 export default defineComponent({
   components: { IconButton, Modal, CreateRoom },
   setup() {
+    const userStore = useUserStore()
     const roomStore = useRoomsStore()
     const rooms = computed(() => roomStore.roomList)
     const showModal = ref(false)
@@ -27,7 +29,9 @@ export default defineComponent({
     }
     return {
       rooms,
+      Role,
       roomStore,
+      userStore,
       ArrowPathIcon,
       showModal,
       ConnectGame,
@@ -66,7 +70,7 @@ export default defineComponent({
 
         <div class="mb-5">
           <div class=" flex flex-row gap-2">
-            <button @click="showModal = !showModal">Создать</button>
+            <button v-if="userStore.UserCreds?.role != Role.Player" @click="showModal = !showModal">Создать</button>
             <IconButton :icon="ArrowPathIcon" @click="roomStore.Fetch()" />
           </div>
         </div>

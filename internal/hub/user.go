@@ -18,10 +18,10 @@ func remove[T comparable](l []T, item T) []T {
 }
 
 type User struct {
-	Name     string      `json:"name"`
-	Apikey   string      `json:"token"`
-	Room     string      `json:"room"`
-	Role     common.Role `json:"role"`
+	Name     string
+	Apikey   string
+	Room     string
+	Role     common.Role
 	conn     string
 	channels []string
 	mutex    sync.Mutex
@@ -130,12 +130,13 @@ func (rs *usersState) Add(user *User) error {
 	return nil
 }
 
-// func (users *usersState) Remove(user string, connection string) {
-// 	users.mutex.Lock()
-// 	defer users.mutex.Unlock()
+func (users *usersState) Remove(username string) {
+	users.mutex.Lock()
+	defer users.mutex.Unlock()
 
-// 	use
-// 	// if usersExists {
-// 	// 	users.state[user] = common.RemoveString(usersEntry, connection)
-// 	// }
-// }
+	for i, other := range users.state {
+		if other.Name == username {
+			delete(users.state, i)
+		}
+	}
+}

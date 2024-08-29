@@ -25,42 +25,17 @@ func (s *Server) configureRoutes() {
 		AllowCredentials: false,
 		MaxAge:           300, // Maximum value not ignored by any of major browsers
 	}))
-	// stripped, err := fs.Sub(web.DIST, "dist")
-	// if err != nil {
-	// 	s.log.Error("Failed get FS", sl.Err(err))
-	// }
-
-	// frontendFS := http.FileServer(http.FS(stripped))
-	// s.mux.Handle("/*", frontendFS)
 	s.mux.NotFound(NotFoundHandler)
-	// s.mux.Get("/*", func(w http.ResponseWriter, r *http.Request) {
-	// 	if _, err := os.Stat(r.RequestURI); os.IsNotExist(err) {
-	// 		http.StripPrefix(r.RequestURI, frontendFS).ServeHTTP(w, r)
-	// 	} else {
-	// 		frontendFS.ServeHTTP(w, r)
-	// 	}
-	// })
-
-	// items := http.FileServer(http.FS(web.DIST))
-	// s.mux.Handle("/*", items)
-
 	s.mux.Route("/api/v1", func(r chi.Router) {
 		r.Get("/rooms", s.GetRooms())
 		r.Post("/rooms", s.CreateRoom())
-		// r.Post("/users", s.CreateUser())
 		r.Get("/users", s.GetUsers())
+		r.Post("/users/{username}", s.PatchUser())
 		r.Post("/users", s.Login("test_code"))
 		r.Get("/users/{token}", s.GetUser())
 		r.Get("/ws", s.hub.HandleWS)
 		r.Get("/debug", s.Status())
 
-		// // Subrouters:
-		// r.Route("/{articleID}", func(r chi.Router) {
-		// 	r.Use(ArticleCtx)
-		// 	r.Get("/", getArticle)       // GET /articles/123
-		// 	r.Put("/", updateArticle)    // PUT /articles/123
-		// 	r.Delete("/", deleteArticle) // DELETE /articles/123
-		// })
 	})
 }
 

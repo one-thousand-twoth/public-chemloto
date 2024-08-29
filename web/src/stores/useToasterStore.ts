@@ -3,7 +3,7 @@ import { defineStore } from "pinia";
 // Status will define toast color and icon
 export type TToastStatus = "success" | "info" | "error";
 
-const defaultTimeout: number = 2000;
+const defaultTimeout: number = 4000;
 
 // timeout is conditional because we will define default one
 type ToastPayload = { timeout?: number; text: string };

@@ -3,6 +3,7 @@ import { APISettings } from '@/api/config'
 import { ref } from 'vue'
 import { Client } from '@/api/core/client'
 import { useToasterStore } from "../stores/useToasterStore";
+import { userInfo } from 'os';
 
 const USER_LOCAL_STORAGE_KEY = 'user'
 
@@ -21,24 +22,63 @@ export const useUserStore = defineStore('users', {
   },
   actions:
   {
-    async fetchUsers(){
+    async fetchUsers() {
       console.log("Fetcing users")
       const toasterStore = useToasterStore();
       this.fetching = true
       if (this.UserCreds == null) {
-          return
+        return
       }
       const client = new Client(APISettings.protocol + APISettings.baseURL, this.UserCreds.token);
-        // const token = ref(localStorage.getItem("token") ?? "");
-        try {
-            const resp = await client.get("/users");
-            if (resp.status == 200){
-                this.UsersList = Object.values(await resp.json())
-            }
-        } catch (e) {
-            toasterStore.error("Не удалось обновить информацию о доступных играх")
+      // const token = ref(localStorage.getItem("token") ?? "");
+      try {
+        const resp = await client.get("/users");
+        if (resp.status == 200) {
+          this.UsersList = Object.values(await resp.json())
         }
-        this.fetching = false;
+      } catch (e) {
+        toasterStore.error("Не удалось обновить информацию о доступных играх")
+      }
+      this.fetching = false;
+    },
+    async PatchUser(usr: UserInfo) {
+      const toasterStore = useToasterStore();
+      const client = new Client(APISettings.protocol + APISettings.baseURL, "");
+      let role = ""
+      if (usr.role == Role.Player) {
+        role = Role.Judge
+      } else if (usr.role == Role.Judge) {
+        role = Role.Player
+      }
+      const resp = await fetch(client.url(`/users/${encodeURI(usr.username)}`), {
+        method: "POST",
+        // headers: client.headers(),
+        body: JSON.stringify({
+          Role: role
+        })
+      });
+      const json = await resp.json();
+      if (!resp.ok) {
+        console.error("Failed to login with user");
+        toasterStore.error(`Не удалось изменить роль пользователя ${usr.username}`);
+        toasterStore.error(json["error"]);
+        return;
+      }
+    },
+    async Remove(usr: string) {
+      const toasterStore = useToasterStore();
+      const client = new Client(APISettings.protocol + APISettings.baseURL, "");
+
+      const resp = await fetch(client.url(`/users/${encodeURI(usr.username)}`), {
+        method: "DELETE",
+      });
+      const json = await resp.json();
+      if (!resp.ok) {
+        console.error("Failed to login with user");
+        toasterStore.error(`Не удалось удалить пользователя ${usr.username}`);
+        toasterStore.error(json["error"]);
+        return;
+      }
     },
     async Login(input: string, code: string) {
       const toasterStore = useToasterStore();
@@ -55,8 +95,8 @@ export const useUserStore = defineStore('users', {
         toasterStore.error(`Пользователь с именем ${input} уже существует!`);
         return;
       }
-      
-      const json = await resp.json(); 
+
+      const json = await resp.json();
       if (!resp.ok) {
         console.error("Failed to login with user");
         toasterStore.error(`Не удалось войти под именем ${input}`);
@@ -106,7 +146,7 @@ export enum Role {
   Judge = "Judge_Role",
   Player = "Player_Role",
 }
-interface UserInfo {
+export interface UserInfo {
   username: string
   token: string
   role: Role

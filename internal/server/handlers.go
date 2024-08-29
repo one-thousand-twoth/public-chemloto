@@ -20,10 +20,10 @@ import (
 func (s *Server) Status() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		encode(w, r, http.StatusOK, map[string]any{
-			"Channels":    s.hub.Channels,
-			"Connections": s.hub.Connections,
-			"Rooms":       s.hub.Rooms,
 			"Users":       s.hub.Users,
+			"Channels":    s.hub.Channels,
+			"Rooms":       s.hub.Rooms,
+			"Connections": s.hub.Connections,
 		})
 	}
 }
@@ -50,6 +50,71 @@ func (s *Server) GetUser() http.HandlerFunc {
 			encode(w, r, http.StatusNotFound, clnt)
 			return
 		}
+		encode(w, r, http.StatusOK, clnt)
+	}
+}
+func (s *Server) DeleteUser() http.HandlerFunc {
+	type Response struct {
+		Error []string `json:"error"`
+	}
+	return func(w http.ResponseWriter, r *http.Request) {
+		const op = "server.handlers.PatchUser"
+		log := s.log.With(slog.String("op", op))
+		username := chi.URLParam(r, "username")
+		if username == "" {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		clnt, ok := s.hub.Users.Get(username)
+		if !ok {
+			encode(w, r, http.StatusNotFound, Response{Error: []string{"Возможно пользователь был удалён"}})
+			return
+		}
+		if clnt.Room != "" {
+			encode(w, r, http.StatusBadRequest, Response{Error: []string{"Нельзя изменить пользователя находящегося в игре"}})
+			return
+		}
+
+		s.hub.Users.Remove(clnt.Name)
+
+		log.Info("Deleted user", "user", username)
+
+		encode(w, r, http.StatusOK, Response{})
+	}
+}
+func (s *Server) PatchUser() http.HandlerFunc {
+	type Request struct {
+		Role common.Role
+	}
+	type Response struct {
+		Error []string `json:"error"`
+	}
+	return func(w http.ResponseWriter, r *http.Request) {
+		const op = "server.handlers.PatchUser"
+		log := s.log.With(slog.String("op", op))
+		username := chi.URLParam(r, "username")
+		if username == "" {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		var req Request
+		err := render.DecodeJSON(r.Body, &req)
+		if err != nil {
+			log.Error("failed to decode body", sl.Err(err))
+			encode(w, r, http.StatusBadRequest, Response{Error: []string{"Неправильный формат запроса"}})
+			return
+		}
+		clnt, ok := s.hub.Users.Get(username)
+		if !ok {
+			encode(w, r, http.StatusNotFound, Response{Error: []string{"Возможно пользователь был удалён"}})
+			return
+		}
+		if clnt.Room != "" {
+			encode(w, r, http.StatusBadRequest, Response{Error: []string{"Нельзя изменить пользователя в игре"}})
+			return
+		}
+		clnt.Role = req.Role
 		encode(w, r, http.StatusOK, clnt)
 	}
 }
@@ -86,10 +151,10 @@ func (s *Server) CreateRoom() http.HandlerFunc {
 			req.Time = 0
 		}
 		jsonFile, err := os.Open("polymers.json")
-		defer jsonFile.Close()
 		if err != nil {
 			s.log.Error("Cannot open polymers config", sl.Err(err))
 		}
+		defer jsonFile.Close()
 		byteValue, err := io.ReadAll(jsonFile)
 		if err != nil {
 			s.log.Error("Error reading polymers", sl.Err(err))

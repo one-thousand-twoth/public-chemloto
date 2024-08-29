@@ -20,6 +20,9 @@ export const useGameStore = defineStore('game', () => {
         },
         set: (v) => {
            roomname.value = v
+           if (v === ""){
+            roomname.value = ""
+           }
            localStorage.setItem(ROOMNAME_LOCAL_STORAGE_KEY, roomname.value);
         }
       })
