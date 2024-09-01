@@ -1,9 +1,9 @@
 <script setup lang="ts">
+import IconButton from '@/components/UI/IconButton.vue';
+import IconButtonBackground from '@/components/UI/IconButtonBackground.vue';
 import { Role, UserInfo, useUserStore } from '@/stores/useUserStore';
-import { storeToRefs } from 'pinia';
 import { ArrowPathIcon, TrashIcon } from "@heroicons/vue/24/outline";
-import IconButton from './UI/IconButton.vue';
-import IconButtonBackground from './UI/IconButtonBackground.vue';
+import { storeToRefs } from 'pinia';
 
 const userStore = useUserStore()
 const { UsersList } = storeToRefs(userStore)
@@ -15,12 +15,12 @@ function Patch(usr: UserInfo) {
   } else if (usr.role == Role.Judge) {
     role = Role.Player
   }
-  if (confirm(`Вы действительно хотите изменить роль ${usr.username} на ${role} ?`)){
+  if (confirm(`Вы действительно хотите изменить роль ${usr.username} на ${role} ?`)) {
     userStore.PatchUser(usr)
     userStore.fetchUsers()
   }
 }
-function Delete(usr: string){
+function Delete(usr: string) {
   userStore.Remove(usr)
   userStore.fetchUsers()
 
@@ -36,7 +36,7 @@ function Delete(usr: string){
               <th>Имя</th>
               <th>Роль</th>
               <th>Комната</th>
-              <th></th>
+              <th v-if="userStore.UserCreds?.role != Role.Player"></th>
             </tr>
           </thead>
           <tbody>
@@ -50,11 +50,12 @@ function Delete(usr: string){
               <td class="">{{ user.username }}</td>
               <td class="">{{ user.role }}</td>
               <td> {{ user.room ? user.room : "-" }}</td>
-              <td>
+              <td v-if="userStore.UserCreds?.role != Role.Player">
                 <div class="flex justify-end items-end gap-1">
                   <button v-if="user.role == Role.Player" @click="Patch(user)">Назначить Судьей</button>
                   <button v-if="user.role == Role.Judge" @click="Patch(user)">Cделать Игроком</button>
-                  <IconButtonBackground class="bg-red-700" :icon="TrashIcon" @click="Delete(user.username)"></IconButtonBackground>
+                  <IconButtonBackground class="bg-red-700" :icon="TrashIcon" @click="Delete(user.username)">
+                  </IconButtonBackground>
                 </div>
               </td>
             </tr>

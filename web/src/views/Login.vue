@@ -39,8 +39,8 @@ const isChecked = ref(false)
                             Я админ
                         </label>
                         <label v-show="isChecked">Введите код:
-                            <input  v-model="code" autocomplete="off" type="text" maxlength="25"
-                                 style="width: 95%;">
+                            <input :required="isChecked ? true : undefined" v-model="code" autocomplete="off"
+                                type="text" maxlength="25" style="width: 95%;">
                         </label>
                         <button type="submit">Войти</button>
                     </form>

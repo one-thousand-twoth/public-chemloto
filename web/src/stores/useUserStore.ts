@@ -3,7 +3,6 @@ import { APISettings } from '@/api/config'
 import { ref } from 'vue'
 import { Client } from '@/api/core/client'
 import { useToasterStore } from "../stores/useToasterStore";
-import { userInfo } from 'os';
 
 const USER_LOCAL_STORAGE_KEY = 'user'
 
@@ -69,13 +68,13 @@ export const useUserStore = defineStore('users', {
       const toasterStore = useToasterStore();
       const client = new Client(APISettings.protocol + APISettings.baseURL, "");
 
-      const resp = await fetch(client.url(`/users/${encodeURI(usr.username)}`), {
+      const resp = await fetch(client.url(`/users/${encodeURI(usr)}`), {
         method: "DELETE",
       });
       const json = await resp.json();
       if (!resp.ok) {
         console.error("Failed to login with user");
-        toasterStore.error(`Не удалось удалить пользователя ${usr.username}`);
+        toasterStore.error(`Не удалось удалить пользователя ${usr}`);
         toasterStore.error(json["error"]);
         return;
       }
@@ -100,7 +99,9 @@ export const useUserStore = defineStore('users', {
       if (!resp.ok) {
         console.error("Failed to login with user");
         toasterStore.error(`Не удалось войти под именем ${input}`);
-        toasterStore.error(json["error"]);
+        json["error"].forEach((element: string) => {
+          toasterStore.error(element);
+        });
         return;
       }
       // localStorage.setItem("token", token.value);
