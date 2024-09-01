@@ -91,7 +91,7 @@ func (s SimpleState) Handle(e models.Action, player *Participant) (stateInt, err
 	if !ok {
 		return st, fmt.Errorf("%w for %s action", ErrNoHandler, action)
 	}
-	fmt.Println("find handler for action")
+	// fmt.Println("find handler for action")
 	st = handle(e)
 	return st, nil
 }
