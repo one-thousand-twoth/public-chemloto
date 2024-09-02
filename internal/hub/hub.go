@@ -34,7 +34,7 @@ func NewHub(log *slog.Logger, upgrader websocket.Upgrader) *Hub {
 	return &Hub{
 		upgrader:    upgrader,
 		log:         log,
-		Rooms:       &roomsState{state: make(map[string]*room)},
+		Rooms:       &roomsState{state: make(map[string]*Room)},
 		Users:       &usersState{state: make(map[string]*User)},
 		Connections: &connectionsState{state: make(map[string]*SockConnection)},
 		Channels: &channelsState{
