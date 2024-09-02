@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import RoomList from '@/components/RoomList.vue';
-import ClientList from '@/components/game/ClientList.vue';
+import ClientList from '@/components/ClientList.vue';
 import { ref } from 'vue';
 
 const currentTab = ref('RoomList')

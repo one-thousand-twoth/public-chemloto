@@ -47,10 +47,10 @@ function Delete(usr: string) {
               <td colspan="3">Пока нет пользователей</td>
             </tr>
             <tr v-else v-for="user in UsersList" :key="user.username">
-              <td class="">{{ user.username }}</td>
+              <td class="">{{ user.username }} <span v-if="userStore.UserCreds?.username == user.username">(Это вы!)</span></td>
               <td class="">{{ user.role }}</td>
               <td> {{ user.room ? user.room : "-" }}</td>
-              <td v-if="userStore.UserCreds?.role != Role.Player">
+              <td v-if="userStore.UserCreds?.role == Role.Admin">
                 <div class="flex justify-end items-end gap-1">
                   <button v-if="user.role == Role.Player" @click="Patch(user)">Назначить Судьей</button>
                   <button v-if="user.role == Role.Judge" @click="Patch(user)">Cделать Игроком</button>
