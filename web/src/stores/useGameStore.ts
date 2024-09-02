@@ -69,11 +69,11 @@ export const useGameStore = defineStore('game', () => {
         }
 
     }
-    function Timer(e: WEBSOCKET_EVENT) {
-        const b = e.Body["Value"] as number
-        timer.value = b
+    // function Timer(e: WEBSOCKET_EVENT) {
+    //     const b = e.Body["Value"] as number
+    //     timer.value = b
 
-    }
+    // }
     return {
         fetching,
         connected,

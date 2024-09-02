@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useGameStore } from '@/stores/useGameStore';
-import { computed, watch } from 'vue';
+import { computed } from 'vue';
 
 const GameStore = useGameStore();
 
