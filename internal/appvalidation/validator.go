@@ -12,7 +12,7 @@ var ruTranslation = map[string]string{
 	"Name": `"Имя"`,
 	"Code": `"Код"`,
 }
-var regexAlphaNumSpace = regexp.MustCompile(`^[^\s][a-zA-Zа-яА-Я0-9- ]+[^\s]$`)
+var regexAlphaNumSpace = regexp.MustCompile(`^[^\s][a-zA-Zа-яА-Я0-9- ]*[^\s]*$`)
 
 var (
 	Ins *validator.Validate

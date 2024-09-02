@@ -150,9 +150,9 @@ func (s *Server) CreateRoom() http.HandlerFunc {
 	}
 }
 
-func (s *Server) Login(AdminCode string) http.HandlerFunc {
+func (s *Server) Login() http.HandlerFunc {
 	type Request struct {
-		Name string `json:"name" validate:"required,min=3,safeinput"`
+		Name string `json:"name" validate:"required,min=1,safeinput"`
 		Code string `json:"code,omitempty"`
 	}
 	type Response struct {
@@ -182,7 +182,7 @@ func (s *Server) Login(AdminCode string) http.HandlerFunc {
 		var role common.Role
 		role = common.Player_Role
 		if req.Code != "" {
-			if req.Code == AdminCode {
+			if req.Code == s.code {
 				role = common.Admin_Role
 			} else {
 				encode(w, r, http.StatusBadRequest, Response{Error: []string{"Неправильный код администратора"}})

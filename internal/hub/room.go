@@ -100,8 +100,8 @@ func parseEngineJson(h *Hub) polymers.Checks {
 }
 
 type Room struct {
-	Name       string         `json:"name" validate:"required,min=3,safeinput"`
-	MaxPlayers int            `json:"maxPlayers" validate:"required,gt=2,lt=100"`
+	Name       string         `json:"name" validate:"required,min=1,safeinput"`
+	MaxPlayers int            `json:"maxPlayers" validate:"required,gt=1,lt=100"`
 	Elements   map[string]int `json:"elementCounts" validate:"required"`
 	Time       int            `validate:"excluded_if=isAuto false,gte=0"`
 	IsAuto     bool           `json:"isAuto"`

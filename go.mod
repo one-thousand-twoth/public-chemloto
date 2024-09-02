@@ -17,6 +17,7 @@ require (
 	github.com/go-playground/validator/v10 v10.22.0
 	github.com/gorilla/websocket v1.5.1
 	github.com/mitchellh/mapstructure v1.5.0
+	github.com/onsi/ginkgo v1.10.1
 )
 
 require (
