@@ -181,10 +181,14 @@ func (s *Server) Login(AdminCode string) http.HandlerFunc {
 		}
 		var role common.Role
 		role = common.Player_Role
-		if req.Code == AdminCode {
-			role = common.Admin_Role
+		if req.Code != "" {
+			if req.Code == AdminCode {
+				role = common.Admin_Role
+			} else {
+				encode(w, r, http.StatusBadRequest, Response{Error: []string{"Неправильный код администратора"}})
+				return
+			}
 		}
-
 		token, err := GenerateRandomStringURLSafe(32)
 		if err != nil {
 			encode(w, r, http.StatusInternalServerError, Response{Error: []string{"Ошибка сервера"}})

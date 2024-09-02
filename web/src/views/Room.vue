@@ -1,24 +1,22 @@
 <script setup lang="ts">
-import { computed, inject, ref, } from 'vue'
-import { ElementImage } from '../components/UI/index'
-import { Hand, useGameStore } from '@/stores/useGameStore'
-import { WebsocketConnector } from '@/api/websocket/websocket'
-import { Role, useUserStore } from '@/stores/useUserStore';
-import { Modal } from '../components/UI/index';
-import UserElements from './UserElements.vue'
+import { WebsocketConnector } from '@/api/websocket/websocket';
+import IconButtonBackground from '@/components/UI/IconButtonBackground.vue';
 import Timer from '@/components/UI/Timer.vue';
-import CheckPlayer from './CheckPlayer.vue'
-import RaiseHandComp from './RaiseHandComp.vue';
-import Trade from './Trade.vue'
+import { Hand, useGameStore } from '@/stores/useGameStore';
+import { Role, useUserStore } from '@/stores/useUserStore';
 import {
     ArrowLeftStartOnRectangleIcon
 } from "@heroicons/vue/24/outline";
-import IconButtonBackground from '@/components/UI/IconButtonBackground.vue';
+import { computed, inject, ref, } from 'vue';
+import CheckPlayer from '../components/game/CheckPlayer.vue';
+import RaiseHandComp from '../components/game/RaiseHandComp.vue';
+import Trade from '../components/game/Trade.vue';
+import { ElementImage, Modal } from '../components/UI/index';
+import UserElements from '../components/game/UserElements.vue';
+import FieldsTable from './FieldsTable.vue'
+
 const GameStore = useGameStore()
 const userStore = useUserStore()
-// const player = GameStore.SelfPlayer
-console.log(GameStore.gameState.Players)
-console.log(userStore.UserCreds?.username)
 const ws = inject('connector') as WebsocketConnector
 function StartGame() {
     ws.Send({
@@ -26,7 +24,6 @@ function StartGame() {
         Name: GameStore.name.toString()
     })
 }
-
 function GetElement() {
     console.log('Get element!')
     ws.Send({
@@ -41,30 +38,18 @@ function SendContinue() {
     })
 }
 function DisconnectGame() {
-      ws.Send(
+    ws.Send(
         {
-          "Type": "HUB_UNSUBSCRIBE",
-          "Target": "room",
-          "Name": GameStore.name
+            "Type": "HUB_UNSUBSCRIBE",
+            "Target": "room",
+            "Name": GameStore.name
         }
-      )
-    }
-// function RaiseHand() {
-//     console.log('Get element!')
-//     ws.Send({
-//         Type: 'ENGINE_ACTION',
-//         Action: 'RaiseHand'
-//     })
-// }
+    )
+}
 
 const currPlayer = computed(() => {
     return GameStore.gameState.Players.find(player => player.Name === curInfoPlayer.value)
 })
-
-// const currCheckPlayer = computed(() => {
-
-//     // return GameStore.gameState.Players.find(player => player.Name === curCheckPlayer.value)
-// })
 
 const curInfoPlayer = ref('')
 const curCheckPlayer = ref<Hand>()
@@ -85,7 +70,6 @@ const TradeButton = ref(false)
                     [&:nth-child(1)]:bg-amber-300
                     [&:nth-child(2)]:bg-stone-300
                     [&:nth-child(3)]:bg-yellow-500
-                    
                     rounded-md my-2"
                             v-for="pl in GameStore.gameState.Players.filter((pl) => pl.Role === Role.Player).sort((a, b) => b.Score - a.Score) "
                             :key="pl.Name">
@@ -93,54 +77,19 @@ const TradeButton = ref(false)
                         </li>
                     </ul>
                 </div>
-                <IconButtonBackground v-if="!GameStore.gameState.Started || userStore.UserCreds?.role != Role.Player "class="w-full bg-red-700 text-white  rounded-lg"
-                    :icon="ArrowLeftStartOnRectangleIcon" @click="DisconnectGame()">Выйти</IconButtonBackground>
+                <IconButtonBackground v-if="!GameStore.gameState.Started || userStore.UserCreds?.role != Role.Player"
+                    class="w-full bg-red-700 text-white  rounded-lg" :icon="ArrowLeftStartOnRectangleIcon"
+                    @click="DisconnectGame()">Выйти</IconButtonBackground>
             </div>
             <div class="flex flex-col items-center  h-lvh max-w-[900px] gap-2 p-5 pb-60 grow-[3]">
                 <Timer />
-
                 <ElementImage class="h-auto w-full max-w-[50lvh]" :elname="GameStore.currElement" />
-                <div class="flex flex-col">
-                    <div class="-m-1.5 overflow-x-auto">
-                        <div class="p-1.5 min-w-full inline-block align-middle">
-                            <div class="overflow-hidden">
-                                <table class="min-w-full divide-y divide-gray-200">
-                                    <thead>
-                                        <tr>
-                                            <th scope="col"
-                                                class="px-6 py-3 text-start text-3xl font-medium text-gray-700 ">
-                                                α</th>
-                                            <th scope="col"
-                                                class="px-6 py-3 text-start text-3xl font-medium text-gray-700 ">
-                                                β</th>
-                                            <th scope="col"
-                                                class="px-6 py-3 text-start text-3xl font-medium text-gray-700 ">
-                                                γ</th>
-
-                                        </tr>
-                                    </thead>
-                                    <tbody class="divide-y divide-gray-200">
-                                        <tr>
-                                            <td class="px-6 py-4 whitespace-nowrap text-3xl font-3xl text-gray-800">
-                                                {{ GameStore.gameState.Fields["Альфа"]?.Score }}</td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-3xl text-gray-800">{{
-                                                GameStore.gameState.Fields["Бета"]?.Score }}</td>
-                                            <td class="px-6 py-4 whitespace-nowrap text-3xl text-gray-800">{{
-                                                GameStore.gameState.Fields["Гамма"]?.Score }}</td>
-
-                                        </tr>
-                                    </tbody>
-                                </table>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+                <FieldsTable />
                 <template v-if="!GameStore.gameState.Started">
                     <button v-if="userStore.UserCreds?.role != Role.Player" @click="StartGame()">
                         Начать игру
                     </button>
-                    <button disabled v-else>Ждем
-                        начала</button>
+                    <button disabled v-else>Ждем начала</button>
                 </template>
                 <template v-else>
                     <template v-if="GameStore.gameState.State == 'OBTAIN'">
@@ -162,7 +111,6 @@ const TradeButton = ref(false)
                         <button @click="SendContinue()">Продолжить</button>
                     </template>
                 </template>
-                <!-- <div class="mb-12" id="empty"></div> -->
             </div>
             <div class="bars min-w-[135px] p-3 bg-gray-50 w-[20%] m-3">
                 <h2>Поднятые руки</h2>

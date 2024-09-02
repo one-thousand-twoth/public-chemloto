@@ -3,7 +3,6 @@ package common
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 )
 
 type Message struct {
@@ -28,7 +27,7 @@ func (m *MessageType) UnmarshalJSON(data []byte) error {
 	if !ok {
 		return errors.New("unknown messageType")
 	}
-	fmt.Println(inType)
+	// fmt.Println(inType)
 	*m = inType
 	return nil
 }

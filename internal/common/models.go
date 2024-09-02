@@ -3,7 +3,6 @@ package common
 import (
 	"encoding/json"
 	"errors"
-	"fmt"
 )
 
 // at that time - deprecated
@@ -40,7 +39,7 @@ func (r *Role) UnmarshalJSON(data []byte) error {
 	if !ok {
 		return errors.New("unknown messageType")
 	}
-	fmt.Println(inType)
+	// fmt.Println(inType)
 	*r = inType
 	return nil
 }

@@ -3,7 +3,7 @@ import { Player } from '@/stores/useGameStore';
 import { ElementImage } from '@/components/UI';
 
 defineProps<{
-	player: Player 
+	player: Player
 }>()
 
 </script>
