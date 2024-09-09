@@ -5,22 +5,22 @@ tasks:
     cmds:
       - go build -v .\\cmd\\tournament\\
   run:
-    deps: [run:go, run:vue]
+    deps: [run:go, run:vue, watch]
   run:go:
     cmds:
       - go build -v .\\cmd\\tournament\\
       - .\\tournament.exe
   run:vue:
-    deps: [watch]
     dir: '.\\web'
     cmds:
-      - npm run dev
+      - npx vite -l info --clearScreen false
+      # - echo 'hi'
     silent: true
   watch:
     desc: Watch tailwindcss
     dir: '.\\web'
     cmds:
-      - npx tailwindcss -i .\\src\\assets\\main.css -o .\\src\\assets\\output.css --watch
+      - npx -q tailwindcss -i .\\src\\assets\\main.css -o .\\src\\assets\\output.css -q --watch
   run:race:
     cmds:
       - go run -race .\\cmd\\tournament\\
