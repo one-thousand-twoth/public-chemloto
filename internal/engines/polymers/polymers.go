@@ -106,22 +106,23 @@ type Field struct {
 	Score int
 }
 
-// getter. Score field will be decriadsed by one
+// getter. Score field will be decriased by one
 func (f *Field) getScore() int {
 	o := f.Score
 	f.Score -= 1
 	return o
 }
 
+// a Participant represents all users including Admin, Judje, Player roles.
 type Participant struct {
 	models.Player
 	RaisedHand bool
 	Bag        map[string]int
-	Score      int
+	Score      int // Game score only for Players
 }
 
 // unicastFunction accepts first argument userID
-type unicastFunction func(string, common.Message)
+type unicastFunction func(userId string, msg common.Message)
 type broadcastFunction func(common.Message)
 
 // Start Game
