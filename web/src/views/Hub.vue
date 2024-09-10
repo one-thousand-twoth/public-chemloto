@@ -2,6 +2,7 @@
 import RoomList from '@/components/RoomList.vue';
 import ClientList from '@/components/ClientList.vue';
 import { ref } from 'vue';
+import Tab from '@/components/tabs/Tab.vue';
 
 const currentTab = ref('RoomList')
 const tabs = {
@@ -10,11 +11,12 @@ const tabs = {
 }
 </script>
 <template>
-    <div class="absolute">
+    <!-- <div class="absolute">
         <button v-for="(_, tab) in tabs" :key="tab" :class="['tab-button', { active: currentTab === tab }]"
             @click="currentTab = tab"> {{ tab }} </button>
-    </div>
-    <component :is="(<any>tabs)[currentTab]" class="tab"></component>
+    </div> -->
+    <!-- <component :is="(<any>tabs)[currentTab]" class="tab"></component> -->
+    <Tab />
 </template>
 
 

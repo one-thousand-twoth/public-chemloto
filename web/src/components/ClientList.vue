@@ -47,7 +47,8 @@ function Delete(usr: string) {
               <td colspan="3">Пока нет пользователей</td>
             </tr>
             <tr v-else v-for="user in UsersList" :key="user.username">
-              <td class="">{{ user.username }} <span v-if="userStore.UserCreds?.username == user.username">(Это вы!)</span></td>
+              <td class="">{{ user.username }} <span v-if="userStore.UserCreds?.username == user.username">(Это
+                  вы!)</span></td>
               <td class="">{{ user.role }}</td>
               <td> {{ user.room ? user.room : "-" }}</td>
               <td v-if="userStore.UserCreds?.role == Role.Admin">
@@ -64,20 +65,11 @@ function Delete(usr: string) {
 
         <div class="mb-5">
           <div class=" flex flex-row gap-2">
-            <!-- <button @click="showModal = !showModal">Создать</button> -->
             <IconButton :icon="ArrowPathIcon" @click="userStore.fetchUsers()" />
           </div>
         </div>
       </div>
     </div>
-    <!-- <Modal :show="showModal" @close="showModal = !showModal">
-        <template #header>
-          <h3 class="font-bold text-center">Создать игру</h3>
-        </template>
-<template #body>
-          <CreateRoom></CreateRoom>
-        </template>
-</Modal> -->
   </div>
 </template>
 
