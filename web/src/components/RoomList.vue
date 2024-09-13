@@ -17,7 +17,7 @@ export default defineComponent({
     const roomStore = useRoomsStore()
     const rooms = computed(() => roomStore.roomList)
     const showModal = ref(false)
-    const ws  = inject('connector') as WebsocketConnector
+    const ws = inject('connector') as WebsocketConnector
     function ConnectGame(roomName: string) {
       ws.Send(
         {
@@ -40,40 +40,38 @@ export default defineComponent({
 })
 </script>
 <template>
-  <div class="h-screen flex items-center justify-center bg-opacity-5 bg-slate-500">
-    <div class=" flex items-center  justify-center gap-4 flex-col">
-      <div class="p-4 shadow-lg bg-white" style="width: 70%;">
-        <table class="mb-4">
-          <thead>
-            <tr>
-              <th>Имя</th>
-              <th>Статус</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr v-if="roomStore.fetching">
-              <td colspan="3">Загрузка...</td>
-            </tr>
-            <tr v-else-if="!rooms.length">
-              <td colspan="3">Пока нет доступных комнат</td>
-            </tr>
-            <tr v-else v-for="room in rooms" :key="room.name">
-              <td class="">{{ room.name }}</td>
-              <td></td>
-              <td>
-                <button @click="ConnectGame(room.name)">Подключиться</button>
-              </td>
-            </tr>
-          </tbody>
-        </table>
+  <!-- <div class="h-screen flex items-center justify-center bg-opacity-5 bg-slate-500">
+    <div class=" flex items-center  justify-center gap-4 flex-col"> -->
+  <div class="p-4 shadow-lg bg-white">
+    <table class="mb-4">
+      <thead>
+        <tr>
+          <th>Имя</th>
+          <th>Статус</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr v-if="roomStore.fetching">
+          <td colspan="3">Загрузка...</td>
+        </tr>
+        <tr v-else-if="!rooms.length">
+          <td colspan="3">Пока нет доступных комнат</td>
+        </tr>
+        <tr v-else v-for="room in rooms" :key="room.name">
+          <td class="">{{ room.name }}</td>
+          <td></td>
+          <td>
+            <button @click="ConnectGame(room.name)">Подключиться</button>
+          </td>
+        </tr>
+      </tbody>
+    </table>
 
-        <div class="mb-5">
-          <div class=" flex flex-row gap-2">
-            <button v-if="userStore.UserCreds?.role != Role.Player" @click="showModal = !showModal">Создать</button>
-            <IconButton :icon="ArrowPathIcon" @click="roomStore.Fetch()" />
-          </div>
-        </div>
+    <div class="mb-5">
+      <div class=" flex flex-row gap-2">
+        <button v-if="userStore.UserCreds?.role != Role.Player" @click="showModal = !showModal">Создать</button>
+        <IconButton :icon="ArrowPathIcon" @click="roomStore.Fetch()" />
       </div>
     </div>
     <Modal :show="showModal" @close="showModal = !showModal">
@@ -85,6 +83,9 @@ export default defineComponent({
       </template>
     </Modal>
   </div>
+  <!-- </div> -->
+
+  <!-- </div> -->
 </template>
 
 

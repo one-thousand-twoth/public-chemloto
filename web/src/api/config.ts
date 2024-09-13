@@ -5,6 +5,6 @@ export const APISettings = {
     headers: new Headers({
         'Accept': 'application/json'
     }),
-    baseURL: import.meta.env.PROD ? window.location.hostname+":1090" : 'localhost:1090',
+    baseURL: import.meta.env.PROD ? window.location.hostname+":1090" : window.location.hostname + ':1090',
     protocol: 'http://',
 }

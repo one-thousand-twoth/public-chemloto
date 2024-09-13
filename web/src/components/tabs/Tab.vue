@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<!-- <script setup lang="ts">
 import { ref } from 'vue';
 import RoomList from '@/components/RoomList.vue';
 import ClientList from '@/components/ClientList.vue';
@@ -7,25 +7,18 @@ const tabs = {
     "Игроки": ClientList,
 }
 
-const picked = ref('tab-1')
+const picked = ref('Комнаты')
 </script>
 <template>
-
     <div class="flex flex-wrap shadow-lg">
         <div class="p-6" v-for="(_, tab) in tabs">
             <input class="peer absolute opacity-0" name="tabs" type="radio" :id="tab" :value="tab" v-model="picked" />
             <label
-                class="peer-checked:text-black w-auto cursor-pointer  bg-slate-50 font-bold text-blue-800 transition-colors hover:bg-white"
+                class="peer-checked:text-black w-auto cursor-pointer bg-slate-50 font-bold text-blue-800 transition-colors hover:bg-white"
                 :for="tab">
                 {{ tab }}
             </label>
         </div>
-        <!-- <input class="absolute opacity-0" name="tabs" type="radio" id="tab-2" v-model="picked" />
-        <label class="w-auto p-6  text-blue-800 bg-slate-50 hover:bg-white cursor-pointer font-bold" for="tab-2">Arlina
-            Design</label>
-        -->
-        <!-- <input class="input" name="tabs" type="radio" id="tab-3" />
-        <label class="label" for="tab-3">Tekno Match</label> -->
     </div>
     <component :is="(<any>tabs)[picked]" class="tab"></component>
 </template>
@@ -93,4 +86,4 @@ const picked = ref('tab-1')
 .input:checked+.label+.panel {
     display: block;
 } */
-</style>
+</style> -->

@@ -27,9 +27,9 @@ function Delete(usr: string) {
 }
 </script>
 <template>
-  <div class="h-screen flex items-center justify-center bg-opacity-5 bg-slate-500">
-    <div class=" flex items-center  justify-center gap-4 flex-col">
-      <div class="p-4 shadow-lg bg-white" style="width: 70%;">
+  <!-- <div class="h-screen flex items-center justify-center bg-opacity-5 bg-slate-500"> -->
+    <!-- <div class=" flex items-center  justify-center gap-4 flex-col"> -->
+      <div class="p-4 shadow-lg bg-white">
         <table class="mb-4">
           <thead>
             <tr>
@@ -69,8 +69,8 @@ function Delete(usr: string) {
           </div>
         </div>
       </div>
-    </div>
-  </div>
+    <!-- </div> -->
+  <!-- </div> -->
 </template>
 
 <style scoped>

@@ -13,7 +13,7 @@ tasks:
   run:vue:
     dir: '.\\web'
     cmds:
-      - npx vite -l info --clearScreen false
+      - npx vite -l info --clearScreen false --host
       # - echo 'hi'
     silent: true
   watch:

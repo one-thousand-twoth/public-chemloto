@@ -1,11 +1,3 @@
-<!-- <template>
-    <div class="absolute flex justify-center items-center h-screen w-screen bg-opacity-20 bg-slate-500">
-      <div class="h-fit m-auto bg-white p-4 shadow-lg rounded-lg">
-        <slot />
-      </div>
-    </div>
-</template> -->
-
 <script setup lang="ts">
 const props = defineProps({
   show: Boolean
@@ -17,7 +9,7 @@ defineEmits(['close'])
   <Teleport to="body">
     <Transition name="modal">
     <div v-if="props.show"
-      class="fixed  top-0 left-0 flex justify-center items-center m-auto w-screen h-screen bg-opacity-20 bg-slate-500">
+      class="fixed z-50  top-0 left-0 flex justify-center items-center m-auto w-screen h-screen bg-opacity-20 bg-slate-500">
       <div class="h-fit m-auto bg-white p-4 shadow-lg rounded-sm" style="width: 80%;">
         <div class="modal-header">
           <slot name="header"></slot>
