@@ -64,6 +64,14 @@ func Subscribe(h *Hub, e internalEventWrap) {
 		log.Error("Failed getting connection of user")
 		return
 	}
+	if usr.Room != "" {
+		conn.MessageChan <- common.Message{
+			Type:   common.HUB_SUBSCRIBE,
+			Ok:     false,
+			Errors: []string{"Вы уже подписаны на другую комнату"},
+		}
+		return
+	}
 	switch data.Target {
 	case "room":
 		room, ok := h.Rooms.get(data.Name)
