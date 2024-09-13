@@ -146,7 +146,7 @@ func Check(engine *PolymersEngine) HandlerFunc {
 		if len(engine.unchecked()) == 0 {
 			engine.log.Debug("all players checked")
 			for _, hand := range engine.RaisedHands {
-				hand.Player.Score += engine.Fields[hand.Field].getScore()
+				hand.Player.Score += engine.Fields[hand.Field].decrementScore()
 			}
 			engine.RaisedHands = engine.RaisedHands[:0]
 			return OBTAIN

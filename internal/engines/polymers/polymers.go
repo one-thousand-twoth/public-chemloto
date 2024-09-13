@@ -44,7 +44,7 @@ func New(log *slog.Logger, cfg PolymersEngineConfig) *PolymersEngine {
 			Add("GetElement", GetElement(eng), true).
 			Add("RaiseHand", RaiseHand(eng), false)
 	}
-
+	// Конфигурация FSM и его обработчиков событий.
 	eng.StateMachine = stateMachine{
 		Current: OBTAIN,
 		States: map[stateInt]State{
@@ -72,7 +72,6 @@ type PolymersEngineConfig struct {
 	Broadcast  broadcastFunction
 	MaxPlayers int
 }
-
 type PolymersEngine struct {
 	log          *slog.Logger
 	started      bool
@@ -106,8 +105,8 @@ type Field struct {
 	Score int
 }
 
-// getter. Score field will be decriased by one
-func (f *Field) getScore() int {
+// decrementScore substract by one field.Score and returns old value.
+func (f *Field) decrementScore() int {
 	o := f.Score
 	f.Score -= 1
 	return o

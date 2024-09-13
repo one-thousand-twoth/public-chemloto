@@ -27,6 +27,7 @@ const (
 
 type stateInt int
 
+// Реализация FSM (Finite State Machine)
 type stateMachine struct {
 	Current stateInt
 	States  map[stateInt]State
