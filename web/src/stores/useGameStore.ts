@@ -4,28 +4,40 @@ import { computed, ref } from 'vue'
 import { Role, useUserStore } from './useUserStore'
 
 const ROOMNAME_LOCAL_STORAGE_KEY = "roomname"
+const CONNECTED_LOCAL_STORAGE_KEY = "connected"
 const getName = () => {
     const value = localStorage.getItem(ROOMNAME_LOCAL_STORAGE_KEY)
     return value ? value : "";
+}
+const getConnected = () => {
+    const value = localStorage.getItem(CONNECTED_LOCAL_STORAGE_KEY)
+    return value === "true" ? true : false;
 }
 
 export const useGameStore = defineStore('game', () => {
 
     const fetching = ref(false)
-    const connected = ref(false)
+    // const connectedRef = ref(getConnected())
+    // const connected = computed({
+    //     get: () => connectedRef.value,
+    //     set: (v) => {
+    //         connectedRef.value = v
+    //         localStorage.setItem(CONNECTED_LOCAL_STORAGE_KEY, String(v));
+    //     },
+    // })
     const roomname = ref(getName())
-    const name  = computed({
+    const name = computed({
         get: () => {
-           return roomname.value
+            return roomname.value
         },
         set: (v) => {
-           roomname.value = v
-           if (v === ""){
-            roomname.value = ""
-           }
-           localStorage.setItem(ROOMNAME_LOCAL_STORAGE_KEY, roomname.value);
+            roomname.value = v
+            if (v === "") {
+                roomname.value = ""
+            }
+            localStorage.setItem(ROOMNAME_LOCAL_STORAGE_KEY, roomname.value);
         }
-      })
+    })
     const timer = ref(0)
     const gameState = ref<GameInfo>({
         Bag: {
@@ -41,8 +53,6 @@ export const useGameStore = defineStore('game', () => {
         }
     })
     const userStore = useUserStore()
-    // const LastElements = ref<Array<string>>(Array.from({ length: 5 }, () => "UNDEFINED"))
-    // const currElement = ref('UNDEFINED')
     const LastElements = computed(() => {
         const elems: Array<string> = Object.assign([], gameState.value.Bag.LastElements);
         return elems.
@@ -69,14 +79,10 @@ export const useGameStore = defineStore('game', () => {
         }
 
     }
-    // function Timer(e: WEBSOCKET_EVENT) {
-    //     const b = e.Body["Value"] as number
-    //     timer.value = b
-
-    // }
     return {
         fetching,
-        connected,
+        // connectedRef,
+        // connected,
         name,
         timer,
         currElement,

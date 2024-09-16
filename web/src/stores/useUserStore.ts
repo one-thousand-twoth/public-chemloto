@@ -1,7 +1,7 @@
-import { defineStore } from 'pinia'
-import { APISettings } from '@/api/config'
-import { ref } from 'vue'
-import { Client } from '@/api/core/client'
+import { APISettings } from '@/api/config';
+import { Client } from '@/api/core/client';
+import { defineStore } from 'pinia';
+import { ref } from 'vue';
 import { useToasterStore } from "../stores/useToasterStore";
 
 const USER_LOCAL_STORAGE_KEY = 'user'
@@ -139,6 +139,9 @@ export const useUserStore = defineStore('users', {
       this.UserCreds = null
     }
 
+  },
+  getters:{
+    connected: (state) => state.UserCreds?.room ? true : false,
   }
 })
 

@@ -1,4 +1,4 @@
-import polymers from '@/../../polymers.json' 
+import polymers from '@/../../polymers.json';
 /** Содержит в себе перечисление полей с вложеными структурами 
  * 
  * Десериализуется из файла polymers.json в корне проекта */ 
@@ -11,7 +11,9 @@ interface Polymer extends Array<Entry> {}
 interface Entry {
 	[element: string]: number;
 }
-
+/** Содержит в себе перечисление полей с вложеными структурами 
+ * 
+ * Десериализуется из файла polymers.json в корне проекта */ 
 export const Polymers = polymers as Fields
 
 

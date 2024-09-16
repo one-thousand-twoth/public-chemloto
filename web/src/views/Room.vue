@@ -11,9 +11,9 @@ import { computed, inject, ref, } from 'vue';
 import CheckPlayer from '../components/game/CheckPlayer.vue';
 import RaiseHandComp from '../components/game/RaiseHandComp.vue';
 import Trade from '../components/game/Trade.vue';
-import { ElementImage, Modal } from '../components/UI/index';
 import UserElements from '../components/game/UserElements.vue';
-import FieldsTable from './FieldsTable.vue'
+import { ElementImage, Modal } from '../components/UI/index';
+import FieldsTable from './FieldsTable.vue';
 
 const GameStore = useGameStore()
 const userStore = useUserStore()
@@ -21,7 +21,7 @@ const ws = inject('connector') as WebsocketConnector
 function StartGame() {
     ws.Send({
         Type: 'HUB_STARTGAME',
-        Name: GameStore.name.toString()
+        Name: userStore.UserCreds!.room.toString()
     })
 }
 function GetElement() {
@@ -42,7 +42,7 @@ function DisconnectGame() {
         {
             "Type": "HUB_UNSUBSCRIBE",
             "Target": "room",
-            "Name": GameStore.name
+            "Name": userStore.UserCreds!.room
         }
     )
 }

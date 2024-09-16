@@ -1,6 +1,7 @@
 import { useGameStore } from "@/stores/useGameStore"
-import { WEBSOCKET_EVENT } from "./websocket"
 import { useToasterStore } from "@/stores/useToasterStore"
+import { useUserStore } from "@/stores/useUserStore"
+import { WEBSOCKET_EVENT } from "./websocket"
 
 interface HUB_SUBSCRIBE_EVENT {
     Target: string,
@@ -8,21 +9,22 @@ interface HUB_SUBSCRIBE_EVENT {
 }
 export function Subscribe(e: WEBSOCKET_EVENT) {
     const store = useGameStore()
+    const user = useUserStore()
     console.log("changing to room")
     const b = e.Body as HUB_SUBSCRIBE_EVENT
     if (b.Target == "room"){
         console.log("Hi")
-        store.connected = true
+        user.UserCreds!.room = b.Name
         store.name = b.Name
     }
 }
 export function UNSubscribe(e: WEBSOCKET_EVENT) {
     const store = useGameStore()
+    const user = useUserStore()
     console.log("exiting room")
     const b = e.Body as HUB_SUBSCRIBE_EVENT
     if (b.Target == "room"){
-        console.log("Hi")
-        store.connected = false
+        user.UserCreds!.room = b.Name
         store.name = ""
     }
 }

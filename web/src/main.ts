@@ -3,11 +3,10 @@ import './assets/output.css'
 import { createApp } from 'vue'
 import App from './App.vue'
 
+import Hub from '@/views/Hub.vue'
+import Login from '@/views/Login.vue'
 import { createPinia } from 'pinia'
 import { createRouter, createWebHistory } from 'vue-router'
-import Login from '@/views/Login.vue'
-import Room from '@/views/Room.vue'
-import Hub from '@/views/Hub.vue'
 import { useUserStore } from './stores/useUserStore'
 
 const pinia = createPinia()
@@ -28,11 +27,6 @@ const router = createRouter({
       path: '/login',
       component: Login,
     },
-    {
-      name: 'Room',
-      path: '/room',
-      component: Room,
-    }
   ],
   history: createWebHistory()
 });
