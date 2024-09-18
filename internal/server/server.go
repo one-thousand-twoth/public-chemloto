@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 	"time"
 
@@ -59,6 +60,28 @@ func (s *Server) Run(port string) {
 	case <-signalQuit:
 	}
 	s.log.Info("Shutting down")
+	doneChan := make(chan struct{})
+	go func() {
+		s.log.Info("Сохранение результатов игр...")
+		results := s.hub.SaveGamesStats()
+		for roomName, result := range results {
+			filePath := filepath.Join("chemloto results", roomName+".csv")
+			file, err := os.Create(filePath)
+			if err != nil {
+				s.log.Error("Failed to create result file", sl.Err(err))
+				return
+			}
+			defer file.Close()
+
+			_, err = result.WriteTo(file)
+			if err != nil {
+				s.log.Error("Failed to write in result file", sl.Err(err))
+				return
+			}
+			s.log.Info("Saved results for room", "room", roomName)
+		}
+		doneChan <- struct{}{}
+	}()
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
@@ -67,6 +90,8 @@ func (s *Server) Run(port string) {
 			sl.Err(err),
 		)
 	}
+
+	<-doneChan
 
 	s.log.Info("Stopped")
 }

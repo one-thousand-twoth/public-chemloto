@@ -2,6 +2,8 @@
 package hub
 
 import (
+	"bytes"
+	"encoding/csv"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -69,6 +71,31 @@ func (h *Hub) SendEventToHub(e internalEventWrap) {
 	h.eventChan <- e
 }
 
+func (h *Hub) SaveGamesStats() map[string]*bytes.Buffer {
+	h.Rooms.mutex.Lock()
+	defer h.Rooms.mutex.Unlock()
+
+	results := make(map[string]*bytes.Buffer)
+	for k, v := range h.Rooms.state {
+		// Инициализация нового bytes.Buffer
+		buffer := new(bytes.Buffer)
+
+		// Создание нового csv.Writer
+		writer := csv.NewWriter(buffer)
+
+		// Запись данных в CSV
+		err := writer.WriteAll(v.engine.GetResults())
+		if err != nil {
+			h.log.Error("Error writing to buffer:", slog.String("room", k), sl.Err(err))
+			continue
+		}
+
+		// Сохранение буфера в результаты
+		results[v.Name] = buffer
+	}
+
+	return results
+}
 func (h *Hub) SendMessageOverChannel(channel string, message common.Message) error {
 	op := "SendMessageOverChannel"
 	log := h.log.With("op", op)

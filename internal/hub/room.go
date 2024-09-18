@@ -21,6 +21,7 @@ type Engine interface {
 	// Обработать событие
 	Input(enmodels.Action)
 	Start()
+	GetResults() [][]string
 	AddPlayer(enmodels.Player) error
 	RemovePlayer(name string) error
 }

@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log/slog"
 	"math/rand"
+	"strconv"
 	"sync"
 	"time"
 
@@ -233,6 +234,15 @@ func (engine *PolymersEngine) Input(e models.Action) {
 }
 func (engine *PolymersEngine) PreHook() map[string]any {
 	return map[string]any{"engine": engine}
+}
+
+func (engine *PolymersEngine) GetResults() [][]string {
+	results := [][]string{{"Игрок", "Очки"}}
+	for _, v := range engine.players() {
+		results = append(results, []string{v.Name, strconv.Itoa(v.Score)})
+	}
+	engine.log.Debug("New Results", slog.Any("res", results))
+	return results
 }
 
 func (engine *PolymersEngine) AddPlayer(player models.Player) error {
