@@ -2,8 +2,9 @@
 import { WebsocketConnector } from '@/api/websocket/websocket';
 import IconButtonBackground from '@/components/UI/IconButtonBackground.vue';
 import Timer from '@/components/UI/Timer.vue';
+import { Role } from '@/models/User';
 import { Hand, useGameStore } from '@/stores/useGameStore';
-import { Role, useUserStore } from '@/stores/useUserStore';
+import { useUserStore } from '@/stores/useUserStore';
 import {
     ArrowLeftStartOnRectangleIcon
 } from "@heroicons/vue/24/outline";

@@ -785,10 +785,6 @@ select {
   left: 3.5rem;
 }
 
-.left-\[8px\] {
-  left: 8px;
-}
-
 .right-3 {
   right: 0.75rem;
 }
@@ -805,10 +801,6 @@ select {
   top: 0.5rem;
 }
 
-.right-0 {
-  right: 0px;
-}
-
 .z-0 {
   z-index: 0;
 }
@@ -823,10 +815,6 @@ select {
 
 .z-\[2\] {
   z-index: 2;
-}
-
-.float-end {
-  float: inline-end;
 }
 
 .-m-1 {
@@ -942,6 +930,11 @@ select {
   width: auto;
 }
 
+.w-fit {
+  width: -moz-fit-content;
+  width: fit-content;
+}
+
 .w-full {
   width: 100%;
 }
@@ -952,11 +945,6 @@ select {
 
 .w-screen {
   width: 100vw;
-}
-
-.w-fit {
-  width: -moz-fit-content;
-  width: fit-content;
 }
 
 .min-w-\[135px\] {
@@ -993,26 +981,6 @@ select {
 
 .border-collapse {
   border-collapse: collapse;
-}
-
-.-translate-y-1 {
-  --tw-translate-y: -0.25rem;
-  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
-}
-
-.-translate-y-\[-1px\] {
-  --tw-translate-y: 1px;
-  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
-}
-
-.-translate-y-\[1px\] {
-  --tw-translate-y: -1px;
-  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
-}
-
-.-translate-y-\[2px\] {
-  --tw-translate-y: -2px;
-  transform: translate(var(--tw-translate-x), var(--tw-translate-y)) rotate(var(--tw-rotate)) skewX(var(--tw-skew-x)) skewY(var(--tw-skew-y)) scaleX(var(--tw-scale-x)) scaleY(var(--tw-scale-y));
 }
 
 .-translate-y-\[0\.1rem\] {
@@ -1105,10 +1073,6 @@ select {
 
 .self-end {
   align-self: flex-end;
-}
-
-.justify-self-end {
-  justify-self: end;
 }
 
 .overflow-hidden {
@@ -1298,21 +1262,6 @@ select {
   padding-bottom: 1rem;
 }
 
-.px-3 {
-  padding-left: 0.75rem;
-  padding-right: 0.75rem;
-}
-
-.py-1 {
-  padding-top: 0.25rem;
-  padding-bottom: 0.25rem;
-}
-
-.py-\[0\.5rem\] {
-  padding-top: 0.5rem;
-  padding-bottom: 0.5rem;
-}
-
 .py-\[0\.1rem\] {
   padding-top: 0.1rem;
   padding-bottom: 0.1rem;
@@ -1340,10 +1289,6 @@ select {
 
 .text-start {
   text-align: start;
-}
-
-.align-top {
-  vertical-align: top;
 }
 
 .align-middle {

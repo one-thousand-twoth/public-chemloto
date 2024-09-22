@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { WebsocketConnector } from '@/api/websocket/websocket';
+import { Role } from '@/models/User';
 import { Player, useGameStore } from '@/stores/useGameStore';
-import { Role } from '@/stores/useUserStore';
 import { storeToRefs } from 'pinia';
 import { computed, inject, ref } from 'vue';
 // const props = defineProps<{

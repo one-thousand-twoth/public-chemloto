@@ -1,7 +1,9 @@
 import { WEBSOCKET_EVENT } from '@/api/websocket/websocket'
+import { Role } from '@/models/User'
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
-import { Role, useUserStore } from './useUserStore'
+import { useUserStore } from './useUserStore'
+
 
 const ROOMNAME_LOCAL_STORAGE_KEY = "roomname"
 const CONNECTED_LOCAL_STORAGE_KEY = "connected"

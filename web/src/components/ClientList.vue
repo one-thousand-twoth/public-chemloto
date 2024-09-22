@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import IconButton from '@/components/UI/IconButton.vue';
 import IconButtonBackground from '@/components/UI/IconButtonBackground.vue';
-import { Role, UserInfo, useUserStore } from '@/stores/useUserStore';
+import { Role, UserInfo } from '@/models/User';
+import { useUserStore } from '@/stores/useUserStore';
 import { ArrowPathIcon, TrashIcon } from "@heroicons/vue/24/outline";
 import { storeToRefs } from 'pinia';
 

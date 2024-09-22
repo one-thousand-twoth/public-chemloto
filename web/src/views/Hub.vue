@@ -2,7 +2,8 @@
 import ClientList from '@/components/ClientList.vue';
 import RoomList from '@/components/RoomList.vue';
 import IconButton from '@/components/UI/IconButton.vue';
-import { emojiRole, useUserStore } from '@/stores/useUserStore';
+import { emojiRole } from '@/models/User';
+import { useUserStore } from '@/stores/useUserStore';
 import {
     ArrowLeftStartOnRectangleIcon
 } from "@heroicons/vue/24/outline";
