@@ -16,31 +16,11 @@ export const useUserStore = defineStore('users', {
   state: () => {
     return {
       UserCreds: getUser() as UserInfo | null,
-      UsersList: ref<Array<UserInfo>>([]),
       fetching: ref(false)
     }
   },
   actions:
   {
-    async fetchUsers() {
-      console.log("Fetcing users")
-      const toasterStore = useToasterStore();
-      this.fetching = true
-      if (this.UserCreds == null) {
-        return
-      }
-      const client = new Client(APISettings.protocol + APISettings.baseURL, this.UserCreds.token);
-      // const token = ref(localStorage.getItem("token") ?? "");
-      try {
-        const resp = await client.get("/users");
-        if (resp.status == 200) {
-          this.UsersList = Object.values(await resp.json())
-        }
-      } catch (e) {
-        toasterStore.error("Не удалось обновить информацию о доступных играх")
-      }
-      this.fetching = false;
-    },
     async PatchUser(usr: UserInfo) {
       const toasterStore = useToasterStore();
       const client = new Client(APISettings.protocol + APISettings.baseURL, "");
@@ -141,7 +121,7 @@ export const useUserStore = defineStore('users', {
     }
 
   },
-  getters:{
+  getters: {
     connected: (state) => state.UserCreds?.room ? true : false,
   }
 })

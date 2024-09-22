@@ -2,13 +2,16 @@
 import IconButton from '@/components/UI/IconButton.vue';
 import IconButtonBackground from '@/components/UI/IconButtonBackground.vue';
 import { Role, UserInfo } from '@/models/User';
+import { useUsersListStore } from '@/stores/useUserListStore';
 import { useUserStore } from '@/stores/useUserStore';
 import { ArrowPathIcon, TrashIcon } from "@heroicons/vue/24/outline";
 import { storeToRefs } from 'pinia';
 
 const userStore = useUserStore()
-const { UsersList } = storeToRefs(userStore)
-userStore.fetchUsers()
+
+const usersListStore = useUsersListStore()
+const { UsersList } = storeToRefs(usersListStore)
+usersListStore.fetchUsers()
 function Patch(usr: UserInfo) {
   let role = ""
   if (usr.role == Role.Player) {
@@ -18,12 +21,12 @@ function Patch(usr: UserInfo) {
   }
   if (confirm(`Вы действительно хотите изменить роль ${usr.username} на ${role} ?`)) {
     userStore.PatchUser(usr)
-    userStore.fetchUsers()
+    usersListStore.fetchUsers()
   }
 }
 function Delete(usr: string) {
   userStore.Remove(usr)
-  userStore.fetchUsers()
+  usersListStore.fetchUsers()
 
 }
 </script>
@@ -66,7 +69,7 @@ function Delete(usr: string) {
 
         <div class="mb-5">
           <div class=" flex flex-row gap-2">
-            <IconButton :icon="ArrowPathIcon" @click="userStore.fetchUsers()" />
+            <IconButton :icon="ArrowPathIcon" @click="usersListStore.fetchUsers()" />
           </div>
         </div>
       </div>

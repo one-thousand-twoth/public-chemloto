@@ -1,7 +1,7 @@
-import { defineStore } from 'pinia'
-import { APISettings } from '@/api/config'
-import { ref } from 'vue'
-import { Client } from '@/api/core/client'
+import { APISettings } from '@/api/config';
+import { Client } from '@/api/core/client';
+import { defineStore } from 'pinia';
+import { ref } from 'vue';
 import { useToasterStore } from "../stores/useToasterStore";
 import { useUserStore } from "../stores/useUserStore";
 
@@ -9,8 +9,6 @@ import { useUserStore } from "../stores/useUserStore";
 
 
 export const useRoomsStore = defineStore('rooms', () => {
-    // actions:
-    // {
     const fetching = ref(false)
     const roomList = ref<Array<RoomInfo>>([])
 
@@ -57,7 +55,6 @@ export const useRoomsStore = defineStore('rooms', () => {
         toasterStore.info("Новая игра успешно создана!");
         await Fetch();
     }
-    // state: () => {
     return {
         roomList,
         fetching,
