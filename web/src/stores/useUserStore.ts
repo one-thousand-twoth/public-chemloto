@@ -122,7 +122,7 @@ export const useUserStore = defineStore('users', {
 
   },
   getters: {
-    connected: (state) => state.UserCreds?.room ? true : false,
+    connected: (state) => state.UserCreds!.room ? true : false,
   }
 })
 

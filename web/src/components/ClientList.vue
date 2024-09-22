@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import IconButton from '@/components/UI/IconButton.vue';
 import IconButtonBackground from '@/components/UI/IconButtonBackground.vue';
-import { Role, UserInfo } from '@/models/User';
+import { i18nRole, Role, UserInfo } from '@/models/User';
 import { useUsersListStore } from '@/stores/useUserListStore';
 import { useUserStore } from '@/stores/useUserStore';
 import { ArrowPathIcon, TrashIcon } from "@heroicons/vue/24/outline";
@@ -31,8 +31,6 @@ function Delete(usr: string) {
 }
 </script>
 <template>
-  <!-- <div class="h-screen flex items-center justify-center bg-opacity-5 bg-slate-500"> -->
-    <!-- <div class=" flex items-center  justify-center gap-4 flex-col"> -->
       <div class="p-4 shadow-lg bg-white">
         <table class="mb-4">
           <thead>
@@ -53,7 +51,7 @@ function Delete(usr: string) {
             <tr v-else v-for="user in UsersList" :key="user.username">
               <td class="">{{ user.username }} <span v-if="userStore.UserCreds?.username == user.username">(Это
                   вы!)</span></td>
-              <td class="">{{ user.role }}</td>
+              <td class="">{{ i18nRole( user.role) }}</td>
               <td> {{ user.room ? user.room : "-" }}</td>
               <td v-if="userStore.UserCreds?.role == Role.Admin">
                 <div class="flex justify-end items-end gap-1">
@@ -73,8 +71,6 @@ function Delete(usr: string) {
           </div>
         </div>
       </div>
-    <!-- </div> -->
-  <!-- </div> -->
 </template>
 
 <style scoped>

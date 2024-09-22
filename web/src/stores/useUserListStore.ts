@@ -6,13 +6,6 @@ import { ref } from 'vue';
 import { useToasterStore } from "../stores/useToasterStore";
 import { useUserStore } from './useUserStore';
 
-// const USER_LOCAL_STORAGE_KEY = 'user'
-
-// const getUser = () => {
-//   const value = localStorage.getItem(USER_LOCAL_STORAGE_KEY)
-//   return value ? JSON.parse(value) : null;
-// }
-
 export const useUsersListStore = defineStore('usersList', {
   state: () => {
     return {
