@@ -1,6 +1,6 @@
 import { APISettings } from '@/api/config';
 import { Client } from '@/api/core/client';
-import { defineStore } from 'pinia';
+import { acceptHMRUpdate, defineStore } from 'pinia';
 import { ref } from 'vue';
 import { useToasterStore } from "../stores/useToasterStore";
 import { useUserStore } from "../stores/useUserStore";
@@ -70,3 +70,7 @@ export interface RoomInfo {
     time: number
     isAuto: boolean
 } 
+
+if (import.meta.hot) {
+    import.meta.hot.accept(acceptHMRUpdate(useRoomsStore, import.meta.hot))
+}

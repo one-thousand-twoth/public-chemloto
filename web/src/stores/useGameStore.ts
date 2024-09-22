@@ -1,6 +1,6 @@
 import { WEBSOCKET_EVENT } from '@/api/websocket/websocket'
 import { Role } from '@/models/User'
-import { defineStore } from 'pinia'
+import { acceptHMRUpdate, defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import { useUserStore } from './useUserStore'
 
@@ -122,3 +122,7 @@ export interface GameInfo {
     StateStruct?: { Timer: number }
     Fields: { [id: string]: { Score: number }; }
 } 
+
+if (import.meta.hot) {
+    import.meta.hot.accept(acceptHMRUpdate(useGameStore, import.meta.hot))
+}

@@ -1,4 +1,4 @@
-import { defineStore } from "pinia";
+import { acceptHMRUpdate, defineStore } from "pinia";
 
 // Status will define toast color and icon
 export type TToastStatus = "success" | "info" | "error";
@@ -42,15 +42,19 @@ export const useToasterStore = defineStore("toaster-store", {
             }, timeout ?? defaultTimeout);
         },
         success(payload: string) {
-            this.updateState({text:payload}, "success");
+            this.updateState({ text: payload }, "success");
         },
 
         info(payload: string) {
-            this.updateState({text:payload}, "info");
+            this.updateState({ text: payload }, "info");
         },
 
         error(payload: string) {
-            this.updateState({text:payload}, "error");
+            this.updateState({ text: payload }, "error");
         },
     },
 });
+
+if (import.meta.hot) {
+    import.meta.hot.accept(acceptHMRUpdate(useToasterStore, import.meta.hot))
+}

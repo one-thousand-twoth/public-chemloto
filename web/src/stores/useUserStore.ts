@@ -1,7 +1,7 @@
 import { APISettings } from '@/api/config';
 import { Client } from '@/api/core/client';
 import { Role, UserInfo } from '@/models/User';
-import { defineStore } from 'pinia';
+import { acceptHMRUpdate, defineStore } from 'pinia';
 import { ref } from 'vue';
 import { useToasterStore } from "../stores/useToasterStore";
 
@@ -126,3 +126,6 @@ export const useUserStore = defineStore('users', {
   }
 })
 
+if (import.meta.hot) {
+  import.meta.hot.accept(acceptHMRUpdate(useUserStore, import.meta.hot))
+}
