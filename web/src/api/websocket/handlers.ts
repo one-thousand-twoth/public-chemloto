@@ -21,10 +21,15 @@ export function Subscribe(e: WEBSOCKET_EVENT) {
 export function UNSubscribe(e: WEBSOCKET_EVENT) {
     const store = useGameStore()
     const user = useUserStore()
-    console.log("exiting room")
     const b = e.Body as HUB_SUBSCRIBE_EVENT
     if (b.Target == "room"){
-        user.UserCreds!.room = b.Name
+        console.log("exiting room", b)
+        if (user.UserCreds == null){
+            console.error("user is null")
+            return
+        }
+        user.UserCreds.room = ""
+        console.log(user.UserCreds)
         store.name = ""
     }
 }
