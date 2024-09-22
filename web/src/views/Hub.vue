@@ -19,6 +19,10 @@ const tabs = {
 const picked = ref('Комнаты')
 const userStore = useUserStore()
 const { connected } = storeToRefs(userStore)
+async function Remove(username: string){
+    await userStore.Remove(userStore.UserCreds!.username)
+    window.location.reload();
+}
 </script>
 <template>
     <div class="relative md:p-8 flex flex-col " v-if="!connected">
@@ -26,7 +30,7 @@ const { connected } = storeToRefs(userStore)
             class="flex  items-center relative pl-2 py-[0.1rem]  mb:p-8 text-lg font-semibold border-[5px] border-blue-400 rounded-lg w-fit self-end">
             <span class="-translate-y-[0.1rem]">
                 {{ emojiRole(userStore.UserCreds!.role) }} {{ userStore.UserCreds?.username }}</span>
-            <IconButton :icon="ArrowLeftStartOnRectangleIcon" @click="userStore.Remove(userStore.UserCreds!.username)" />
+            <IconButton :icon="ArrowLeftStartOnRectangleIcon" @click="Remove(userStore.UserCreds!.username)" />
         </div>
         <div class="">
             <div class="relative pl-[8px] top-[0.5rem] flex flex-wrap bg-opacity-0 overflow-y-hidden">
