@@ -56,7 +56,7 @@ func RaiseHand(engine *PolymersEngine) HandlerFunc {
 			}
 		}
 		if !eq {
-			player.Score -= 1
+			player.score(-1)
 			engine.unicast(player.Name, common.Message{
 				Type:   common.UNDEFINED,
 				Ok:     false,
@@ -116,6 +116,7 @@ func Check(engine *PolymersEngine) HandlerFunc {
 			}
 		}
 		var eq bool
+		// Смотрим достаточно ли элементов у игрока в мешке
 		for _, entry := range engine.Checks.Fields[data.Field][data.Name] {
 			eq = reflect.DeepEqual(removeZeroValues(entry), data.Structure)
 			if eq {
@@ -135,7 +136,7 @@ func Check(engine *PolymersEngine) HandlerFunc {
 				slog.Any("example", engine.Checks.Fields[data.Field][data.Name]),
 			)
 			player.RaisedHand = false
-			player.Score -= 1
+			player.score(-1)
 			for i := 0; i < len(engine.RaisedHands); i++ {
 				if engine.RaisedHands[i].Player.Name == e.Player {
 					engine.RaisedHands = append(engine.RaisedHands[:i], engine.RaisedHands[i+1:]...)
@@ -146,7 +147,7 @@ func Check(engine *PolymersEngine) HandlerFunc {
 		if len(engine.unchecked()) == 0 {
 			engine.log.Debug("all players checked")
 			for _, hand := range engine.RaisedHands {
-				hand.Player.Score += engine.Fields[hand.Field].decrementScore()
+				hand.Player.score(engine.Fields[hand.Field].decrementScore())
 			}
 			engine.RaisedHands = engine.RaisedHands[:0]
 			return OBTAIN

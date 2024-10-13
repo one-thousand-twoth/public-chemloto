@@ -121,6 +121,14 @@ type Participant struct {
 	Score      int // Game score only for Players
 }
 
+// score will decrease Participant`s score with min value = -2
+func (p *Participant) score(score int) {
+	p.Score += score
+	if p.Score < -2 {
+		p.Score = -2
+	}
+}
+
 // unicastFunction accepts first argument userID
 type unicastFunction func(userId string, msg common.Message)
 type broadcastFunction func(common.Message)

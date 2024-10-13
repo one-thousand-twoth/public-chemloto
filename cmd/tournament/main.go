@@ -8,7 +8,7 @@ import (
 
 func main() {
 	initResultFolder()
-	port := "1090"
+	port := "8090"
 	server := server.NewServer()
 	server.Run(port)
 }
