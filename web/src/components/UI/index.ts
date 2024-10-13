@@ -1,7 +1,10 @@
-import Navbar from "./Navbar.vue";
-import Modal from "./Modal.vue";
-import IconButton from "./IconButton.vue";
-import Tooltip from "./Tooltip.vue";
 import ElementImage from "./ElementImage.vue";
+import IconButton from "./IconButton.vue";
+import IconButtonBackground from "./IconButtonBackground.vue";
+import Modal from "./Modal.vue";
+import Navbar from "./Navbar.vue";
+import Timer from "./Timer.vue";
+import Tooltip from "./Tooltip.vue";
 
-export { Navbar , Modal,IconButton, Tooltip, ElementImage};
+export { ElementImage, IconButton, IconButtonBackground, Modal, Navbar, Timer, Tooltip };
+
