@@ -123,12 +123,13 @@ func NewServer() *Server {
 	log := slog.New(devslog.NewHandler(colorable.NewColorableStdout(), opts))
 	mux := chi.NewRouter()
 
-	hub := hub.NewHub(log, upgrader)
-	hub.SetupHandlers()
-	hub.Run()
-
+	Hub := hub.NewHub(log, upgrader)
+	Hub.SetupHandlers()
+	Hub.Run()
+	// NOTE: for development
+	Hub.FillRooms()
 	server := &Server{
-		hub: hub,
+		hub: Hub,
 		log: log,
 		mux: mux}
 	server.configureRoutes()
