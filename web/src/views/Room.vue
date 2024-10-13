@@ -39,22 +39,33 @@ const TradeButton = ref(false)
 <template>
     <div class="relative flex max-h-lvh flex-col items-center overflow-x-hidden">
         <main class="flex justify-between w-lvw grow gap-10 bg-gray-100">
+            <!-- #region LEFT -->
             <div class="flex flex-col m-3 w-[20%] gap-2">
                 <div class="bars p-3 min-w-[8.5rem]  grow-[1] bg-gray-50">
-                    <LeaderBoard @selectPlayer="(name: string) => {curInfoPlayer = name}"></LeaderBoard>
+                    <LeaderBoard @selectPlayer="(name: string) => { curInfoPlayer = name }"></LeaderBoard>
                 </div>
                 <IconButtonBackground v-if="!GameStore.gameState.Started || userStore.UserCreds?.role != Role.Player"
                     class="w-full bg-red-700 text-white  rounded-lg" :icon="ArrowLeftStartOnRectangleIcon"
                     @click="DisconnectGame()">Выйти</IconButtonBackground>
             </div>
+            <!-- #endregion LEFT -->
+            <!-- #region CENTER -->
             <div class="flex flex-col items-center  h-lvh max-w-[900px] gap-2 p-5 pb-60 grow-[3]">
                 <Timer />
-                <ElementImage class="h-auto w-full max-w-[50lvh]" :elname="GameStore.currElement" />
+                <div class=" h-auto w-full max-w-[50lvh] gap-2 flex flex-wrap items-center justify-center">
+                    <ElementImage class="grow-[2] center" :elname="GameStore.currElement" />
+                    <div class="flex flex-col flex-wrap gap-1 items-center" id="lastElementsContainer">
+                        <!-- <h3 class="mb-2">Последние элементы</h3> -->
+                        <ElementImage v-for="el in GameStore.LastElements" :elname="el" />
+                    </div>
+                </div>
                 <FieldsTable />
                 <ButtonPanelAdmin v-if="userStore.UserCreds?.role != Role.Player" />
                 <ButtonPanelPlayer v-else />
 
             </div>
+            <!-- #endregion CENTER -->
+            <!-- #region RIGHT -->
             <div class="bars min-w-[135px] p-3 bg-gray-50 w-[20%] m-3">
                 <h2>Поднятые руки</h2>
                 <ul class="list-none p-0 font-bold m-0">
@@ -64,11 +75,13 @@ const TradeButton = ref(false)
                     </li>
                 </ul>
             </div>
+            <!-- #endregion RIGHT -->
         </main>
-        <div class="fixed bottom-3 right-3 flex flex-wrap items-center" id="lastElementsContainer">
-            <h3 class="mr-2">Последние элементы</h3>
-            <ElementImage v-for="el in GameStore.LastElements" :elname="el" />
-        </div>
+
+
+      
+
+
         <Modal :show="currPlayer !== undefined" @close="curInfoPlayer = ''">
             <template #header>
                 <h3 class="font-bold text-center">Информация о игроке {{ curInfoPlayer }}</h3>
@@ -86,7 +99,7 @@ const TradeButton = ref(false)
                 <CheckPlayer :player="curCheckPlayer" />
             </template>
         </Modal>
-  
+
     </div>
 </template>
 

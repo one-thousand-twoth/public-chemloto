@@ -769,10 +769,6 @@ select {
   position: sticky;
 }
 
-.bottom-3 {
-  bottom: 0.75rem;
-}
-
 .bottom-4 {
   bottom: 1rem;
 }
@@ -783,10 +779,6 @@ select {
 
 .left-14 {
   left: 3.5rem;
-}
-
-.right-3 {
-  right: 0.75rem;
 }
 
 .right-4 {
@@ -841,6 +833,10 @@ select {
   margin: auto;
 }
 
+.m-\[25\%\] {
+  margin: 25%;
+}
+
 .mx-0 {
   margin-left: 0px;
   margin-right: 0px;
@@ -874,6 +870,14 @@ select {
 
 .mt-4 {
   margin-top: 1rem;
+}
+
+.ml-\[25\%\] {
+  margin-left: 25%;
+}
+
+.mb-2 {
+  margin-bottom: 0.5rem;
 }
 
 .block {
@@ -973,6 +977,10 @@ select {
 
 .grow-\[1\] {
   flex-grow: 1;
+}
+
+.grow-\[2\] {
+  flex-grow: 2;
 }
 
 .grow-\[3\] {
@@ -1293,6 +1301,10 @@ select {
 
 .text-start {
   text-align: start;
+}
+
+.align-baseline {
+  vertical-align: baseline;
 }
 
 .align-middle {
