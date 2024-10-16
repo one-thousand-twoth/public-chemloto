@@ -190,7 +190,7 @@ func (h *Hub) HandleWS(w http.ResponseWriter, r *http.Request) {
 			initChan(connection.MessageChan)
 		}()
 	}
-	log.Debug("user", "user current channels:", fmt.Sprintf("%+v", user.channels))
+	log.Debug("(Re)Connected to WS user", "user current channels:", fmt.Sprintf("%+v", user.channels))
 	if x, ok := h.Channels.Get("default"); ok {
 		log.Debug("hub current channels", "hub channels:", fmt.Sprintf("%+#v", x))
 	}

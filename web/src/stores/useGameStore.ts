@@ -19,14 +19,6 @@ const getConnected = () => {
 export const useGameStore = defineStore('game', () => {
 
     const fetching = ref(false)
-    // const connectedRef = ref(getConnected())
-    // const connected = computed({
-    //     get: () => connectedRef.value,
-    //     set: (v) => {
-    //         connectedRef.value = v
-    //         localStorage.setItem(CONNECTED_LOCAL_STORAGE_KEY, String(v));
-    //     },
-    // })
     const roomname = ref(getName())
     const name = computed({
         get: () => {
@@ -40,6 +32,7 @@ export const useGameStore = defineStore('game', () => {
             localStorage.setItem(ROOMNAME_LOCAL_STORAGE_KEY, roomname.value);
         }
     })
+    // TODO: Сделать getter`om
     const timer = ref(0)
     const gameState = ref<GameInfo>({
         Bag: {
@@ -48,7 +41,7 @@ export const useGameStore = defineStore('game', () => {
         },
         Players: [],
         Started: false,
-        State: "none",
+        State: undefined,
         RaisedHands: [],
         Fields: {
 
@@ -73,9 +66,9 @@ export const useGameStore = defineStore('game', () => {
     })
 
     function EngineInfo(e: WEBSOCKET_EVENT) {
-        // console.log("changing to room")
         const b = e.Body["engine"] as GameInfo
         gameState.value = b
+        if (gameState.value.State === "OBTAIN")
         if (gameState.value.StateStruct) {
             timer.value = gameState.value.StateStruct.Timer
         }
@@ -113,14 +106,31 @@ export interface Hand {
     Name: string,
     Structure: { [id: string]: number; }
 }
-export interface GameInfo {
+export type GameInfo = {
     Bag: Bag,
     Players: Array<Player>,
     RaisedHands: Array<Hand>
     Started: boolean,
-    State: String,
-    StateStruct?: { Timer: number }
+    // State
     Fields: { [id: string]: { Score: number }; }
+}  & State
+export type State = StateOBTAIN | StateTRADE | StateCOMPLETED | StateHAND | StateUndefined
+export interface StateOBTAIN {
+    State: "OBTAIN"
+    StateStruct?: { Timer: number }
+} 
+export interface StateTRADE {
+    State: "TRADE",
+    StateStruct?: { StockExchange: {StockList: {Owner: string, Element: string, ToElement: string }[]} }
+} 
+export interface StateCOMPLETED {
+    State: "COMPLETED"
+} 
+export interface StateHAND {
+    State: "HAND"
+} 
+export interface StateUndefined {
+    State: undefined
 } 
 
 if (import.meta.hot) {

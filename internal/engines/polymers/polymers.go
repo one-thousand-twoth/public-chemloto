@@ -12,6 +12,7 @@ import (
 	"github.com/anrew1002/Tournament-ChemLoto/internal/common"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/engines/models"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/sl"
+	"github.com/mitchellh/mapstructure"
 )
 
 func New(log *slog.Logger, cfg PolymersEngineConfig) *PolymersEngine {
@@ -53,9 +54,10 @@ func New(log *slog.Logger, cfg PolymersEngineConfig) *PolymersEngine {
 			HAND: NewState().
 				Add("RaiseHand", RaiseHand(eng), false).
 				Add("Check", Check(eng), true),
-			TRADE: NewState().
-				Add("Trade", eng.Trade(), true).
-				Add("Continue", func(a models.Action) stateInt { return OBTAIN }, true),
+			// TRADE: NewState().
+			// 	Add("Trade", eng.Trade(), true).
+			// 	Add("Continue", func(a models.Action) stateInt { return OBTAIN }, true),
+			TRADE:     eng.NewTradeState(30),
 			COMPLETED: NewState(),
 		},
 	}
@@ -192,7 +194,7 @@ func (engine *PolymersEngine) Start() {
 			case <-engine.Internal:
 				engine.mu.Lock()
 				func() {
-					engine.log.Debug("recieve tick from timer")
+					// engine.log.Debug("recieve tick from timer")
 					// Избыточная проверка, потому что предполагаю, что
 					// есть маленький шанс, когда тик может прийти после смены state
 					if engine.StateMachine.Current != OBTAIN {
@@ -221,7 +223,7 @@ func (engine *PolymersEngine) Start() {
 				}()
 				engine.mu.Unlock()
 			}
-			engine.log.Debug("Engine selected action")
+			// engine.log.Debug("Engine selected action")
 		}
 	}()
 	engine.log.Debug("Broadcast for starting engine")
@@ -347,4 +349,16 @@ func (engine *PolymersEngine) MarshalJSON() ([]byte, error) {
 		engine.StateMachine.States[engine.StateMachine.Current],
 	}
 	return json.Marshal(eng)
+}
+
+func dataFromAction[T any](e models.Action, eng *PolymersEngine) (*T, *Participant, error) {
+	player, err := eng.getPlayer(e.Player)
+	if err != nil {
+		return nil, nil, err
+	}
+	var data T
+	if err := mapstructure.Decode(e.Envelope, data); err != nil {
+		return nil, nil, err
+	}
+	return &data, player, nil
 }

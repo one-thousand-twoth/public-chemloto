@@ -4,8 +4,9 @@ import CheckPlayer from "./CheckPlayer.vue";
 import LeaderBoard from "./LeaderBoard.vue";
 import RaiseHandComp from "./RaiseHandComp.vue";
 import Trade from "./Trade.vue";
+import TradeExchange from "./TradeExchange.vue";
 import UserElements from "./UserElements.vue";
 
 
-export { ButtonPanelAdmin, ButtonPanelPlayer, CheckPlayer, LeaderBoard, RaiseHandComp, Trade, UserElements };
+export { ButtonPanelAdmin, ButtonPanelPlayer, CheckPlayer, LeaderBoard, RaiseHandComp, Trade, TradeExchange, UserElements };
 

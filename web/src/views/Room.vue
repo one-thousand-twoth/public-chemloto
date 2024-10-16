@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { WebsocketConnector } from '@/api/websocket/websocket';
-import { ButtonPanelAdmin, ButtonPanelPlayer, CheckPlayer, LeaderBoard, RaiseHandComp, Trade, UserElements } from '@/components/game';
+import { ButtonPanelAdmin, ButtonPanelPlayer, CheckPlayer, LeaderBoard, UserElements } from '@/components/game';
 import { ElementImage, IconButtonBackground, Modal, Timer } from '@/components/UI/';
 import { Role } from '@/models/User';
 import { Hand, useGameStore } from '@/stores/useGameStore';
@@ -31,9 +31,6 @@ const currPlayer = computed(() => {
 
 const curInfoPlayer = ref('')
 const curCheckPlayer = ref<Hand>()
-const RaiseHandButton = ref(false)
-const TradeButton = ref(false)
-
 
 </script>
 <template>
@@ -52,6 +49,7 @@ const TradeButton = ref(false)
             <!-- #region CENTER -->
             <div class="flex flex-col items-center  h-lvh max-w-[900px] gap-2 p-5 pb-60 grow-[3]">
                 <Timer />
+
                 <div class=" h-auto w-full max-w-[50lvh] gap-2 flex flex-wrap items-center justify-center">
                     <ElementImage class="grow-[2] center" :elname="GameStore.currElement" />
                     <div class="flex flex-col flex-wrap gap-1 items-center" id="lastElementsContainer">
@@ -59,6 +57,7 @@ const TradeButton = ref(false)
                         <ElementImage v-for="el in GameStore.LastElements" :elname="el" />
                     </div>
                 </div>
+
                 <FieldsTable />
                 <ButtonPanelAdmin v-if="userStore.UserCreds?.role != Role.Player" />
                 <ButtonPanelPlayer v-else />
@@ -79,7 +78,7 @@ const TradeButton = ref(false)
         </main>
 
 
-      
+
 
 
         <Modal :show="currPlayer !== undefined" @close="curInfoPlayer = ''">

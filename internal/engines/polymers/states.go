@@ -9,6 +9,8 @@ import (
 
 	"github.com/anrew1002/Tournament-ChemLoto/internal/common"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/engines/models"
+	"github.com/anrew1002/Tournament-ChemLoto/internal/sl"
+	"github.com/google/uuid"
 )
 
 var (
@@ -61,7 +63,7 @@ func (s SimpleState) Handlers() map[string]HandlerFunc {
 	return s.handlers
 }
 
-// MarshalJSON - метод, который всегда возвращает пустой JSON-объект
+// MarshalJSON - метод, который возвращает пустой JSON-объект для объектов SimpleState, так как они не имеют внутреннего состояния
 func (s SimpleState) MarshalJSON() ([]byte, error) {
 	return []byte("null"), nil
 }
@@ -115,7 +117,6 @@ func (s *ObtainState) Handlers() map[string]HandlerFunc {
 	return s.handlers
 }
 
-// MarshalJSON - метод, который всегда возвращает пустой JSON-объект
 func (s *ObtainState) MarshalJSON() ([]byte, error) {
 	st := struct {
 		Timer int
@@ -185,4 +186,135 @@ func (eng *PolymersEngine) NewObtainState(timerInt int) (state *ObtainState) {
 		eng.log.Error("exiting timer loop")
 	}()
 	return
+}
+
+type TradeState struct {
+	SimpleState
+	ticker        *time.Ticker
+	maxDur        int
+	currDur       time.Duration
+	step          int
+	done          chan struct{}
+	eng           *PolymersEngine
+	startTime     time.Time
+	StockExchange *StockExchange
+}
+
+type StockExchange struct {
+	StockList   []*Stock
+	RequestList map[string]*StockRequest
+}
+
+type StockRequest struct {
+	Player string
+	Accept bool
+}
+
+type Stock struct {
+	ID        string
+	Owner     *Participant
+	Element   string
+	ToElement string
+}
+
+func (s *StockExchange) AddStock(stck *Stock) {
+	s.StockList = append(s.StockList, stck)
+}
+func (s *StockExchange) AddRequest(id string, req *StockRequest) {
+	s.RequestList[id] = req
+}
+func (stk *Stock) MarshalJSON() ([]byte, error) {
+	st := struct {
+		Owner     string
+		Element   string
+		ToElement string
+	}{
+		stk.Owner.Name, stk.Element, stk.ToElement,
+	}
+	return json.Marshal(st)
+}
+
+func (eng *PolymersEngine) NewTradeState(timerInt int) (state *TradeState) {
+	state = &TradeState{
+		ticker:  time.NewTicker(time.Hour * 100),
+		maxDur:  0,
+		currDur: 0,
+		step:    0,
+		done:    make(chan struct{}),
+		eng:     eng,
+
+		SimpleState: NewState(),
+		StockExchange: &StockExchange{
+			StockList:   make([]*Stock, 0, 10),
+			RequestList: make(map[string]*StockRequest),
+		},
+	}
+	state.Add("TradeOffer", state.addTradeOffer(), false)
+	state.Add("Continue", func(a models.Action) stateInt { return OBTAIN }, true)
+
+	return
+
+}
+func (s *TradeState) addTradeOffer() HandlerFunc {
+	type Data struct {
+		Type      string
+		Action    string
+		Element   string
+		ToElement string `json:"toElement"`
+	}
+	return func(e models.Action) (newState stateInt) {
+
+		data, owner, err := dataFromAction[Data](e, s.eng)
+		if err != nil {
+			s.eng.log.Error("Failed to decode Action data", sl.Err(err))
+			return
+		}
+
+		if owner.Bag[data.Element] < 1 {
+			s.eng.unicast(owner.Name, common.Message{
+				Type:   common.UNDEFINED,
+				Ok:     false,
+				Errors: []string{"У вас нет такого элемента!"},
+			})
+			return
+		}
+
+		s.StockExchange.AddStock(&Stock{
+			ID:        uuid.NewString(),
+			Owner:     owner,
+			Element:   data.Element,
+			ToElement: data.ToElement,
+		})
+		s.eng.broadcast(common.Message{
+			Type: common.ENGINE_INFO,
+			Ok:   true,
+			Body: s.eng.PreHook(),
+		})
+		return
+	}
+}
+func (s *TradeState) addTradeRequest() HandlerFunc {
+	type Data struct {
+		Type    string
+		StockID string
+		Action  string
+		Accept  bool
+	}
+	return func(e models.Action) (newState stateInt) {
+		data, _, err := dataFromAction[Data](e, s.eng)
+		if err != nil {
+			s.eng.log.Error("Failed to decode Action data", sl.Err(err))
+			return
+		}
+		s.StockExchange.AddRequest(data.StockID, &StockRequest{Player: e.Player, Accept: data.Accept})
+
+		return
+	}
+}
+
+func (s *TradeState) MarshalJSON() ([]byte, error) {
+	st := struct {
+		StockExchange StockExchange
+	}{*s.StockExchange}
+	return json.Marshal(st)
 }

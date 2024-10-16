@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { WebsocketConnector } from '@/api/websocket/websocket';
-import RaiseHandComp from '@/components/game/RaiseHandComp.vue';
+import { RaiseHandComp, TradeExchange, UserElements } from '@/components/game/';
 import { Modal } from '@/components/UI/index';
 import { Hand, useGameStore } from '@/stores/useGameStore';
 import { useUserStore } from '@/stores/useUserStore';
@@ -62,6 +62,7 @@ const TradeButton = ref(false)
                 руку</button>
         </template>
         <template v-if="GameStore.gameState.State == 'TRADE'">
+            <button @click="TradeButton = !TradeButton">Обменять</button>
         </template>
     </template>
 
@@ -79,6 +80,14 @@ const TradeButton = ref(false)
         </template>
         <template v-if="GameStore.SelfPlayer" #body>
             <RaiseHandComp :player="GameStore.SelfPlayer" />
+        </template>
+    </Modal>
+    <Modal :show="TradeButton" @close="TradeButton = false">
+        <template #header>
+            <h3 class="font-bold text-center">Обменять</h3>
+        </template>
+        <template v-if="GameStore.SelfPlayer" #body>
+            <TradeExchange />
         </template>
     </Modal>
 </template>
