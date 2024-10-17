@@ -201,11 +201,12 @@ type TradeState struct {
 }
 
 type StockExchange struct {
-	StockList   []*Stock
-	RequestList map[string]*StockRequest
+	StockList []*Stock
+	Requests  map[string]*StockRequest
 }
 
 type StockRequest struct {
+	ID     string
 	Player string
 	Accept bool
 }
@@ -220,16 +221,30 @@ type Stock struct {
 func (s *StockExchange) AddStock(stck *Stock) {
 	s.StockList = append(s.StockList, stck)
 }
-func (s *StockExchange) AddRequest(id string, req *StockRequest) {
-	s.RequestList[id] = req
+func (s *StockExchange) AddRequest(StockID string, req *StockRequest) {
+	s.Requests[StockID] = req
 }
+
+func (s *StockExchange) StockByUser(user string) (Stock, error) {
+	for _, stock := range s.StockList {
+		if stock.Owner.Name == user {
+			return stock, nil
+		}
+	}
+	return nil, errors.New("no stock with this player")
+}
+
+// func (s *StockExchange) SetAck(StockId string, RequestID string){
+
+// }
 func (stk *Stock) MarshalJSON() ([]byte, error) {
 	st := struct {
+		ID        string
 		Owner     string
 		Element   string
 		ToElement string
 	}{
-		stk.Owner.Name, stk.Element, stk.ToElement,
+		stk.ID, stk.Owner.Name, stk.Element, stk.ToElement,
 	}
 	return json.Marshal(st)
 }
@@ -245,8 +260,8 @@ func (eng *PolymersEngine) NewTradeState(timerInt int) (state *TradeState) {
 
 		SimpleState: NewState(),
 		StockExchange: &StockExchange{
-			StockList:   make([]*Stock, 0, 10),
-			RequestList: make(map[string]*StockRequest),
+			StockList: make([]*Stock, 0, 10),
+			Requests:  make(map[string]*StockRequest),
 		},
 	}
 	state.Add("TradeOffer", state.addTradeOffer(), false)
@@ -296,8 +311,8 @@ func (s *TradeState) addTradeOffer() HandlerFunc {
 func (s *TradeState) addTradeRequest() HandlerFunc {
 	type Data struct {
 		Type    string
-		StockID string
 		Action  string
+		StockID string
 		Accept  bool
 	}
 	return func(e models.Action) (newState stateInt) {
@@ -306,12 +321,30 @@ func (s *TradeState) addTradeRequest() HandlerFunc {
 			s.eng.log.Error("Failed to decode Action data", sl.Err(err))
 			return
 		}
-		s.StockExchange.AddRequest(data.StockID, &StockRequest{Player: e.Player, Accept: data.Accept})
+		s.StockExchange.AddRequest(data.StockID, &StockRequest{ID: uuid.NewString(), Player: e.Player, Accept: data.Accept})
 
 		return
 	}
 }
 
+func (s *TradeState) addTradeAck() HandlerFunc {
+	type Data struct {
+		Type     string
+		Action   string
+		TargetID string
+	}
+	return func(e models.Action) (newState stateInt) {
+		_, player, err := dataFromAction[Data](e, s.eng)
+		if err != nil {
+			s.eng.log.Error("Failed to decode Action data", sl.Err(err))
+			return
+		}
+		s.StockExchange.StockByUser(player.Name)
+		// s.StockExchange.Requests[]
+
+		return
+	}
+}
 func (s *TradeState) MarshalJSON() ([]byte, error) {
 	st := struct {
 		StockExchange StockExchange
