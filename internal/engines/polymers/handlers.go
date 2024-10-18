@@ -2,17 +2,17 @@ package polymers
 
 import (
 	"errors"
-	"fmt"
 	"log/slog"
 	"reflect"
 
 	"github.com/anrew1002/Tournament-ChemLoto/internal/common"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/engines/models"
+	"github.com/anrew1002/Tournament-ChemLoto/internal/engines/models/enerr"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/sl"
 	"github.com/mitchellh/mapstructure"
 )
 
-type HandlerFunc func(models.Action) stateInt
+type HandlerFunc func(models.Action) (stateInt, error)
 
 func RaiseHand(engine *PolymersEngine) HandlerFunc {
 	type Data struct {
@@ -22,34 +22,28 @@ func RaiseHand(engine *PolymersEngine) HandlerFunc {
 		Name      string
 		Structure map[string]int
 	}
-	return func(e models.Action) stateInt {
-		engine.log.Info("Handle RaiseHand", slog.String("player", e.Player), slog.Any("players", engine.players()))
-		var data Data
-		if err := mapstructure.Decode(e.Envelope, &data); err != nil {
-			engine.log.Error("Failed to decode Check data", sl.Err(err))
+	return func(e models.Action) (stateInt, error) {
+		const op enerr.Op = "polymers/RaiseHand"
+		data, player, err := dataFromAction[Data](e, engine)
+		if err != nil {
+			enerr.ErrorResponse(engine.unicast, e.Player, engine.log, err)
 		}
 
-		player, _ := engine.getPlayer(e.Player)
+		engine.log.Debug("Handle RaiseHand",
+			slog.String("player", e.Player),
+			slog.Any("players", engine.players()),
+			enerr.OpAttr(op))
+
 		var less bool
 		for k := range data.Structure {
 			less = player.Bag[k] < data.Structure[k]
 			if less {
-				engine.log.Error("To many elements, than player has")
-				engine.unicast(e.Player, common.Message{
-					Type:   common.ENGINE_ACTION,
-					Ok:     false,
-					Errors: []string{"Указаны элементы которых нет в количестве"},
-					Body: map[string]any{
-						"Action":  "RaiseHand",
-						"Players": engine.players(),
-					},
-				})
-				return NO_TRANSITION
+				return NO_TRANSITION, enerr.E("Указаны элементы которых нет в таком количестве", enerr.GameLogic)
 			}
 		}
 
 		var eq bool
-		for _, entry := range engine.Checks.Fields[data.Field][data.Name] {
+		for _, entry := range engine.checks.Fields[data.Field][data.Name] {
 			eq = reflect.DeepEqual(removeZeroValues(entry), data.Structure)
 			if eq {
 				break
@@ -57,20 +51,16 @@ func RaiseHand(engine *PolymersEngine) HandlerFunc {
 		}
 		if !eq {
 			player.score(-1)
-			engine.unicast(player.Name, common.Message{
-				Type:   common.UNDEFINED,
-				Ok:     false,
-				Errors: []string{"Неправильный состав элементов", "Вычитается один балл"},
-			})
 			engine.broadcast(common.Message{
 				Type: common.ENGINE_INFO,
 				Ok:   true,
 				Body: engine.PreHook(),
 			})
-			return NO_TRANSITION
+			return NO_TRANSITION, enerr.E("Неправильный состав элементов")
 		}
 		player.RaisedHand = true
-		engine.RaisedHands = append(engine.RaisedHands, Hand{Player: player, Field: data.Field, Name: data.Name, Structure: data.Structure})
+		engine.raisedHands = append(engine.raisedHands,
+			Hand{Player: player, Field: data.Field, Name: data.Name, Structure: data.Structure})
 
 		engine.broadcast(common.Message{
 			Type: common.ENGINE_ACTION,
@@ -80,7 +70,7 @@ func RaiseHand(engine *PolymersEngine) HandlerFunc {
 				"Players": engine.players(),
 			},
 		})
-		return HAND
+		return HAND, nil
 	}
 }
 
@@ -93,38 +83,45 @@ func Check(engine *PolymersEngine) HandlerFunc {
 		Name      string
 		Structure map[string]int
 	}
-	return func(e models.Action) stateInt {
-		engine.log.Info("Handle Check action",
+	return func(e models.Action) (stateInt, error) {
+
+		const op enerr.Op = "polymers/Check"
+		data, player, err := dataFromAction[Data](e, engine)
+		if err != nil {
+			enerr.ErrorResponse(engine.unicast, e.Player, engine.log, err)
+		}
+
+		engine.log.Debug("Handle Check action",
 			slog.String("player", e.Player),
 			slog.Any("players", engine.players()),
-			slog.String("data", fmt.Sprintf("%#v", e.Envelope["Structure"])))
-		var data Data
-		if err := mapstructure.Decode(e.Envelope, &data); err != nil {
-			engine.log.Error("Failed to decode Check data", sl.Err(err))
-		}
-		player, err := engine.getPlayer(data.Player)
-		if err != nil {
-			engine.log.Error("cannot find player")
-			return NO_TRANSITION
-		}
+			slog.String("Field", data.Field),
+			slog.String("Name", data.Name),
+			slog.Any("Structure", data.Structure),
+			enerr.OpAttr(op),
+		)
+		// TODO: роазобраться, тут кажется напутана логика
 		var less bool
 		for k := range data.Structure {
 			less = player.Bag[k] < data.Structure[k]
 			if less {
 				engine.log.Error("To many elements, than player has")
-				return NO_TRANSITION
+				return NO_TRANSITION, enerr.E("Слишком много элементов", enerr.GameLogic)
 			}
 		}
 		var eq bool
 		// Смотрим достаточно ли элементов у игрока в мешке
-		for _, entry := range engine.Checks.Fields[data.Field][data.Name] {
+		for _, entry := range engine.checks.Fields[data.Field][data.Name] {
 			eq = reflect.DeepEqual(removeZeroValues(entry), data.Structure)
 			if eq {
 				break
 			}
 		}
+		// TODO: обработать ошибку
 		if eq {
-			engine.log.Info("Succesful check Polymers", slog.String("Player", e.Player), slog.Any("Data", data))
+			engine.log.Info("Succesful check Polymers",
+				slog.String("Player", e.Player),
+				slog.Any("Data", data),
+				enerr.OpAttr(op))
 			player.RaisedHand = false
 			for k := range player.Bag {
 				player.Bag[k] -= data.Structure[k]
@@ -133,60 +130,64 @@ func Check(engine *PolymersEngine) HandlerFunc {
 		} else {
 			engine.log.Error("Failed to check Polymers",
 				slog.Any("data", data),
-				slog.Any("example", engine.Checks.Fields[data.Field][data.Name]),
+				slog.Any("example", engine.checks.Fields[data.Field][data.Name]),
+				enerr.OpAttr(op),
 			)
 			player.RaisedHand = false
 			player.score(-1)
-			for i := 0; i < len(engine.RaisedHands); i++ {
-				if engine.RaisedHands[i].Player.Name == e.Player {
-					engine.RaisedHands = append(engine.RaisedHands[:i], engine.RaisedHands[i+1:]...)
+			for i := 0; i < len(engine.raisedHands); i++ {
+				if engine.raisedHands[i].Player.Name == e.Player {
+					engine.raisedHands = append(engine.raisedHands[:i], engine.raisedHands[i+1:]...)
 					break
 				}
 			}
+
 		}
 		if len(engine.unchecked()) == 0 {
-			engine.log.Debug("all players checked")
-			for _, hand := range engine.RaisedHands {
-				hand.Player.score(engine.Fields[hand.Field].decrementScore())
+			engine.log.Debug("all players checked", enerr.OpAttr(op))
+			for _, hand := range engine.raisedHands {
+				hand.Player.score(engine.fields[hand.Field].decrementScore())
 			}
-			engine.RaisedHands = engine.RaisedHands[:0]
-			return OBTAIN
+			engine.raisedHands = engine.raisedHands[:0]
+			return OBTAIN, nil
 		}
-		return HAND
+		return HAND, nil
 	}
 }
 func GetElement(engine *PolymersEngine) HandlerFunc {
-	return func(e models.Action) stateInt {
-		elem, err := engine.Bag.getRandomElement()
+	return func(_ models.Action) (stateInt, error) {
+		const op enerr.Op = "polymers/PolymersEngine.GetElement"
+		empty := "Empty bag!"
+		elem, err := engine.bag.getRandomElement()
 		if err != nil {
+			// TODO: ErrEmptyBag не должен быть ошибкой, по идее - надо поправить
 			if errors.Is(err, ErrEmptyBag) {
-				engine.log.Info("Empty bag!")
-				elem = "Empty bag!"
-				engine.Bag.PushedValues = append(engine.Bag.PushedValues, elem)
+				engine.log.Info("Элементы в мешке закончились", enerr.OpAttr(op))
+				elem = empty
+				engine.bag.PushedValues = append(engine.bag.PushedValues, elem)
 			} else {
 				engine.log.Error("Error Get Element", sl.Err(err))
-				return NO_TRANSITION
+				return NO_TRANSITION, err
 			}
 		}
 
 		for _, player := range engine.players() {
 			player.Bag[elem] += 1
 		}
-		engine.log.Debug("Got element", slog.String("elem", elem))
+		engine.log.Debug("Got new element", slog.String("elem", elem), enerr.OpAttr(op))
 		engine.broadcast(common.Message{Type: common.ENGINE_ACTION, Ok: true, Body: map[string]any{
 			"Action":       "GetElement",
 			"Element":      elem,
-			"LastElements": engine.Bag.LastElements(),
+			"LastElements": engine.bag.LastElements(),
 		}})
-		if elem == "Empty bag!" {
-			return COMPLETED
+		if elem == empty {
+			return COMPLETED, nil
 		}
 		if elem == "TRADE" {
-			return TRADE
+			return TRADE, nil
 		}
-		return NO_TRANSITION
+		return NO_TRANSITION, nil
 	}
-
 }
 func (engine *PolymersEngine) Trade() HandlerFunc {
 	type Data struct {
@@ -197,7 +198,7 @@ func (engine *PolymersEngine) Trade() HandlerFunc {
 		Player2  string
 		Element2 string
 	}
-	return func(e models.Action) stateInt {
+	return func(e models.Action) (stateInt, error) {
 		var data Data
 		if err := mapstructure.Decode(e.Envelope, &data); err != nil {
 			engine.log.Error("Failed to decode Check data", sl.Err(err))
@@ -205,25 +206,25 @@ func (engine *PolymersEngine) Trade() HandlerFunc {
 		pl1, err := engine.getPlayer(data.Player1)
 		if err != nil {
 			engine.log.Error("Failed to get user", "user", data.Player1)
-			return NO_TRANSITION
+			return NO_TRANSITION, err
 		}
 		pl2, err := engine.getPlayer(data.Player2)
 		if err != nil {
 			engine.log.Error("Failed to get user", "user", data.Player2)
-			return NO_TRANSITION
+			return NO_TRANSITION, err
 		}
 		if pl1.Bag[data.Element1] <= 1 {
-			engine.log.Error("found no element", "user", pl1, "element", data.Element1)
-			return NO_TRANSITION
+			// engine.log.Error("found no element", "user", pl1, "element", data.Element1)
+			return NO_TRANSITION, enerr.E("У игрока нет элемента")
 		}
 		if pl2.Bag[data.Element2] <= 1 {
-			engine.log.Error("found no element", "user", pl1, "element", data.Element1)
-			return NO_TRANSITION
+			// engine.log.Error("found no element", "user", pl1, "element", data.Element1)
+			return NO_TRANSITION, err
 		}
 		pl1.Bag[data.Element1] -= 1
 		pl2.Bag[data.Element2] -= 1
 		pl1.Bag[data.Element2] += 1
 		pl2.Bag[data.Element1] += 1
-		return TRADE
+		return TRADE, nil
 	}
 }

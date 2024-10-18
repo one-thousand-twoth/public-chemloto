@@ -5,11 +5,12 @@ import (
 	"errors"
 	"math/rand"
 	"time"
+
+	"github.com/anrew1002/Tournament-ChemLoto/internal/engines/models/enerr"
 )
 
 var (
-	ErrEmptyBag    = errors.New("empty bag")
-	ErrInternalErr = errors.New("internal error")
+	ErrEmptyBag = errors.New("empty bag")
 )
 
 type Bag struct {
@@ -35,6 +36,8 @@ func (b GameBag) MarshalJSON() ([]byte, error) {
 	}
 	return json.Marshal(bag)
 }
+
+// NewGameBag initializes GameBag with elements and generate random seed.
 func NewGameBag(elements map[string]int) GameBag {
 	keys := make([]string, 0, 12)
 	for k, v := range elements {
@@ -53,18 +56,18 @@ func NewGameBag(elements map[string]int) GameBag {
 }
 
 func (b *GameBag) getRandomElement() (string, error) {
-
+	const op enerr.Op = "polymers/GameBag.getRandomElement"
 	if len(b.Values) == 0 {
 
-		return "", ErrEmptyBag
+		return "", enerr.E(op, ErrEmptyBag)
 	}
 
-	rand_index := b.rnd.Intn(len(b.Values))
-	elem := b.Values[rand_index]
+	randIndex := b.rnd.Intn(len(b.Values))
+	elem := b.Values[randIndex]
 	item, ok := b.Elements[elem]
 	if !ok {
 		// log.Error("Failed to pick an element", slog.String("Element", elem))
-		return "", ErrInternalErr
+		return "", enerr.E(op, "Ошибка при вытаскивании нового элемента из мешка", enerr.Internal)
 	}
 
 	b.Elements[elem] = item - 1

@@ -1,10 +1,12 @@
 package models
 
 import (
-	"errors"
-
 	"github.com/anrew1002/Tournament-ChemLoto/internal/common"
 )
+
+// UnicastFunction accepts first argument userID
+type UnicastFunction func(userId string, msg common.Message)
+type BroadcastFunction func(common.Message)
 
 type Action struct {
 	Player   string
@@ -15,8 +17,3 @@ type Player struct {
 	Name string
 	Role common.Role
 }
-
-var (
-	ErrAlreadyStarted = errors.New("engine was started")
-	ErrMaxPlayers     = errors.New("all players places are filled")
-)

@@ -9,7 +9,7 @@ import (
 
 	"github.com/anrew1002/Tournament-ChemLoto/internal/common"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/engines/models"
-	"github.com/anrew1002/Tournament-ChemLoto/internal/sl"
+	"github.com/anrew1002/Tournament-ChemLoto/internal/engines/models/enerr"
 	"github.com/google/uuid"
 )
 
@@ -63,7 +63,8 @@ func (s SimpleState) Handlers() map[string]HandlerFunc {
 	return s.handlers
 }
 
-// MarshalJSON - метод, который возвращает пустой JSON-объект для объектов SimpleState, так как они не имеют внутреннего состояния
+// MarshalJSON - метод, который возвращает пустой JSON-объект для объектов SimpleState,
+// так как они не имеют внутреннего состояния
 func (s SimpleState) MarshalJSON() ([]byte, error) {
 	return []byte("null"), nil
 }
@@ -83,23 +84,23 @@ func (s SimpleState) Handle(e models.Action, player *Participant) (stateInt, err
 
 	action, ok := e.Envelope["Action"].(string)
 	if !ok {
-		return st, errors.New("failed to extract Action field")
+		return st, enerr.E("Неправильный Action", enerr.InvalidRequest)
 	}
 	if s.secure[action] {
 		if player.Role < common.Judge_Role {
-			return NO_TRANSITION, fmt.Errorf("%w for %s action", ErrNoAuthorized, action)
+			return st, enerr.E("Недостаточно прав", enerr.Unauthorized)
 		}
 	}
 	handle, ok := s.handlers[action]
 	if !ok {
-		return st, fmt.Errorf("%w for %s action", ErrNoHandler, action)
+		return st, enerr.E(fmt.Sprintf("Неизвестное действие: %s", action), enerr.NotExistAction)
 	}
-	// fmt.Println("find handler for action")
-	st = handle(e)
-	return st, nil
+	st, err := handle(e)
+	return st, err
 }
-func (s SimpleState) PreHook() {
 
+func (s SimpleState) PreHook() {
+	// PreHook doesnt do anything for SimpleState, becouse its no need for update internals
 }
 
 type ObtainState struct {
@@ -133,14 +134,16 @@ func (s *ObtainState) PreHook() {
 	s.startTime = time.Now()
 }
 
-// GetElement now
+// Update current state - obtain new element from bag.
 func (s *ObtainState) Update() (stateInt, error) {
 	s.eng.log.Debug("Updating ObtainState")
-	st := s.handlers["GetElement"](models.Action{})
+	st, err := s.handlers["GetElement"](models.Action{})
+	if err != nil {
+		return st, err
+	}
 	if st == OBTAIN || st == NO_TRANSITION {
 		s.currDur = s.incrementalTime()
 		s.step += 1
-		s.eng.log.Debug("new Timer", "currDur", s.currDur, "step", s.step)
 		s.ticker.Reset(s.currDur * time.Second)
 		s.eng.broadcast(common.Message{
 			Type: common.ENGINE_ACTION,
@@ -181,7 +184,7 @@ func (eng *PolymersEngine) NewObtainState(timerInt int) (state *ObtainState) {
 	state.Add("RaiseHand", RaiseHand(eng), false)
 	go func() {
 		for t := range state.ticker.C {
-			eng.Internal <- t
+			eng.internal <- t
 		}
 		eng.log.Error("exiting timer loop")
 	}()
@@ -225,13 +228,13 @@ func (s *StockExchange) AddRequest(StockID string, req *StockRequest) {
 	s.Requests[StockID] = req
 }
 
-func (s *StockExchange) StockByUser(user string) (Stock, error) {
+func (s *StockExchange) StockByUser(user string) (*Stock, error) {
 	for _, stock := range s.StockList {
 		if stock.Owner.Name == user {
 			return stock, nil
 		}
 	}
-	return nil, errors.New("no stock with this player")
+	return nil, enerr.E("Предложение не найдено", enerr.InvalidRequest)
 }
 
 // func (s *StockExchange) SetAck(StockId string, RequestID string){
@@ -265,7 +268,7 @@ func (eng *PolymersEngine) NewTradeState(timerInt int) (state *TradeState) {
 		},
 	}
 	state.Add("TradeOffer", state.addTradeOffer(), false)
-	state.Add("Continue", func(a models.Action) stateInt { return OBTAIN }, true)
+	state.Add("Continue", func(a models.Action) (stateInt, error) { return OBTAIN, nil }, true)
 
 	return
 
@@ -277,21 +280,15 @@ func (s *TradeState) addTradeOffer() HandlerFunc {
 		Element   string
 		ToElement string `json:"toElement"`
 	}
-	return func(e models.Action) (newState stateInt) {
+	return func(e models.Action) (stateInt, error) {
 
 		data, owner, err := dataFromAction[Data](e, s.eng)
 		if err != nil {
-			s.eng.log.Error("Failed to decode Action data", sl.Err(err))
-			return
+			return NO_TRANSITION, err
 		}
 
 		if owner.Bag[data.Element] < 1 {
-			s.eng.unicast(owner.Name, common.Message{
-				Type:   common.UNDEFINED,
-				Ok:     false,
-				Errors: []string{"У вас нет такого элемента!"},
-			})
-			return
+			return NO_TRANSITION, enerr.E("У вас нет такого элемента", enerr.GameLogic)
 		}
 
 		s.StockExchange.AddStock(&Stock{
@@ -305,7 +302,7 @@ func (s *TradeState) addTradeOffer() HandlerFunc {
 			Ok:   true,
 			Body: s.eng.PreHook(),
 		})
-		return
+		return NO_TRANSITION, nil
 	}
 }
 func (s *TradeState) addTradeRequest() HandlerFunc {
@@ -315,15 +312,14 @@ func (s *TradeState) addTradeRequest() HandlerFunc {
 		StockID string
 		Accept  bool
 	}
-	return func(e models.Action) (newState stateInt) {
+	return func(e models.Action) (stateInt, error) {
 		data, _, err := dataFromAction[Data](e, s.eng)
 		if err != nil {
-			s.eng.log.Error("Failed to decode Action data", sl.Err(err))
-			return
+			return NO_TRANSITION, err
 		}
 		s.StockExchange.AddRequest(data.StockID, &StockRequest{ID: uuid.NewString(), Player: e.Player, Accept: data.Accept})
 
-		return
+		return NO_TRANSITION, nil
 	}
 }
 
@@ -333,16 +329,15 @@ func (s *TradeState) addTradeAck() HandlerFunc {
 		Action   string
 		TargetID string
 	}
-	return func(e models.Action) (newState stateInt) {
+	return func(e models.Action) (stateInt, error) {
 		_, player, err := dataFromAction[Data](e, s.eng)
 		if err != nil {
-			s.eng.log.Error("Failed to decode Action data", sl.Err(err))
-			return
+			return NO_TRANSITION, err
 		}
 		s.StockExchange.StockByUser(player.Name)
 		// s.StockExchange.Requests[]
-
-		return
+		// TODO:
+		return NO_TRANSITION, nil
 	}
 }
 func (s *TradeState) MarshalJSON() ([]byte, error) {

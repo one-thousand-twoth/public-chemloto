@@ -1,12 +1,12 @@
 package hub
 
 import (
-	"errors"
 	"fmt"
 	"log/slog"
 
 	"github.com/anrew1002/Tournament-ChemLoto/internal/common"
 	enmodels "github.com/anrew1002/Tournament-ChemLoto/internal/engines/models"
+	"github.com/anrew1002/Tournament-ChemLoto/internal/engines/models/enerr"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/sl"
 	"github.com/mitchellh/mapstructure"
 )
@@ -87,14 +87,14 @@ func Subscribe(h *Hub, e internalEventWrap) {
 			Name: usr.Name,
 			Role: usr.Role,
 		}); err != nil {
-			if errors.Is(err, enmodels.ErrAlreadyStarted) {
+			if enerr.KindIs(enerr.AlreadyStarted, err) {
 				conn.MessageChan <- common.Message{
 					Type:   common.HUB_SUBSCRIBE,
 					Ok:     false,
 					Errors: []string{"Комната уже запущена, в неё нельзя войти"},
 				}
 			}
-			if errors.Is(err, enmodels.ErrMaxPlayers) {
+			if enerr.KindIs(enerr.MaxPlayers, err) {
 				conn.MessageChan <- common.Message{
 					Type:   common.HUB_SUBSCRIBE,
 					Ok:     false,
@@ -156,7 +156,7 @@ func UnSubscribe(h *Hub, e internalEventWrap) {
 		Target string
 		Name   string
 	}
-	op := "UnSubscribe handler"
+	op := "polymers/UnSubscribe"
 	log := h.log.With("op", op)
 	log.Debug("Start Handle Event", "usr", e.userId, "room", e.room, "data", fmt.Sprintf("%v", e.msg))
 	var data dataT
@@ -196,7 +196,7 @@ func UnSubscribe(h *Hub, e internalEventWrap) {
 			return
 		}
 		if err := room.engine.RemovePlayer(e.userId); err != nil {
-			if errors.Is(err, enmodels.ErrAlreadyStarted) {
+			if enerr.KindIs(enerr.AlreadyStarted, err) {
 				conn.MessageChan <- common.Message{
 					Type:   common.HUB_UNSUBSCRIBE,
 					Ok:     false,

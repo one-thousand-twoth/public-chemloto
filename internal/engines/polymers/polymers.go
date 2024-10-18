@@ -2,7 +2,6 @@ package polymers
 
 import (
 	"encoding/json"
-	"errors"
 	"log/slog"
 	"math/rand"
 	"strconv"
@@ -11,29 +10,31 @@ import (
 
 	"github.com/anrew1002/Tournament-ChemLoto/internal/common"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/engines/models"
+	"github.com/anrew1002/Tournament-ChemLoto/internal/engines/models/enerr"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/sl"
 	"github.com/mitchellh/mapstructure"
 )
 
+// New returns PolymersEngine with cfg parameters
 func New(log *slog.Logger, cfg PolymersEngineConfig) *PolymersEngine {
 	src := rand.NewSource(time.Now().UnixNano())
 
 	eng := &PolymersEngine{
 		log:    log.With(slog.String("engine", "PolymersEngine")),
-		Checks: cfg.Checks,
-		Bag:    NewGameBag(cfg.Elements),
+		checks: cfg.Checks,
+		bag:    NewGameBag(cfg.Elements),
 		// Fields will be filled latly on [[Start]]
-		Fields: map[string]*Field{
+		fields: map[string]*Field{
 			"Альфа": {Score: 0},
 			"Бета":  {Score: 0},
 			"Гамма": {Score: 0}},
-		RaisedHands: make([]Hand, 0),
-		ActionChan:  make(chan models.Action),
-		Internal:    make(chan time.Time),
+		raisedHands: make([]Hand, 0),
+		actionChan:  make(chan models.Action),
+		internal:    make(chan time.Time),
 		unicast:     cfg.Unicast,
 		broadcast:   cfg.Broadcast,
 		timerInt:    cfg.TimerInt,
-		MaxPlayers:  cfg.MaxPlayers,
+		maxPlayers:  cfg.MaxPlayers,
 		rnd:         rand.New(src),
 	}
 
@@ -47,7 +48,7 @@ func New(log *slog.Logger, cfg PolymersEngineConfig) *PolymersEngine {
 			Add("RaiseHand", RaiseHand(eng), false)
 	}
 	// Конфигурация FSM и его обработчиков событий.
-	eng.StateMachine = stateMachine{
+	eng.stateMachine = stateMachine{
 		Current: OBTAIN,
 		States: map[stateInt]State{
 			OBTAIN: obtainState,
@@ -65,50 +66,56 @@ func New(log *slog.Logger, cfg PolymersEngineConfig) *PolymersEngine {
 	return eng
 }
 
-// Use to Configure all Engine params.
+// Use to Configure Engine params.
 type PolymersEngineConfig struct {
 	Elements map[string]int
 	Checks   Checks
 	// Should be >= 0
 	TimerInt   int
-	Unicast    unicastFunction
-	Broadcast  broadcastFunction
+	Unicast    models.UnicastFunction
+	Broadcast  models.BroadcastFunction
 	MaxPlayers int
 }
 type PolymersEngine struct {
 	log          *slog.Logger
 	started      bool
-	StateMachine stateMachine
-	Bag          GameBag
-	Fields       map[string]*Field
-	RaisedHands  []Hand
+	stateMachine stateMachine
+	bag          GameBag
+	fields       map[string]*Field
+	raisedHands  []Hand
 	// Канал для обработки действий игроков
-	ActionChan chan models.Action
+	actionChan chan models.Action
 	// handlers   map[string]HandlerFunc
-	Checks   Checks
-	Internal chan time.Time
+	checks   Checks
+	internal chan time.Time
 
-	Participants []*Participant
-	MaxPlayers   int
+	participants []*Participant
+	maxPlayers   int
 
-	unicast   unicastFunction
-	broadcast broadcastFunction
+	unicast   models.UnicastFunction
+	broadcast models.BroadcastFunction
 
 	timerInt int
 	mu       sync.Mutex
 	rnd      *rand.Rand
 }
+
+// Hand defines struct for RaisedHand
 type Hand struct {
 	Player    *Participant
 	Field     string
 	Name      string
 	Structure map[string]int
 }
+
+// Game field with Scoring counter
 type Field struct {
 	Score int
 }
 
 // decrementScore substract by one field.Score and returns old value.
+//
+// Use it to assign Score to the Player who compose the Field correctly
 func (f *Field) decrementScore() int {
 	o := f.Score
 	f.Score -= 1
@@ -131,57 +138,43 @@ func (p *Participant) score(score int) {
 	}
 }
 
-// unicastFunction accepts first argument userID
-type unicastFunction func(userId string, msg common.Message)
-type broadcastFunction func(common.Message)
-
-// Start Game
-// All inputs should lock engine mutex.
+// Start Game.
+//
+// All inputs must lock engine mutex.
 func (engine *PolymersEngine) Start() {
 	if engine.started {
 		// TODO:
 		return
 	}
 	engine.started = true
-	for _, field := range engine.Fields {
+	for _, field := range engine.fields {
 		field.Score = len(engine.players())
 	}
-	engine.StateMachine.States[engine.StateMachine.Current].PreHook()
+	engine.stateMachine.States[engine.stateMachine.Current].PreHook()
 	go func() {
 		for {
 			select {
-			case e := <-engine.ActionChan:
+			case e := <-engine.actionChan:
 				engine.mu.Lock()
 				engine.log.Debug("locked engine")
 				func() {
 					player, err := engine.getPlayer(e.Player)
 					if err != nil {
-						engine.log.Error("Unknown player", slog.String("name", e.Player))
+						enerr.ErrorResponse(engine.unicast, e.Player, engine.log, err)
 						return
 					}
-					state, err := engine.StateMachine.States[engine.StateMachine.Current].Handle(e, player)
+					state, err := engine.stateMachine.States[engine.stateMachine.Current].Handle(e, player)
 					if err != nil {
-						if errors.Is(err, ErrNoAuthorized) {
-							engine.log.Error("no authorized")
-							engine.unicast(e.Player,
-								common.Message{Type: common.UNDEFINED,
-									Ok:     false,
-									Errors: []string{"Недостаточно прав"}})
-						}
-						engine.log.Error(
-							"error while handling action with state",
-							sl.Err(err),
-							slog.String("state", engine.StateMachine.Current.String()))
-
+						enerr.ErrorResponse(engine.unicast, e.Player, engine.log, err)
 						return
 					}
 					// Changing state if needed and notificate users.
 					if state > NO_TRANSITION {
 						engine.log.Info("Changing game state",
 							slog.String("new state", state.String()),
-							slog.String("old state", engine.StateMachine.Current.String()))
-						engine.StateMachine.Current = state
-						engine.StateMachine.States[state].PreHook()
+							slog.String("old state", engine.stateMachine.Current.String()))
+						engine.stateMachine.Current = state
+						engine.stateMachine.States[state].PreHook()
 						engine.broadcast(common.Message{
 							Type: common.ENGINE_INFO,
 							Ok:   true,
@@ -191,29 +184,29 @@ func (engine *PolymersEngine) Start() {
 				}()
 				engine.mu.Unlock()
 				engine.log.Debug("unlocked engine")
-			case <-engine.Internal:
+			case <-engine.internal:
 				engine.mu.Lock()
 				func() {
 					// engine.log.Debug("recieve tick from timer")
 					// Избыточная проверка, потому что предполагаю, что
 					// есть маленький шанс, когда тик может прийти после смены state
-					if engine.StateMachine.Current != OBTAIN {
+					if engine.stateMachine.Current != OBTAIN {
 						return
 					}
-					state, err := engine.StateMachine.States[OBTAIN].Update()
+					state, err := engine.stateMachine.States[OBTAIN].Update()
 					if err != nil {
 						engine.log.Error(
 							"error while handling action with state",
 							sl.Err(err),
-							slog.String("state", engine.StateMachine.Current.String()))
+							slog.String("state", engine.stateMachine.Current.String()))
 						return
 					}
 					if state > NO_TRANSITION {
 						engine.log.Info("Changing game state by timer",
 							slog.String("new state", state.String()),
-							slog.String("old state", engine.StateMachine.Current.String()))
-						engine.StateMachine.Current = state
-						engine.StateMachine.States[state].PreHook()
+							slog.String("old state", engine.stateMachine.Current.String()))
+						engine.stateMachine.Current = state
+						engine.stateMachine.States[state].PreHook()
 						engine.broadcast(common.Message{
 							Type: common.ENGINE_INFO,
 							Ok:   true,
@@ -231,6 +224,7 @@ func (engine *PolymersEngine) Start() {
 	engine.broadcast(common.Message{Type: common.ENGINE_INFO, Ok: true, Body: engine.PreHook()})
 }
 
+// Input will send action to engine for processing
 func (engine *PolymersEngine) Input(e models.Action) {
 	if !engine.started {
 		engine.unicast(e.Player, common.Message{
@@ -240,8 +234,14 @@ func (engine *PolymersEngine) Input(e models.Action) {
 		})
 		return
 	}
-	engine.ActionChan <- e
+	engine.actionChan <- e
 }
+
+// PreHook returns map with pointer to the engine:
+//
+//	map[string]any{"engine": engine}
+//
+// Should only be used for MarshalJSON as it is safe for concurent use
 func (engine *PolymersEngine) PreHook() map[string]any {
 	return map[string]any{"engine": engine}
 }
@@ -259,14 +259,14 @@ func (engine *PolymersEngine) AddPlayer(player models.Player) error {
 	engine.mu.Lock()
 	defer engine.mu.Unlock()
 	if engine.started {
-		return models.ErrAlreadyStarted
+		return enerr.E("Игрок не может быть добавлен так как игра уже начата", enerr.AlreadyStarted)
 	}
 	if player.Role == common.Player_Role {
-		if len(engine.players()) >= engine.MaxPlayers {
-			return models.ErrMaxPlayers
+		if len(engine.players()) >= engine.maxPlayers {
+			return enerr.E("Недостаточно прав", enerr.MaxPlayers)
 		}
 	}
-	engine.Participants = append(engine.Participants, &Participant{Player: player, Bag: make(map[string]int)})
+	engine.participants = append(engine.participants, &Participant{Player: player, Bag: make(map[string]int)})
 	return nil
 }
 
@@ -274,33 +274,38 @@ func (engine *PolymersEngine) RemovePlayer(name string) error {
 	engine.mu.Lock()
 	defer engine.mu.Unlock()
 	if engine.started {
-		return models.ErrAlreadyStarted
+		return enerr.E("Игрок не может быть удалён так как игра уже начата", enerr.AlreadyStarted)
 	}
-	for i := 0; i < len(engine.Participants); i++ {
-		if engine.Participants[i].Name == name {
-			engine.Participants = append(engine.Participants[:i], engine.Participants[i+1:]...)
+	for i := 0; i < len(engine.participants); i++ {
+		if engine.participants[i].Name == name {
+			engine.participants = append(engine.participants[:i], engine.participants[i+1:]...)
 			break
 		}
 	}
 	return nil
 }
 
-// getPlayer internal. Not conccurent safe
+// getPlayer internal. Not conccurent safe.
+//
+// Can return:
+//
+//	enerr.Unidentified
 func (engine *PolymersEngine) getPlayer(name string) (*Participant, error) {
-	for i := 0; i < len(engine.Participants); i++ {
-		if engine.Participants[i].Name == name {
-			return engine.Participants[i], nil
+	const op enerr.Op = "polymers/PolymersEngine.getPlayer"
+	for i := 0; i < len(engine.participants); i++ {
+		if engine.participants[i].Name == name {
+			return engine.participants[i], nil
 		}
 	}
-	return &Participant{}, errors.New("unknown player")
+	return &Participant{}, enerr.E("Игрок с таким именем не найден", enerr.Unidentified, op)
 }
 
 // players() return engine.Participants with Player Role
 func (engine *PolymersEngine) players() []*Participant {
-	players := make([]*Participant, 0, len(engine.Participants))
-	for i := 0; i < len(engine.Participants); i++ {
-		if engine.Participants[i].Role == common.Player_Role {
-			players = append(players, engine.Participants[i])
+	players := make([]*Participant, 0, len(engine.participants))
+	for i := 0; i < len(engine.participants); i++ {
+		if engine.participants[i].Role == common.Player_Role {
+			players = append(players, engine.participants[i])
 		}
 	}
 	return players
@@ -308,10 +313,10 @@ func (engine *PolymersEngine) players() []*Participant {
 
 // Возвращает список игроков которых еще не проверяли
 func (engine *PolymersEngine) unchecked() []*Participant {
-	players := make([]*Participant, 0, len(engine.Participants))
-	for i := 0; i < len(engine.Participants); i++ {
-		if engine.Participants[i].Role == common.Player_Role && engine.Participants[i].RaisedHand {
-			players = append(players, engine.Participants[i])
+	players := make([]*Participant, 0, len(engine.participants))
+	for i := 0; i < len(engine.participants); i++ {
+		if engine.participants[i].Role == common.Player_Role && engine.participants[i].RaisedHand {
+			players = append(players, engine.participants[i])
 		}
 	}
 	return players
@@ -321,14 +326,14 @@ func (engine *PolymersEngine) unchecked() []*Participant {
 func (engine *PolymersEngine) MarshalJSON() ([]byte, error) {
 	engine.mu.Lock()
 	defer engine.mu.Unlock()
-	players := make([]Participant, len(engine.Participants))
-	fields := make(map[string]Field, len(engine.Fields))
+	players := make([]Participant, len(engine.participants))
+	fields := make(map[string]Field, len(engine.fields))
 
 	// Проходим по каждому элементу и копируем его в новый срез
-	for i, p := range engine.Participants {
+	for i, p := range engine.participants {
 		players[i] = *p
 	}
-	for k, v := range engine.Fields {
+	for k, v := range engine.fields {
 		fields[k] = *v
 	}
 	eng := struct {
@@ -341,24 +346,29 @@ func (engine *PolymersEngine) MarshalJSON() ([]byte, error) {
 		StateStruct State
 	}{
 		engine.started,
-		engine.StateMachine.Current.String(),
-		engine.Bag,
+		engine.stateMachine.Current.String(),
+		engine.bag,
 		players,
-		engine.RaisedHands,
+		engine.raisedHands,
 		fields,
-		engine.StateMachine.States[engine.StateMachine.Current],
+		engine.stateMachine.States[engine.stateMachine.Current],
 	}
 	return json.Marshal(eng)
 }
 
+// dataFromAction is a convenience function for extracting data from action,
+// including Participant information
+//
+// it can return enerr.InvalidRequest, enerr.Unidentified
 func dataFromAction[T any](e models.Action, eng *PolymersEngine) (*T, *Participant, error) {
+	const op enerr.Op = "polymers/dataFromAction"
 	player, err := eng.getPlayer(e.Player)
 	if err != nil {
 		return nil, nil, err
 	}
 	var data T
-	if err := mapstructure.Decode(e.Envelope, data); err != nil {
-		return nil, nil, err
+	if err := mapstructure.Decode(e.Envelope, &data); err != nil {
+		return nil, nil, enerr.E("Неправильный запрос", enerr.InvalidRequest, err, op)
 	}
 	return &data, player, nil
 }
