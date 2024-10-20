@@ -40,7 +40,7 @@ func New(log *slog.Logger, cfg PolymersEngineConfig) *PolymersEngine {
 
 	var obtainState State
 	if cfg.TimerInt > 0 {
-		obtainState = eng.NewObtainState(cfg.TimerInt)
+		obtainState = eng.NewObtainState(time.Second * time.Duration(cfg.TimerInt))
 	}
 	if cfg.TimerInt == 0 {
 		obtainState = NewState().
@@ -58,7 +58,7 @@ func New(log *slog.Logger, cfg PolymersEngineConfig) *PolymersEngine {
 			// TRADE: NewState().
 			// 	Add("Trade", eng.Trade(), true).
 			// 	Add("Continue", func(a models.Action) stateInt { return OBTAIN }, true),
-			TRADE:     eng.NewTradeState(30),
+			TRADE:     eng.NewTradeState(time.Second * 30),
 			COMPLETED: NewState(),
 		},
 	}
@@ -184,39 +184,30 @@ func (engine *PolymersEngine) Start() {
 				}()
 				engine.mu.Unlock()
 				engine.log.Debug("unlocked engine")
-			case <-engine.internal:
+			default:
 				engine.mu.Lock()
-				func() {
-					// engine.log.Debug("recieve tick from timer")
-					// Избыточная проверка, потому что предполагаю, что
-					// есть маленький шанс, когда тик может прийти после смены state
-					if engine.stateMachine.Current != OBTAIN {
-						return
-					}
-					state, err := engine.stateMachine.States[OBTAIN].Update()
-					if err != nil {
-						engine.log.Error(
-							"error while handling action with state",
-							sl.Err(err),
-							slog.String("state", engine.stateMachine.Current.String()))
-						return
-					}
-					if state > NO_TRANSITION {
-						engine.log.Info("Changing game state by timer",
-							slog.String("new state", state.String()),
-							slog.String("old state", engine.stateMachine.Current.String()))
-						engine.stateMachine.Current = state
-						engine.stateMachine.States[state].PreHook()
-						engine.broadcast(common.Message{
-							Type: common.ENGINE_INFO,
-							Ok:   true,
-							Body: engine.PreHook(),
-						})
-					}
-				}()
+				state, err := engine.stateMachine.States[engine.stateMachine.Current].Update()
+				if err != nil {
+					engine.log.Error(
+						"error while updating state",
+						sl.Err(err),
+						slog.String("state", engine.stateMachine.Current.String()))
+					break
+				}
+				if state > NO_TRANSITION {
+					engine.log.Info("Changing game state by Update",
+						slog.String("new state", state.String()),
+						slog.String("old state", engine.stateMachine.Current.String()))
+					engine.stateMachine.Current = state
+					engine.stateMachine.States[state].PreHook()
+					engine.broadcast(common.Message{
+						Type: common.ENGINE_INFO,
+						Ok:   true,
+						Body: engine.PreHook(),
+					})
+				}
 				engine.mu.Unlock()
 			}
-			// engine.log.Debug("Engine selected action")
 		}
 	}()
 	engine.log.Debug("Broadcast for starting engine")

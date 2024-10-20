@@ -86,11 +86,13 @@ func (s SimpleState) Handle(e models.Action, player *Participant) (stateInt, err
 	if !ok {
 		return st, enerr.E("Неправильный Action", enerr.InvalidRequest)
 	}
+
 	if s.secure[action] {
 		if player.Role < common.Judge_Role {
 			return st, enerr.E("Недостаточно прав", enerr.Unauthorized)
 		}
 	}
+
 	handle, ok := s.handlers[action]
 	if !ok {
 		return st, enerr.E(fmt.Sprintf("Неизвестное действие: %s", action), enerr.NotExistAction)
@@ -104,14 +106,26 @@ func (s SimpleState) PreHook() {
 }
 
 type ObtainState struct {
-	ticker  *time.Ticker
-	maxDur  int
-	currDur time.Duration
-	step    int
-	done    chan struct{}
-	eng     *PolymersEngine
 	SimpleState
-	startTime time.Time
+
+	ticker *Ticker
+	maxDur time.Duration
+	step   int
+
+	eng *PolymersEngine
+}
+
+func (eng *PolymersEngine) NewObtainState(timer time.Duration) (state *ObtainState) {
+	state = &ObtainState{
+		eng:         eng,
+		maxDur:      timer,
+		step:        0,
+		ticker:      newTicker(),
+		SimpleState: NewState(),
+	}
+	state.Add("GetElement", GetElement(eng), true)
+	state.Add("RaiseHand", RaiseHand(eng), false)
+	return
 }
 
 func (s *ObtainState) Handlers() map[string]HandlerFunc {
@@ -122,35 +136,33 @@ func (s *ObtainState) MarshalJSON() ([]byte, error) {
 	st := struct {
 		Timer int
 	}{
-		int((s.currDur * time.Second).Seconds() - time.Since(s.startTime).Seconds()),
+		int(s.ticker.Remains().Seconds()),
 	}
 	return json.Marshal(st)
 }
 func (s *ObtainState) PreHook() {
-	// empty action, bc no needed
 	s.handlers["GetElement"](models.Action{})
-	s.eng.log.Debug("Reseting Timer")
-	s.ticker.Reset(s.currDur * time.Second)
-	s.startTime = time.Now()
+	s.ticker.Reset(s.incrementalTime())
 }
 
 // Update current state - obtain new element from bag.
 func (s *ObtainState) Update() (stateInt, error) {
+	if !s.ticker.Ticked() {
+		return NO_TRANSITION, nil
+	}
 	s.eng.log.Debug("Updating ObtainState")
 	st, err := s.handlers["GetElement"](models.Action{})
 	if err != nil {
 		return st, err
 	}
 	if st == OBTAIN || st == NO_TRANSITION {
-		s.currDur = s.incrementalTime()
 		s.step += 1
-		s.ticker.Reset(s.currDur * time.Second)
+		s.ticker.Reset(s.incrementalTime())
 		s.eng.broadcast(common.Message{
 			Type: common.ENGINE_ACTION,
 			Ok:   true,
-			Body: map[string]any{"Action": "NewTimer", "Value": (s.currDur * time.Second).Seconds()},
+			Body: map[string]any{"Action": "NewTimer", "Value": (s.ticker.currentDuration).Seconds()},
 		})
-		s.startTime = time.Now()
 	}
 
 	return st, nil
@@ -159,9 +171,13 @@ func (s *ObtainState) incrementalTime() time.Duration {
 	if s.step <= 10 {
 		// Для первых 10 ходов вычисляем значение как логарифм по основанию 2
 		// Добавляем 1 чтобы избежать логарифма от 0
-		dur := time.Duration(math.Log2(float64(s.step)+1) + 1)
-		if dur < time.Duration(s.maxDur)*time.Second {
-			return dur
+		dur := time.Duration(math.Log2(float64(s.step)+1)+1) * time.Second
+		// fmt.Println(dur.Seconds())
+		if dur < time.Duration(s.maxDur) {
+			if dur < time.Second {
+				dur = time.Second
+			}
+			return (dur).Round(time.Second)
 		}
 	}
 	// Для всех остальных ходов возвращаем заданное время
@@ -169,38 +185,43 @@ func (s *ObtainState) incrementalTime() time.Duration {
 
 }
 
-func (eng *PolymersEngine) NewObtainState(timerInt int) (state *ObtainState) {
-	state = &ObtainState{
-		eng:     eng,
-		done:    make(chan struct{}),
-		maxDur:  timerInt,
-		currDur: time.Duration(1),
-		step:    0,
-		// Cпециально недостижимое число, в дальнейшем функции будут переопределять значение
-		ticker:      time.NewTicker(time.Hour * 100),
-		SimpleState: NewState(),
-	}
-	state.Add("GetElement", GetElement(eng), true)
-	state.Add("RaiseHand", RaiseHand(eng), false)
-	go func() {
-		for t := range state.ticker.C {
-			eng.internal <- t
-		}
-		eng.log.Error("exiting timer loop")
-	}()
-	return
-}
-
 type TradeState struct {
 	SimpleState
-	ticker        *time.Ticker
-	maxDur        int
-	currDur       time.Duration
-	step          int
-	done          chan struct{}
+	ticker        *Ticker
+	timeForTrade  time.Duration
 	eng           *PolymersEngine
-	startTime     time.Time
 	StockExchange *StockExchange
+}
+
+func (eng *PolymersEngine) NewTradeState(timer time.Duration) (state *TradeState) {
+	state = &TradeState{
+		ticker:       newTicker(),
+		eng:          eng,
+		timeForTrade: timer,
+		SimpleState:  NewState(),
+		StockExchange: &StockExchange{
+			StockList: make([]*Stock, 0, 10),
+			Requests:  make(map[string]*StockRequest),
+		},
+	}
+	state.Add("TradeOffer", state.addTradeOffer(), false)
+	state.Add("Continue", func(a models.Action) (stateInt, error) { return OBTAIN, nil }, true)
+
+	return
+
+}
+
+func (s *TradeState) PreHook() {
+	s.ticker.Reset(s.timeForTrade)
+}
+
+// Update current state - switch to Obtain
+func (s *TradeState) Update() (stateInt, error) {
+	if !s.ticker.Ticked() {
+		return NO_TRANSITION, nil
+	}
+	s.eng.log.Debug("Updating TradeState")
+	return OBTAIN, nil
 }
 
 type StockExchange struct {
@@ -252,27 +273,6 @@ func (stk *Stock) MarshalJSON() ([]byte, error) {
 	return json.Marshal(st)
 }
 
-func (eng *PolymersEngine) NewTradeState(timerInt int) (state *TradeState) {
-	state = &TradeState{
-		ticker:  time.NewTicker(time.Hour * 100),
-		maxDur:  0,
-		currDur: 0,
-		step:    0,
-		done:    make(chan struct{}),
-		eng:     eng,
-
-		SimpleState: NewState(),
-		StockExchange: &StockExchange{
-			StockList: make([]*Stock, 0, 10),
-			Requests:  make(map[string]*StockRequest),
-		},
-	}
-	state.Add("TradeOffer", state.addTradeOffer(), false)
-	state.Add("Continue", func(a models.Action) (stateInt, error) { return OBTAIN, nil }, true)
-
-	return
-
-}
 func (s *TradeState) addTradeOffer() HandlerFunc {
 	type Data struct {
 		Type      string
@@ -343,6 +343,7 @@ func (s *TradeState) addTradeAck() HandlerFunc {
 func (s *TradeState) MarshalJSON() ([]byte, error) {
 	st := struct {
 		StockExchange StockExchange
-	}{*s.StockExchange}
+		Timer         int
+	}{*s.StockExchange, int(s.ticker.Remains())}
 	return json.Marshal(st)
 }
