@@ -5,7 +5,6 @@ import (
 	"log/slog"
 	"math/rand"
 	"strconv"
-	"sync"
 	"time"
 
 	"github.com/anrew1002/Tournament-ChemLoto/internal/common"
@@ -36,6 +35,7 @@ func New(log *slog.Logger, cfg PolymersEngineConfig) *PolymersEngine {
 		timerInt:    cfg.TimerInt,
 		maxPlayers:  cfg.MaxPlayers,
 		rnd:         rand.New(src),
+		mu:          &debugMutex{name: "Engine"},
 	}
 
 	var obtainState State
@@ -96,8 +96,11 @@ type PolymersEngine struct {
 	broadcast models.BroadcastFunction
 
 	timerInt int
-	mu       sync.Mutex
-	rnd      *rand.Rand
+	mu       interface {
+		Lock()
+		Unlock()
+	}
+	rnd *rand.Rand
 }
 
 // Hand defines struct for RaisedHand
