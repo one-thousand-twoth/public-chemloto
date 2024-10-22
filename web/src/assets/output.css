@@ -749,6 +749,10 @@ select {
   --tw-contain-style:  ;
 }
 
+.visible {
+  visibility: visible;
+}
+
 .collapse {
   visibility: collapse;
 }
@@ -918,8 +922,16 @@ select {
   height: 100vh;
 }
 
+.h-dvh {
+  height: 100dvh;
+}
+
 .max-h-lvh {
   max-height: 100lvh;
+}
+
+.max-h-dvh {
+  max-height: 100dvh;
 }
 
 .w-8 {
@@ -1089,6 +1101,10 @@ select {
 
 .overflow-hidden {
   overflow: hidden;
+}
+
+.overflow-visible {
+  overflow: visible;
 }
 
 .overflow-x-auto {
