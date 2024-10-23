@@ -45,23 +45,25 @@ func (h *Hub) AddNewRoom(r Room) error {
 			TimerInt:   r.Time,
 			MaxPlayers: r.MaxPlayers,
 			Unicast: func(userID string, msg common.Message) {
-				h.log.Debug("Unicast message")
-				usr, ok := h.Users.Get(userID)
-				if !ok {
-					h.log.Error("failed to get user while Unicast message from engine")
-					return
-				}
-				connID := usr.GetConnection()
-				conn, ok := h.Connections.Get(connID)
-				if !ok {
-					h.log.Error("failed to get user connection while Unicast message from engine")
-					return
-				}
-				conn.MessageChan <- msg
+				go func() {
+					h.log.Debug("Unicast message")
+					usr, ok := h.Users.Get(userID)
+					if !ok {
+						h.log.Error("failed to get user while Unicast message from engine")
+						return
+					}
+					connID := usr.GetConnection()
+					conn, ok := h.Connections.Get(connID)
+					if !ok {
+						h.log.Error("failed to get user connection while Unicast message from engine")
+						return
+					}
+					conn.MessageChan <- msg
+				}()
 			},
 			Broadcast: func(msg common.Message) {
 				h.log.Debug("Broadcast message")
-				h.SendMessageOverChannel(r.Name, msg)
+				go h.SendMessageOverChannel(r.Name, msg)
 			},
 		},
 	)
