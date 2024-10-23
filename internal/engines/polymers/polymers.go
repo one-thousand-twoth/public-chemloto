@@ -354,15 +354,11 @@ func (engine *PolymersEngine) MarshalJSON() ([]byte, error) {
 // including Participant information
 //
 // it can return enerr.InvalidRequest, enerr.Unidentified
-func dataFromAction[T any](e models.Action, eng *PolymersEngine) (*T, *Participant, error) {
+func dataFromAction[T any](e models.Action, eng *PolymersEngine) (*T, error) {
 	const op enerr.Op = "polymers/dataFromAction"
-	player, err := eng.getPlayer(e.Player)
-	if err != nil {
-		return nil, nil, err
-	}
 	var data T
 	if err := mapstructure.Decode(e.Envelope, &data); err != nil {
-		return nil, nil, enerr.E("Неправильный запрос", enerr.InvalidRequest, err, op)
+		return nil, enerr.E("Неправильный запрос", enerr.InvalidRequest, err, op)
 	}
-	return &data, player, nil
+	return &data, nil
 }

@@ -24,9 +24,13 @@ func RaiseHand(engine *PolymersEngine) HandlerFunc {
 	}
 	return func(e models.Action) (stateInt, error) {
 		const op enerr.Op = "polymers/RaiseHand"
-		data, player, err := dataFromAction[Data](e, engine)
+		data, err := dataFromAction[Data](e, engine)
 		if err != nil {
-			enerr.ErrorResponse(engine.unicast, e.Player, engine.log, err)
+			return NO_TRANSITION, enerr.E(op, err)
+		}
+		player, err := engine.getPlayer(e.Player)
+		if err != nil {
+			return NO_TRANSITION, enerr.E(op, err)
 		}
 
 		engine.log.Debug("Handle RaiseHand",
@@ -38,7 +42,7 @@ func RaiseHand(engine *PolymersEngine) HandlerFunc {
 		for k := range data.Structure {
 			less = player.Bag[k] < data.Structure[k]
 			if less {
-				return NO_TRANSITION, enerr.E("Указаны элементы которых нет в таком количестве", enerr.GameLogic)
+				return NO_TRANSITION, enerr.E(op, "Указаны элементы которых нет в таком количестве", enerr.GameLogic)
 			}
 		}
 
@@ -56,7 +60,7 @@ func RaiseHand(engine *PolymersEngine) HandlerFunc {
 				Ok:   true,
 				Body: engine.PreHook(),
 			})
-			return NO_TRANSITION, enerr.E("Неправильный состав элементов")
+			return NO_TRANSITION, enerr.E(op, "Неправильный состав элементов")
 		}
 		player.RaisedHand = true
 		engine.raisedHands = append(engine.raisedHands,
@@ -86,13 +90,18 @@ func Check(engine *PolymersEngine) HandlerFunc {
 	return func(e models.Action) (stateInt, error) {
 
 		const op enerr.Op = "polymers/Check"
-		data, player, err := dataFromAction[Data](e, engine)
+		data, err := dataFromAction[Data](e, engine)
 		if err != nil {
-			enerr.ErrorResponse(engine.unicast, e.Player, engine.log, err)
+			return NO_TRANSITION, err
+		}
+		target, err := engine.getPlayer(data.Player)
+		if err != nil {
+			return NO_TRANSITION, err
 		}
 
 		engine.log.Debug("Handle Check action",
-			slog.String("player", e.Player),
+			slog.String("from_player", e.Player),
+			slog.String("target", data.Player),
 			slog.Any("players", engine.players()),
 			slog.String("Field", data.Field),
 			slog.String("Name", data.Name),
@@ -102,10 +111,10 @@ func Check(engine *PolymersEngine) HandlerFunc {
 		// TODO: роазобраться, тут кажется напутана логика
 		var less bool
 		for k := range data.Structure {
-			less = player.Bag[k] < data.Structure[k]
+			less = target.Bag[k] < data.Structure[k]
 			if less {
 				engine.log.Error("To many elements, than player has")
-				return NO_TRANSITION, enerr.E("Слишком много элементов", enerr.GameLogic)
+				return NO_TRANSITION, enerr.E(op, "Слишком много элементов", enerr.GameLogic)
 			}
 		}
 		var eq bool
@@ -122,9 +131,9 @@ func Check(engine *PolymersEngine) HandlerFunc {
 				slog.String("Player", e.Player),
 				slog.Any("Data", data),
 				enerr.OpAttr(op))
-			player.RaisedHand = false
-			for k := range player.Bag {
-				player.Bag[k] -= data.Structure[k]
+			target.RaisedHand = false
+			for k := range target.Bag {
+				target.Bag[k] -= data.Structure[k]
 			}
 
 		} else {
@@ -133,8 +142,8 @@ func Check(engine *PolymersEngine) HandlerFunc {
 				slog.Any("example", engine.checks.Fields[data.Field][data.Name]),
 				enerr.OpAttr(op),
 			)
-			player.RaisedHand = false
-			player.score(-1)
+			target.RaisedHand = false
+			target.score(-1)
 			for i := 0; i < len(engine.raisedHands); i++ {
 				if engine.raisedHands[i].Player.Name == e.Player {
 					engine.raisedHands = append(engine.raisedHands[:i], engine.raisedHands[i+1:]...)
@@ -201,25 +210,23 @@ func (engine *PolymersEngine) Trade() HandlerFunc {
 	return func(e models.Action) (stateInt, error) {
 		var data Data
 		if err := mapstructure.Decode(e.Envelope, &data); err != nil {
-			engine.log.Error("Failed to decode Check data", sl.Err(err))
+			return NO_TRANSITION, err
 		}
 		pl1, err := engine.getPlayer(data.Player1)
 		if err != nil {
-			engine.log.Error("Failed to get user", "user", data.Player1)
 			return NO_TRANSITION, err
 		}
 		pl2, err := engine.getPlayer(data.Player2)
 		if err != nil {
-			engine.log.Error("Failed to get user", "user", data.Player2)
 			return NO_TRANSITION, err
 		}
 		if pl1.Bag[data.Element1] <= 1 {
 			// engine.log.Error("found no element", "user", pl1, "element", data.Element1)
-			return NO_TRANSITION, enerr.E("У игрока нет элемента")
+			return NO_TRANSITION, enerr.E(fmt.Sprintf("У игрока %s нет такого элемента", pl1.Name))
 		}
 		if pl2.Bag[data.Element2] <= 1 {
 			// engine.log.Error("found no element", "user", pl1, "element", data.Element1)
-			return NO_TRANSITION, err
+			return NO_TRANSITION, enerr.E(fmt.Sprintf("У игрока %s нет такого элемента", pl2.Name))
 		}
 		pl1.Bag[data.Element1] -= 1
 		pl2.Bag[data.Element2] -= 1

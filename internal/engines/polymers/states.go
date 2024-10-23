@@ -281,14 +281,17 @@ func (s *TradeState) addTradeOffer() HandlerFunc {
 		ToElement string `json:"toElement"`
 	}
 	return func(e models.Action) (stateInt, error) {
-
-		data, owner, err := dataFromAction[Data](e, s.eng)
+		const op enerr.Op = "polymers/TradeState.addTradeOffer"
+		data, err := dataFromAction[Data](e, s.eng)
 		if err != nil {
-			return NO_TRANSITION, err
+			return NO_TRANSITION, enerr.E(op, err)
 		}
-
+		owner, err := s.eng.getPlayer(e.Player)
+		if err != nil {
+			return NO_TRANSITION, enerr.E(op, err)
+		}
 		if owner.Bag[data.Element] < 1 {
-			return NO_TRANSITION, enerr.E("У вас нет такого элемента", enerr.GameLogic)
+			return NO_TRANSITION, enerr.E(op, "У вас нет такого элемента", enerr.GameLogic)
 		}
 
 		s.StockExchange.AddStock(&Stock{
@@ -313,7 +316,15 @@ func (s *TradeState) addTradeRequest() HandlerFunc {
 		Accept  bool
 	}
 	return func(e models.Action) (stateInt, error) {
-		data, _, err := dataFromAction[Data](e, s.eng)
+		const op enerr.Op = "polymers/TradeState.addTradeRequest"
+		data, err := dataFromAction[Data](e, s.eng)
+		if err != nil {
+			return NO_TRANSITION, enerr.E(op, err)
+		}
+		player, err := s.eng.getPlayer(e.Player)
+		if err != nil {
+			return NO_TRANSITION, enerr.E(op, err)
+		}
 		if err != nil {
 			return NO_TRANSITION, err
 		}
@@ -330,7 +341,7 @@ func (s *TradeState) addTradeAck() HandlerFunc {
 		TargetID string
 	}
 	return func(e models.Action) (stateInt, error) {
-		_, player, err := dataFromAction[Data](e, s.eng)
+		player, err := s.eng.getPlayer(e.Player)
 		if err != nil {
 			return NO_TRANSITION, err
 		}
