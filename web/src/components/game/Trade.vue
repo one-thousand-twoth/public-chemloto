@@ -52,8 +52,8 @@ function Trade(st: TradeStruct) {
 </script>
 <template>
 	<form @submit.prevent="Trade(struct)">
-		<div class="flex">
-			<section class="flex flex-col gap-4 border-r-2 text-right border-gray-700  p-3">
+		<div class="flex flex-wrap">
+			<section class="flex min-w-96 flex-col gap-4 border-r-2 text-right border-gray-700  p-3">
 				<label for="roomName">Игрок:</label>
 				<select v-model="struct.Player1">
 					<option disabled value="">Выберите</option>

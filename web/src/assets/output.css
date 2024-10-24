@@ -749,10 +749,6 @@ select {
   --tw-contain-style:  ;
 }
 
-.visible {
-  visibility: visible;
-}
-
 .collapse {
   visibility: collapse;
 }
@@ -876,6 +872,14 @@ select {
   margin-top: 1rem;
 }
 
+.ml-auto {
+  margin-left: auto;
+}
+
+.mb-1 {
+  margin-bottom: 0.25rem;
+}
+
 .block {
   display: block;
 }
@@ -909,6 +913,10 @@ select {
   height: auto;
 }
 
+.h-dvh {
+  height: 100dvh;
+}
+
 .h-fit {
   height: -moz-fit-content;
   height: fit-content;
@@ -922,16 +930,8 @@ select {
   height: 100vh;
 }
 
-.h-dvh {
-  height: 100dvh;
-}
-
 .max-h-lvh {
   max-height: 100lvh;
-}
-
-.max-h-dvh {
-  max-height: 100dvh;
 }
 
 .w-8 {
@@ -961,6 +961,10 @@ select {
 
 .w-screen {
   width: 100vw;
+}
+
+.min-w-96 {
+  min-width: 24rem;
 }
 
 .min-w-\[135px\] {
@@ -1030,6 +1034,10 @@ select {
 
 .flex-wrap {
   flex-wrap: wrap;
+}
+
+.flex-nowrap {
+  flex-wrap: nowrap;
 }
 
 .items-start {
@@ -1321,6 +1329,10 @@ select {
 
 .text-start {
   text-align: start;
+}
+
+.align-top {
+  vertical-align: top;
 }
 
 .align-middle {

@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"math/rand"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/anrew1002/Tournament-ChemLoto/internal/common"
@@ -35,7 +36,6 @@ func New(log *slog.Logger, cfg PolymersEngineConfig) *PolymersEngine {
 		timerInt:    cfg.TimerInt,
 		maxPlayers:  cfg.MaxPlayers,
 		rnd:         rand.New(src),
-		mu:          &debugMutex{name: "Engine"},
 	}
 
 	var obtainState State
@@ -58,7 +58,7 @@ func New(log *slog.Logger, cfg PolymersEngineConfig) *PolymersEngine {
 			// TRADE: NewState().
 			// 	Add("Trade", eng.Trade(), true).
 			// 	Add("Continue", func(a models.Action) stateInt { return OBTAIN }, true),
-			TRADE:     eng.NewTradeState(time.Second * 30),
+			TRADE:     eng.NewTradeState(time.Hour * 30),
 			COMPLETED: NewState(),
 		},
 	}
@@ -96,11 +96,8 @@ type PolymersEngine struct {
 	broadcast models.BroadcastFunction
 
 	timerInt int
-	mu       interface {
-		Lock()
-		Unlock()
-	}
-	rnd *rand.Rand
+	mu       sync.Mutex
+	rnd      *rand.Rand
 }
 
 // Hand defines struct for RaisedHand

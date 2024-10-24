@@ -201,10 +201,11 @@ func (eng *PolymersEngine) NewTradeState(timer time.Duration) (state *TradeState
 		SimpleState:  NewState(),
 		StockExchange: &StockExchange{
 			StockList: make([]*Stock, 0, 10),
-			Requests:  make(map[string]*StockRequest),
+			Requests:  make(map[string][]*StockRequest),
 		},
 	}
 	state.Add("TradeOffer", state.addTradeOffer(), false)
+	state.Add("TradeRequest", state.addTradeRequest(), false)
 	state.Add("Continue", func(a models.Action) (stateInt, error) { return OBTAIN, nil }, true)
 
 	return
@@ -226,7 +227,7 @@ func (s *TradeState) Update() (stateInt, error) {
 
 type StockExchange struct {
 	StockList []*Stock
-	Requests  map[string]*StockRequest
+	Requests  map[string][]*StockRequest
 }
 
 type StockRequest struct {
@@ -245,8 +246,16 @@ type Stock struct {
 func (s *StockExchange) AddStock(stck *Stock) {
 	s.StockList = append(s.StockList, stck)
 }
-func (s *StockExchange) AddRequest(StockID string, req *StockRequest) {
-	s.Requests[StockID] = req
+
+// TODO: фиксировать дубли
+func (s *StockExchange) AddRequest(stockID string, req *StockRequest) error {
+	requests, ok := s.Requests[stockID]
+	if ok {
+		s.Requests[stockID] = append(requests, req)
+	} else {
+		s.Requests[stockID] = make([]*StockRequest, 0)
+	}
+	return nil
 }
 
 func (s *StockExchange) StockByUser(user string) (*Stock, error) {
@@ -325,11 +334,13 @@ func (s *TradeState) addTradeRequest() HandlerFunc {
 		if err != nil {
 			return NO_TRANSITION, enerr.E(op, err)
 		}
+		err = s.StockExchange.AddRequest(
+			data.StockID,
+			&StockRequest{ID: uuid.NewString(), Player: player.Name, Accept: data.Accept},
+		)
 		if err != nil {
-			return NO_TRANSITION, err
+			return NO_TRANSITION, enerr.E(op, err)
 		}
-		s.StockExchange.AddRequest(data.StockID, &StockRequest{ID: uuid.NewString(), Player: e.Player, Accept: data.Accept})
-
 		return NO_TRANSITION, nil
 	}
 }

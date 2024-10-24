@@ -1,12 +1,14 @@
 <script setup lang="ts">
 import { WebsocketConnector } from '@/api/websocket/websocket';
-import { ElementImage } from '@/components/UI/';
+import { ElementImage, IconButton } from '@/components/UI/';
 import { Role } from '@/models/User';
-import { Player, useGameStore } from '@/stores/useGameStore';
+import { GameInfo, Player, StateTRADE, useGameStore } from '@/stores/useGameStore';
 import { useUserStore } from '@/stores/useUserStore';
+import {
+    CheckIcon, XMarkIcon
+} from "@heroicons/vue/24/outline";
 import { storeToRefs } from 'pinia';
 import { computed, inject, onMounted, ref } from 'vue';
-
 const GameStore = useGameStore()
 const { gameState } = storeToRefs(GameStore)
 const player = GameStore.SelfPlayer
@@ -28,26 +30,25 @@ function Trade(st: TradeOffer) {
     })
 }
 
-
-const checkGameState = () => {
-    if (gameState.value.State !== 'TRADE') {
-        throw new Error(`Invalid state: Expected 'TRADE', but got '${gameState.value.State}'`);
+const tradeState = computed(()=>{
+    if (gameState.value.State ==="TRADE"){
+        return gameState.value as GameInfo & StateTRADE
     }
-};
+    return null
+})
 
-onMounted(() => {
-    checkGameState();
-});
+const selfStock = computed(() => tradeState.value?.StateStruct?.StockExchange.StockList.find( stock => stock.Owner === player.Name) ?? null)
 
 </script>
 <template>
-    <div class="grid grid-cols-2 gap-4">
+    <div v-if="gameState.State === 'TRADE'" class="grid grid-cols-2 gap-4">
 
 
         <form class="flex flex-col gap-4 border-r-2 text-right border-gray-700  p-3" @submit.prevent="Trade(struct)">
-            <div >
-                <section class="flex flex-col items-end">
-                    <label for="roomName">Элемент:</label>
+
+            <div v-if="!selfStock">
+                <section class="flex flex-col gap-1 mb-2 items-end">
+                    <label>Элемент:</label>
                     <select v-model="struct.Element">
                         <option disabled value="" class="text-right">Выберите</option>
                         <option class="text-right"
@@ -65,18 +66,25 @@ onMounted(() => {
                         </option>
                     </select>
                 </section>
+                <button type="submit" class="self-end">Отправить</button>
+            </div>
+            <div v-else>
 
             </div>
-            <button type="submit" class="self-end">Отправить</button>
 
         </form>
         <div v-if="gameState.State === 'TRADE'">
-            <div v-for="[_, Stock] in Object.entries(gameState.StateStruct!.StockExchange.StockList)">
-                <span>{{ Stock.Owner }} предлагает</span>
-                <ElementImage  class="w-8 inline m-1" :elname="Stock.Element" />
-                <span>за</span>
-                <ElementImage class="w-8 inline m-1" :elname="Stock.ToElement" />
-
+            <div class="flex flex-nowrap" v-for="[_, Stock] in Object.entries(gameState.StateStruct!.StockExchange.StockList)">
+                <div>
+                    <div>
+                        <span>{{ Stock.Owner }} предлагает:</span>
+                    </div>
+                    <ElementImage class="w-8 inline m-1" :elname="Stock.Element" />
+                    <span>за</span>
+                    <ElementImage class="w-8 inline m-1" :elname="Stock.ToElement" />
+                </div>
+                <IconButton class=" ml-auto" :icon="CheckIcon" />
+                <IconButton class="" :icon="XMarkIcon" />
             </div>
         </div>
     </div>
