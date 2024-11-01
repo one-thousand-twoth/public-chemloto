@@ -1,27 +1,25 @@
+import { UserIcon, StarIcon, EyeIcon, ExclamationCircleIcon } from "@heroicons/vue/16/solid"
+import { FunctionalComponent, HTMLAttributes, VNodeProps } from "vue";
 export enum Role {
     Admin = "Admin_Role",
     Judge = "Judge_Role",
     Player = "Player_Role",
 }
-export function i18nRole(role: Role) {
-    switch (role) {
-        case Role.Admin:
-            return "Админ"
-        case Role.Judge:
-            return "Судья"
-        case Role.Player:
-            return "Player"
-    }
+
+const roleData = {
+    [Role.Admin]: { label: "Админ", emoji: "🅰", icon: EyeIcon },
+    [Role.Judge]: { label: "Судья", emoji: "🛠", icon: StarIcon },
+    [Role.Player]: { label: "Игрок", emoji: "✌", icon: UserIcon },
 }
-export function emojiRole(role: Role) {
-    switch (role) {
-        case Role.Admin:
-            return "🅰"
-        case Role.Judge:
-            return "🛠"
-        case Role.Player:
-            return "✌"
-    }
+
+export function getRoleData(role: Role, type: "label" | "emoji") {
+    return roleData[role]?.[type] || "";
+}
+export function i18nRole(role: Role) {
+    return roleData[role]?.label || "(?)"
+}
+export function IconRole(role: Role): FunctionalComponent<HTMLAttributes & VNodeProps> {
+    return roleData[role]?.icon || ExclamationCircleIcon
 }
 export interface UserInfo {
     username: string

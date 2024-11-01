@@ -9,15 +9,15 @@ const ROOMNAME_LOCAL_STORAGE_KEY = "roomname"
 const CONNECTED_LOCAL_STORAGE_KEY = "connected"
 const getName = () => {
     const value = localStorage.getItem(ROOMNAME_LOCAL_STORAGE_KEY)
-    return value ? value : "";
+    return value ?? "";
 }
 const getConnected = () => {
     const value = localStorage.getItem(CONNECTED_LOCAL_STORAGE_KEY)
-    return value === "true" ? true : false;
+    return value === "true";
 }
 
 export const useGameStore = defineStore('game', () => {
-
+    const userStore = useUserStore()
     const fetching = ref(false)
     const roomname = ref(getName())
     const name = computed({
@@ -47,7 +47,7 @@ export const useGameStore = defineStore('game', () => {
 
         }
     })
-    const userStore = useUserStore()
+
     const LastElements = computed(() => {
         const elems: Array<string> = Object.assign([], gameState.value.Bag.LastElements);
         return elems.
@@ -61,7 +61,6 @@ export const useGameStore = defineStore('game', () => {
     })
 
     const SelfPlayer = computed(() => {
-
         return gameState.value.Players.find((player) => player.Name == userStore.UserCreds?.username) as Player
     })
 
@@ -69,15 +68,13 @@ export const useGameStore = defineStore('game', () => {
         const b = e.Body["engine"] as GameInfo
         gameState.value = b
         if (gameState.value.State === "OBTAIN")
-        if (gameState.value.StateStruct) {
-            timer.value = gameState.value.StateStruct.Timer
-        }
+            if (gameState.value.StateStruct) {
+                timer.value = gameState.value.StateStruct.Timer
+            }
 
     }
     return {
         fetching,
-        // connectedRef,
-        // connected,
         name,
         timer,
         currElement,
@@ -101,7 +98,7 @@ export interface Player {
     Bag: { [id: string]: number; }
 }
 export interface Hand {
-    Player: Player
+    Player: Player,
     Field: string,
     Name: string,
     Structure: { [id: string]: number; }
@@ -113,25 +110,36 @@ export type GameInfo = {
     Started: boolean,
     // State
     Fields: { [id: string]: { Score: number }; }
-}  & State
+} & State
 export type State = StateOBTAIN | StateTRADE | StateCOMPLETED | StateHAND | StateUndefined
 export interface StateOBTAIN {
     State: "OBTAIN"
     StateStruct?: { Timer: number }
-} 
+}
 export interface StateTRADE {
     State: "TRADE",
-    StateStruct?: { StockExchange: {StockList: {Owner: string, Element: string, ToElement: string }[]} }
-} 
+    StateStruct?: {
+        StockExchange: {
+            StockList: {
+                Owner: string, Element: string, ToElement: string,
+                Request: {
+                    ID: string
+                    Player: string
+                    Accept: boolean
+                }[]
+            }[]
+        }
+    }
+}
 export interface StateCOMPLETED {
     State: "COMPLETED"
-} 
+}
 export interface StateHAND {
     State: "HAND"
-} 
+}
 export interface StateUndefined {
     State: undefined
-} 
+}
 
 if (import.meta.hot) {
     import.meta.hot.accept(acceptHMRUpdate(useGameStore, import.meta.hot))

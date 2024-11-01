@@ -199,7 +199,7 @@ func GetElement(engine *PolymersEngine) HandlerFunc {
 		return NO_TRANSITION, nil
 	}
 }
-func (engine *PolymersEngine) Trade() HandlerFunc {
+func (engine *PolymersEngine) TradeHandler() HandlerFunc {
 	type Data struct {
 		Type     string
 		Action   string
@@ -221,18 +221,33 @@ func (engine *PolymersEngine) Trade() HandlerFunc {
 		if err != nil {
 			return NO_TRANSITION, err
 		}
-		if pl1.Bag[data.Element1] <= 1 {
-			// engine.log.Error("found no element", "user", pl1, "element", data.Element1)
-			return NO_TRANSITION, enerr.E(fmt.Sprintf("У игрока %s нет такого элемента", pl1.Name))
+
+		err = engine.exchange(pl1, data.Element1, data.Element2, pl2)
+		if err != nil {
+			return NO_TRANSITION, err
 		}
-		if pl2.Bag[data.Element2] <= 1 {
-			// engine.log.Error("found no element", "user", pl1, "element", data.Element1)
-			return NO_TRANSITION, enerr.E(fmt.Sprintf("У игрока %s нет такого элемента", pl2.Name))
-		}
-		pl1.Bag[data.Element1] -= 1
-		pl2.Bag[data.Element2] -= 1
-		pl1.Bag[data.Element2] += 1
-		pl2.Bag[data.Element1] += 1
 		return TRADE, nil
 	}
+}
+
+// exchange will exchange elements between players
+//
+// element1 is player1 element, element2 is player2 element
+func (*PolymersEngine) exchange(
+	player1 *Participant,
+	element1 string,
+	element2 string,
+	player2 *Participant) error {
+	const op enerr.Op = "polymers/PolymersEngine.exchange"
+	if player1.Bag[element1] <= 1 {
+		return enerr.E(op, fmt.Sprintf("У игрока %s нет такого элемента", player1.Name))
+	}
+	if player2.Bag[element2] <= 1 {
+		return enerr.E(op, fmt.Sprintf("У игрока %s нет такого элемента", player2.Name))
+	}
+	player1.Bag[element1] -= 1
+	player2.Bag[element2] -= 1
+	player1.Bag[element2] += 1
+	player2.Bag[element1] += 1
+	return nil
 }

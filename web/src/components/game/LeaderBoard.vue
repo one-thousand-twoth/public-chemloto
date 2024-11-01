@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { Role } from '@/models/User';
 import { useGameStore } from '@/stores/useGameStore';
+import { UserInfo } from '@/components/UI/';
 
 const GameStore = useGameStore()
 const emit = defineEmits<{
@@ -12,7 +13,7 @@ const emit = defineEmits<{
     <div>
         <h2>Топ игроков</h2>
         <ul class="list-none p-0 font-bold m-0">
-            <li @click="emit('selectPlayer', pl.Name)" class="break-words flex justify-between items-center p-2
+            <li @click="emit('selectPlayer', pl.Name)" class="break-words flex flex-wrap justify-between items-center p-2
                     hover:underline 
                     [&:nth-child(1)]:bg-amber-300
                     [&:nth-child(2)]:bg-stone-300
@@ -20,7 +21,8 @@ const emit = defineEmits<{
                     rounded-md my-2"
                 v-for="pl in GameStore.gameState.Players.filter((pl) => pl.Role === Role.Player).sort((a, b) => b.Score - a.Score) "
                 :key="pl.Name">
-                {{ pl.Name }} - {{ pl.Score }}
+                <UserInfo :role="pl.Role" :name="pl.Name" />
+                <span>{{ pl.Score }}</span>
             </li>
         </ul>
     </div>

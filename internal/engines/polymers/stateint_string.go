@@ -8,20 +8,31 @@ func _() {
 	// An "invalid array index" compiler error signifies that the constant values have changed.
 	// Re-run the stringer command to generate them again.
 	var x [1]struct{}
-	_ = x[NO_TRANSITION-0]
-	_ = x[OBTAIN-1]
-	_ = x[HAND-2]
-	_ = x[TRADE-3]
-	_ = x[COMPLETED-4]
+	_ = x[UPDATE_CURRENT - -1]
+	_ = x[NO_TRANSITION-1]
+	_ = x[OBTAIN-2]
+	_ = x[HAND-3]
+	_ = x[TRADE-4]
+	_ = x[COMPLETED-5]
 }
 
-const _stateInt_name = "NO_TRANSITIONOBTAINHANDTRADECOMPLETED"
+const (
+	_stateInt_name_0 = "UPDATE_CURRENT"
+	_stateInt_name_1 = "NO_TRANSITIONOBTAINHANDTRADECOMPLETED"
+)
 
-var _stateInt_index = [...]uint8{0, 13, 19, 23, 28, 37}
+var (
+	_stateInt_index_1 = [...]uint8{0, 13, 19, 23, 28, 37}
+)
 
 func (i stateInt) String() string {
-	if i < 0 || i >= stateInt(len(_stateInt_index)-1) {
+	switch {
+	case i == -1:
+		return _stateInt_name_0
+	case 1 <= i && i <= 5:
+		i -= 1
+		return _stateInt_name_1[_stateInt_index_1[i]:_stateInt_index_1[i+1]]
+	default:
 		return "stateInt(" + strconv.FormatInt(int64(i), 10) + ")"
 	}
-	return _stateInt_name[_stateInt_index[i]:_stateInt_index[i+1]]
 }

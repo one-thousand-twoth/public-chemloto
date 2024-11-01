@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { WebsocketConnector } from '@/api/websocket/websocket';
-import { ElementImage, IconButton } from '@/components/UI/';
+import { ElementImage, IconButton, UserInfo } from '@/components/UI/';
 import { Role } from '@/models/User';
 import { GameInfo, Player, StateTRADE, useGameStore } from '@/stores/useGameStore';
 import { useUserStore } from '@/stores/useUserStore';
@@ -30,23 +30,21 @@ function Trade(st: TradeOffer) {
     })
 }
 
-const tradeState = computed(()=>{
-    if (gameState.value.State ==="TRADE"){
+const tradeState = computed(() => {
+    if (gameState.value.State === "TRADE") {
         return gameState.value as GameInfo & StateTRADE
     }
     return null
 })
 
-const selfStock = computed(() => tradeState.value?.StateStruct?.StockExchange.StockList.find( stock => stock.Owner === player.Name) ?? null)
+const selfStock = computed(() => tradeState.value?.StateStruct?.StockExchange.StockList.find(stock => stock.Owner === player.Name) ?? null)
 
 </script>
 <template>
-    <div v-if="gameState.State === 'TRADE'" class="grid grid-cols-2 gap-4">
+    <div v-if="gameState.State === 'TRADE'" class="flex flex-wrap gap-4">
+        <form v-if="!selfStock" class="flex  flex-col gap-4  p-3" @submit.prevent="Trade(struct)">
 
-
-        <form class="flex flex-col gap-4 border-r-2 text-right border-gray-700  p-3" @submit.prevent="Trade(struct)">
-
-            <div v-if="!selfStock">
+            <div>
                 <section class="flex flex-col gap-1 mb-2 items-end">
                     <label>Элемент:</label>
                     <select v-model="struct.Element">
@@ -68,23 +66,71 @@ const selfStock = computed(() => tradeState.value?.StateStruct?.StockExchange.St
                 </section>
                 <button type="submit" class="self-end">Отправить</button>
             </div>
-            <div v-else>
-
-            </div>
-
         </form>
-        <div v-if="gameState.State === 'TRADE'">
-            <div class="flex flex-nowrap" v-for="[_, Stock] in Object.entries(gameState.StateStruct!.StockExchange.StockList)">
+        <div class="w-[max(20rem)]" v-else>
+            <div class="flex flex-nowrap flex-col mb-1">
+                <span class="mb-1">Ваш лот:</span>
                 <div>
-                    <div>
-                        <span>{{ Stock.Owner }} предлагает:</span>
+                    <div class=" w-[min(20rem)] border-solid border-2 border-blue-400 rounded-lg px-4 py-2">
+                        <div class="flex">
+                            <div class=" text-lg inline-flex gap-1 items-center">
+                                <ElementImage class=" w-8 inline m-1" :elname="selfStock.Element" />
+                                <span>за</span>
+                                <ElementImage class="w-8 inline m-1" :elname="selfStock.ToElement" />
+                            </div>
+                            <IconButton class="ml-auto" :icon="XMarkIcon" />
+                        </div>
+
                     </div>
-                    <ElementImage class="w-8 inline m-1" :elname="Stock.Element" />
-                    <span>за</span>
-                    <ElementImage class="w-8 inline m-1" :elname="Stock.ToElement" />
                 </div>
-                <IconButton class=" ml-auto" :icon="CheckIcon" />
+            </div>
+            <details>
+                <summary>
+                    <div
+                        class="inline-flex w-5 h-5 text-[1rem] items-center justify-center rounded-full bg-blue-400 text-white  font-bold">
+                        {{ 1 }}
+                    </div>
+                    Согласны:
+                </summary>
                 <IconButton class="" :icon="XMarkIcon" />
+                <p>
+                    Requires a computer running an operating system. The computer must have some
+                    memory and ideally some kind of long-term storage. An input device as well
+                    as some form of output device is recommended.Requires a computer running an operating system. The
+                    computer must have some
+                    memory and ideally some kind of long-term storage. An input device as well
+                    as some form of output device is recommended.Requires a computer running an operating system. The
+                    computer must have some
+                    memory and ideally some kind of long-term storage. An input device as well
+                    as some form of output device is recommended.Requires a computer running an operating system. The
+                    computer must have some
+                    memory and ideally some kind of long-term storage. An input device as well
+                    as some form of output device is recommended.Requires a computer running an operating system. The
+                    computer must have some
+                    memory and ideally some kind of long-term storage. An input device as well
+                    as some form of output device is recommended.
+                </p>
+            </details>
+        </div>
+        <div v-if="gameState.State === 'TRADE'">
+            <div class="flex flex-nowrap mb-2   flex-col"
+                v-for="[_, Stock] in Object.entries(gameState.StateStruct!.StockExchange.StockList)">
+                <div class="mb-1 flex gap-1">
+                    <UserInfo :name="Stock.Owner" :role="Role.Player" />
+                    <span> предлагает:</span>
+                </div>
+                <div class=" w-[min(20rem)] border-solid border-2 border-blue-400 rounded-lg px-4 py-2">
+
+                    <div class="flex">
+                        <div class=" text-lg inline-flex gap-1 items-center">
+                            <ElementImage class=" w-8 inline m-1" :elname="Stock.Element" />
+                            <span>за</span>
+                            <ElementImage class="w-8 inline m-1" :elname="Stock.ToElement" />
+                        </div>
+                        <IconButton class="ml-auto" :icon="CheckIcon" />
+                        <IconButton class="" :icon="XMarkIcon" />
+                    </div>
+                </div>
             </div>
         </div>
     </div>
