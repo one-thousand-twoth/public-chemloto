@@ -3,7 +3,6 @@ package server
 import (
 	"context"
 	"flag"
-	"log"
 	"log/slog"
 	"net"
 	"net/http"
@@ -141,7 +140,8 @@ func NewServer() *Server {
 func GetOutboundIP() net.IP {
 	conn, err := net.Dial("udp", "8.8.8.8:80")
 	if err != nil {
-		log.Fatal("GetOutboundIP", "Fatal error", err)
+		// log.Fatal("GetOutboundIP", "Fatal error", err)
+		return net.ParseIP("0.0.0.0")
 	}
 	defer conn.Close()
 

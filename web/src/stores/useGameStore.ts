@@ -3,6 +3,7 @@ import { Role } from '@/models/User'
 import { acceptHMRUpdate, defineStore } from 'pinia'
 import { computed, ref } from 'vue'
 import { useUserStore } from './useUserStore'
+import { StoreWithWS } from '@/api/websocket/websocketPlugin'
 
 
 const ROOMNAME_LOCAL_STORAGE_KEY = "roomname"
@@ -14,6 +15,66 @@ const getName = () => {
 const getConnected = () => {
     const value = localStorage.getItem(CONNECTED_LOCAL_STORAGE_KEY)
     return value === "true";
+}
+// Base interface for state handlers
+interface GameStateHandler {
+    getState(): string;
+}
+
+// Trade state handler
+class TradeStateHandler implements GameStateHandler {
+    constructor(private ws: any) { }
+
+    getState() {
+        return 'TRADE';
+    }
+
+    trade(element: string, toElement: string) {
+        this.ws.Send({
+            Type: "ENGINE_ACTION",
+            Action: "TradeOffer",
+            Element: element,
+            ToElement: toElement
+        });
+    }
+
+    cancelTrade(stockId: string) {
+        this.ws.Send({
+            Type: "ENGINE_ACTION",
+            Action: "CancelTrade",
+            StockId: stockId
+        });
+    }
+
+    acceptTrade(stockId: string) {
+        this.ws.Send({
+            Type: "ENGINE_ACTION",
+            Action: "AcceptTrade",
+            StockId: stockId
+        });
+    }
+}
+
+// Obtain state handler
+class ObtainStateHandler implements GameStateHandler {
+    getState() {
+        return 'OBTAIN';
+    }
+
+    // Add obtain-specific methods here
+}
+// Factory to create state handlers
+class GameStateFactory {
+    static createHandler(state: string, ws: any): GameStateHandler {
+        switch (state) {
+            case 'TRADE':
+                return new TradeStateHandler(ws);
+            case 'OBTAIN':
+                return new ObtainStateHandler();
+            default:
+                throw new Error(`Unknown state: ${state}`);
+        }
+    }
 }
 
 export const useGameStore = defineStore('game', () => {
@@ -73,6 +134,21 @@ export const useGameStore = defineStore('game', () => {
             }
 
     }
+
+    const currentStateHandler = computed(() => {
+        const store = useGameStore()
+        if (!gameState.value.State) return null;
+
+        switch (gameState.value.State) {
+            case 'TRADE':
+                return new TradeStateHandler(store.$ws);
+            case 'OBTAIN':
+                return new ObtainStateHandler();
+            default:
+                return null;
+        }
+    })
+
     return {
         fetching,
         name,
@@ -81,7 +157,9 @@ export const useGameStore = defineStore('game', () => {
         SelfPlayer,
         LastElements,
         gameState,
-        EngineInfo
+        EngineInfo,
+        currentStateHandler,
+        // Trade,
     }
 
 })
@@ -129,7 +207,8 @@ export interface StateTRADE {
                 }[]
             }[]
         }
-    }
+    },
+    // Trade(): void,
 }
 export interface StateCOMPLETED {
     State: "COMPLETED"

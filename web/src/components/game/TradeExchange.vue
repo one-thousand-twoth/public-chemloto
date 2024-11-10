@@ -37,6 +37,7 @@ const tradeState = computed(() => {
     return null
 })
 
+// tradeState.value?.Trade()
 const selfStock = computed(() => tradeState.value?.StateStruct?.StockExchange.StockList.find(stock => stock.Owner === player.Name) ?? null)
 
 </script>
