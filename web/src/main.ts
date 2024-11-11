@@ -7,24 +7,24 @@ import Hub from '@/views/Hub.vue'
 import Login from '@/views/Login.vue'
 import { createPinia, storeToRefs } from 'pinia'
 import { createRouter, createWebHistory } from 'vue-router'
-import { useUserStore } from './stores/useUserStore'
-import { WebsocketConnector } from './api/websocket/websocket'
 import { APISettings } from './api/config'
-import { piniaWebsocketPlugin } from './api/websocket/websocketPlugin'
+import { WebsocketConnector } from './api/websocket/websocket'
+import { piniaWebsocketPlugin, websocketPlugin } from './api/websocket/websocketPlugin'
+import { useUserStore } from './stores/useUserStore'
 
 const pinia = createPinia()
 const app = createApp(App)
 
 const connector = new WebsocketConnector(APISettings.baseURL, '')
-pinia.use(piniaWebsocketPlugin(connector))
+// pinia.use(piniaWebsocketPlugin(connector))
 
-
+app.use(websocketPlugin, connector)
 app.use(pinia);
 
 const userStore = useUserStore();
 const { UserCreds } = storeToRefs(userStore)
 
-provide('connector', connector)
+// provide('connector', connector)
 watch(UserCreds, () => {
   if (userStore.UserCreds) {
     if (userStore.UserCreds.token != "") {

@@ -1,9 +1,8 @@
-import { WEBSOCKET_EVENT } from '@/api/websocket/websocket'
+import { WEBSOCKET_EVENT, WebsocketConnector } from '@/api/websocket/websocket'
 import { Role } from '@/models/User'
 import { acceptHMRUpdate, defineStore } from 'pinia'
-import { computed, ref } from 'vue'
+import { computed, inject, ref } from 'vue'
 import { useUserStore } from './useUserStore'
-import { StoreWithWS } from '@/api/websocket/websocketPlugin'
 
 
 const ROOMNAME_LOCAL_STORAGE_KEY = "roomname"
@@ -22,7 +21,7 @@ interface GameStateHandler {
 }
 
 // Trade state handler
-class TradeStateHandler implements GameStateHandler {
+export class TradeStateHandler implements GameStateHandler {
     constructor(private ws: any) { }
 
     getState() {
@@ -38,19 +37,20 @@ class TradeStateHandler implements GameStateHandler {
         });
     }
 
-    cancelTrade(stockId: string) {
+    cancelTrade() {
         this.ws.Send({
             Type: "ENGINE_ACTION",
-            Action: "CancelTrade",
-            StockId: stockId
+            Action: "RemoveTradeOffer",
+            // StockId: stockId
         });
     }
 
-    acceptTrade(stockId: string) {
+    requestTrade(stockId: string, accept: boolean) {
         this.ws.Send({
             Type: "ENGINE_ACTION",
-            Action: "AcceptTrade",
-            StockId: stockId
+            Action: "TradeRequest",
+            StockId: stockId,
+            Accept:  accept
         });
     }
 }
@@ -65,10 +65,11 @@ class ObtainStateHandler implements GameStateHandler {
 }
 // Factory to create state handlers
 class GameStateFactory {
-    static createHandler(state: string, ws: any): GameStateHandler {
+    constructor(private readonly ws: WebsocketConnector){}
+    public createHandler(state: string): GameStateHandler {
         switch (state) {
             case 'TRADE':
-                return new TradeStateHandler(ws);
+                return new TradeStateHandler(this.ws);
             case 'OBTAIN':
                 return new ObtainStateHandler();
             default:
@@ -134,19 +135,14 @@ export const useGameStore = defineStore('game', () => {
             }
 
     }
+    
+    const handlerFactory = new GameStateFactory(inject('connector')!);
 
     const currentStateHandler = computed(() => {
-        const store = useGameStore()
-        if (!gameState.value.State) return null;
-
-        switch (gameState.value.State) {
-            case 'TRADE':
-                return new TradeStateHandler(store.$ws);
-            case 'OBTAIN':
-                return new ObtainStateHandler();
-            default:
-                return null;
+        if (gameState.value.State === undefined){
+            return null
         }
+        return handlerFactory.createHandler(gameState.value.State)
     })
 
     return {
@@ -194,18 +190,25 @@ export interface StateOBTAIN {
     State: "OBTAIN"
     StateStruct?: { Timer: number }
 }
+export interface RequestEntity {
+    ID: string
+    Player: string
+    Accept: boolean
+}
+
+export interface StockEntity {
+    ID: string
+    Owner: string
+    Element: string
+    ToElement: string
+    Requests: { [id: string]: { Request: RequestEntity }; }
+}
+
 export interface StateTRADE {
     State: "TRADE",
     StateStruct?: {
         StockExchange: {
-            StockList: {
-                Owner: string, Element: string, ToElement: string,
-                Request: {
-                    ID: string
-                    Player: string
-                    Accept: boolean
-                }[]
-            }[]
+            StockList: StockEntity[]
         }
     },
     // Trade(): void,

@@ -168,6 +168,13 @@ func (engine *PolymersEngine) Start() {
 						enerr.ErrorResponse(engine.unicast, e.Player, engine.log, err)
 						return
 					}
+					if state == UPDATE_CURRENT {
+						engine.broadcast(common.Message{
+							Type: common.ENGINE_INFO,
+							Ok:   true,
+							Body: engine.PreHook(),
+						})
+					}
 					// Changing state if needed and notificate users.
 					if state > NO_TRANSITION {
 						engine.log.Info("Changing game state",

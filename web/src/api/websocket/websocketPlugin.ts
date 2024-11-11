@@ -1,7 +1,7 @@
 // websocketPlugin.ts
-import { Plugin } from 'vue'
 import { WebsocketConnector } from '@/api/websocket/websocket'
 import { PiniaPluginContext } from 'pinia'
+import { Plugin } from 'vue'
 
 export interface StoreWithWS {
     $ws: WebsocketConnector
@@ -9,7 +9,7 @@ export interface StoreWithWS {
 
 export const websocketPlugin: Plugin = {
     install: (app, wsConnection: WebsocketConnector) => {
-        app.provide('websocket', wsConnection)
+        app.provide('connector', wsConnection)
     }
 }
 

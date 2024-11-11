@@ -2,33 +2,35 @@
 import { WebsocketConnector } from '@/api/websocket/websocket';
 import { ElementImage, IconButton, UserInfo } from '@/components/UI/';
 import { Role } from '@/models/User';
-import { GameInfo, Player, StateTRADE, useGameStore } from '@/stores/useGameStore';
+import { GameInfo, Player, StateTRADE, StockEntity, TradeStateHandler, useGameStore } from '@/stores/useGameStore';
 import { useUserStore } from '@/stores/useUserStore';
 import {
+    ChatBubbleOvalLeftEllipsisIcon,
     CheckIcon, XMarkIcon
 } from "@heroicons/vue/24/outline";
 import { storeToRefs } from 'pinia';
 import { computed, inject, onMounted, ref } from 'vue';
-const GameStore = useGameStore()
-const { gameState } = storeToRefs(GameStore)
-const player = GameStore.SelfPlayer
-const ws = inject('connector') as WebsocketConnector
+
+
+const isTradingState = computed(() => gameState.value.State === "TRADE");
+
+const gameStore = useGameStore()
+const { gameState } = storeToRefs(gameStore)
+const player = gameStore.SelfPlayer
+
 interface TradeOffer {
     Element: string
     toElement: string
 }
-const struct = ref({
+interface TradeRequest {
+    StockID: string
+    Accept: boolean
+}
+const tradeForm = ref({
     Element: "",
     toElement: "",
 })
-function Trade(st: TradeOffer) {
-    ws.Send({
-        Type: "ENGINE_ACTION",
-        Action: "TradeOffer",
-        Element: st.Element,
-        ToElement: st.toElement
-    })
-}
+
 
 const tradeState = computed(() => {
     if (gameState.value.State === "TRADE") {
@@ -37,18 +39,50 @@ const tradeState = computed(() => {
     return null
 })
 
+const tradeHandler = computed(() => {
+    if (!isTradingState.value) return null;
+    return gameStore.currentStateHandler as TradeStateHandler;
+});
+
+function handleTrade(offer: TradeOffer) {
+    if (!tradeHandler.value) return;
+    tradeHandler.value.trade(offer.Element, offer.toElement);
+}
+function cancelTrade() {
+    if (!tradeHandler.value) return;
+    tradeHandler.value.cancelTrade();
+}
+function requestTrade(req: TradeRequest) {
+    if (!tradeHandler.value) return;
+    tradeHandler.value.requestTrade(req.StockID, req.Accept);
+}
+function accepted(stock: StockEntity){
+    // return stock.Requests
+    console.log(stock.Requests);
+    console.log(Array.isArray(stock.Requests))
+    return Object.entries(stock.Requests).find(([name, _]) => name === player.Name ) ?? null
+}
 // tradeState.value?.Trade()
 const selfStock = computed(() => tradeState.value?.StateStruct?.StockExchange.StockList.find(stock => stock.Owner === player.Name) ?? null)
 
+const stockList = computed(() => {
+    if (!tradeState.value?.StateStruct?.StockExchange.StockList) return [];
+    return Object.entries(tradeState.value.StateStruct.StockExchange.StockList);
+});
+
 </script>
 <template>
-    <div v-if="gameState.State === 'TRADE'" class="flex flex-wrap gap-4">
-        <form v-if="!selfStock" class="flex  flex-col gap-4  p-3" @submit.prevent="Trade(struct)">
+    <div v-if="!isTradingState" class="text-lg text-gray-600">
+        Биржа недоступна
+    </div>
+
+    <div v-else class="flex flex-wrap gap-4">
+        <form v-if="!selfStock" class="flex  flex-col gap-4  p-3" @submit.prevent="handleTrade(tradeForm)">
 
             <div>
                 <section class="flex flex-col gap-1 mb-2 items-end">
                     <label>Элемент:</label>
-                    <select v-model="struct.Element">
+                    <select v-model="tradeForm.Element">
                         <option disabled value="" class="text-right">Выберите</option>
                         <option class="text-right"
                             v-for="[i, _] in Object.entries(player.Bag).filter(([k, _]) => k !== 'TRADE')">{{ i
@@ -56,7 +90,7 @@ const selfStock = computed(() => tradeState.value?.StateStruct?.StockExchange.St
                         </option>
                     </select>
                     <label>Обменять на:</label>
-                    <select v-model="struct.toElement">
+                    <select v-model="tradeForm.toElement">
                         <option disabled value="" class="text-right">Выберите</option>
                         <option class="text-right"
                             v-for="[i, _] in Object.entries(gameState.Bag.Elements).filter(([k, _]) => k !== 'TRADE')">
@@ -79,7 +113,7 @@ const selfStock = computed(() => tradeState.value?.StateStruct?.StockExchange.St
                                 <span>за</span>
                                 <ElementImage class="w-8 inline m-1" :elname="selfStock.ToElement" />
                             </div>
-                            <IconButton class="ml-auto" :icon="XMarkIcon" />
+                            <IconButton @click="cancelTrade" class="ml-auto" :icon="XMarkIcon" />
                         </div>
 
                     </div>
@@ -113,9 +147,8 @@ const selfStock = computed(() => tradeState.value?.StateStruct?.StockExchange.St
                 </p>
             </details>
         </div>
-        <div v-if="gameState.State === 'TRADE'">
-            <div class="flex flex-nowrap mb-2   flex-col"
-                v-for="[_, Stock] in Object.entries(gameState.StateStruct!.StockExchange.StockList)">
+        <div>
+            <div class="flex flex-nowrap mb-2   flex-col" v-for="[_, Stock] in stockList">
                 <div class="mb-1 flex gap-1">
                     <UserInfo :name="Stock.Owner" :role="Role.Player" />
                     <span> предлагает:</span>
@@ -128,7 +161,13 @@ const selfStock = computed(() => tradeState.value?.StateStruct?.StockExchange.St
                             <span>за</span>
                             <ElementImage class="w-8 inline m-1" :elname="Stock.ToElement" />
                         </div>
-                        <IconButton class="ml-auto" :icon="CheckIcon" />
+                        <div class="ml-auto" ></div>
+                        
+                        <ChatBubbleOvalLeftEllipsisIcon v-if="accepted(Stock)" class="relative left-2 bottom-1 transform scale-x-[-1] h-6 w-6 text-gray-500" />
+                        <IconButton @click="requestTrade({
+                            StockID: Stock.ID,
+                            Accept: true,
+                        })" :icon="CheckIcon" />
                         <IconButton class="" :icon="XMarkIcon" />
                     </div>
                 </div>

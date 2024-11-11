@@ -283,7 +283,7 @@ func (s *StockExchange) RemoveStockByUser(user string) error {
 	for i, stock := range s.StockList {
 		if stock.Owner.Name == user {
 			s.StockList = append(s.StockList[:i], s.StockList[i+1:]...)
-			break
+			return nil
 		}
 	}
 	return enerr.E(op, "Предложение не найдено", enerr.InvalidRequest)
