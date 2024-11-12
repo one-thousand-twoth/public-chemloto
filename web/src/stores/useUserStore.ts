@@ -16,7 +16,7 @@ export const useUserStore = defineStore('users', {
   state: () => {
     return {
       UserCreds: getUser() as UserInfo | null,
-      fetching: ref(false)
+      fetching: false
     }
   },
   actions:
@@ -122,7 +122,7 @@ export const useUserStore = defineStore('users', {
 
   },
   getters: {
-    connected: (state) => state.UserCreds!.room ? true : false,
+    connected: (state) => state.UserCreds?.room ? true : false,
   }
 })
 

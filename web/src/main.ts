@@ -26,14 +26,14 @@ const { UserCreds } = storeToRefs(userStore)
 
 // provide('connector', connector)
 watch(UserCreds, () => {
-  if (userStore.UserCreds) {
-    if (userStore.UserCreds.token != "") {
-      connector.token = userStore.UserCreds.token
+  if (UserCreds.value) {
+    if (UserCreds.value.token != "") {
+      connector.token = UserCreds.value.token
       connector.Run()
     }
   }
 
-})
+}, { deep: true })
 
 
 const router = createRouter({

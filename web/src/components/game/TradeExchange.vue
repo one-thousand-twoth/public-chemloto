@@ -56,11 +56,11 @@ function requestTrade(req: TradeRequest) {
     if (!tradeHandler.value) return;
     tradeHandler.value.requestTrade(req.StockID, req.Accept);
 }
-function accepted(stock: StockEntity){
+function accepted(stock: StockEntity) {
     // return stock.Requests
     console.log(stock.Requests);
     console.log(Array.isArray(stock.Requests))
-    return Object.entries(stock.Requests).find(([name, _]) => name === player.Name ) ?? null
+    return Object.entries(stock.Requests).find(([name, _]) => name === player.Name) ?? null
 }
 // tradeState.value?.Trade()
 const selfStock = computed(() => tradeState.value?.StateStruct?.StockExchange.StockList.find(stock => stock.Owner === player.Name) ?? null)
@@ -161,9 +161,10 @@ const stockList = computed(() => {
                             <span>за</span>
                             <ElementImage class="w-8 inline m-1" :elname="Stock.ToElement" />
                         </div>
-                        <div class="ml-auto" ></div>
-                        
-                        <ChatBubbleOvalLeftEllipsisIcon v-if="accepted(Stock)" class="relative left-2 bottom-1 transform scale-x-[-1] h-6 w-6 text-gray-500" />
+                        <div class="ml-auto"></div>
+
+                        <ChatBubbleOvalLeftEllipsisIcon v-if="accepted(Stock)"
+                            class="relative left-2 bottom-1 transform scale-x-[-1] h-6 w-6 text-gray-500" />
                         <IconButton @click="requestTrade({
                             StockID: Stock.ID,
                             Accept: true,
