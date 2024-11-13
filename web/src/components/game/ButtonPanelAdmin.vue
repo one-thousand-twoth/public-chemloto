@@ -2,11 +2,11 @@
 import { WebsocketConnector } from '@/api/websocket/websocket';
 import RaiseHandComp from '@/components/game/RaiseHandComp.vue';
 import { Modal } from '@/components/UI/index';
-import {Hand, ObtainStateHandler, TradeStateHandler, useGameStore} from '@/stores/useGameStore';
+import { Hand, ObtainStateHandler, TradeStateHandler, useGameStore } from '@/stores/useGameStore';
 import { useUserStore } from '@/stores/useUserStore';
+import { storeToRefs } from "pinia";
 import { computed, inject, ref } from 'vue';
 import Trade from './Trade.vue';
-import {storeToRefs} from "pinia";
 
 // const props = defineProps<{
 //     modal: string;
@@ -27,21 +27,31 @@ function StartGame() {
 }
 
 const isObtainState = computed(() => gameState.value.State === "OBTAIN");
+const isTradeState = computed(() => gameState.value.State === "TRADE");
 
 const ObtainHandler = computed(() => {
-  if (!isObtainState.value) return null;
-  return gameStore.currentStateHandler as ObtainStateHandler;
+    if (!isObtainState.value) return null;
+    return gameStore.currentStateHandler as ObtainStateHandler;
+});
+const TradeHandler = computed(() => {
+    if (!isTradeState.value) return null;
+    return gameStore.currentStateHandler as TradeStateHandler;
 });
 
 
 
 function GetElement() {
-  if (!ObtainHandler.value) return;
-  ObtainHandler.value.getElement()
+    if (!ObtainHandler.value) return;
+    ObtainHandler.value.getElement()
 }
 function sendContinue() {
-  if (!ObtainHandler.value) return;
-  ObtainHandler.value.sendContinue()
+    if (ObtainHandler.value) {
+        ObtainHandler.value.sendContinue()
+    }
+    if (TradeHandler.value) {
+        TradeHandler.value.sendContinue()
+    }
+    console.log("State doesn`t provide sendContinue action")
 }
 
 // const currPlayer = computed(() => {

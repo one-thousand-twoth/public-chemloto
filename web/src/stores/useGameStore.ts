@@ -53,6 +53,12 @@ export class TradeStateHandler implements GameStateHandler {
             Accept:  accept
         });
     }
+    sendContinue() {
+        this.ws.Send({
+            Type: 'ENGINE_ACTION',
+            Action: 'Continue'
+        })
+    }
 }
 
 // Obtain state handler
