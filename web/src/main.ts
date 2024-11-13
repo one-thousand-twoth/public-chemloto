@@ -1,6 +1,6 @@
 import './assets/output.css'
 
-import { createApp, provide, watch } from 'vue'
+import { createApp,  watch } from 'vue'
 import App from './App.vue'
 
 import Hub from '@/views/Hub.vue'
@@ -9,7 +9,7 @@ import { createPinia, storeToRefs } from 'pinia'
 import { createRouter, createWebHistory } from 'vue-router'
 import { APISettings } from './api/config'
 import { WebsocketConnector } from './api/websocket/websocket'
-import { piniaWebsocketPlugin, websocketPlugin } from './api/websocket/websocketPlugin'
+import { websocketPlugin } from './api/websocket/websocketPlugin'
 import { useUserStore } from './stores/useUserStore'
 
 const pinia = createPinia()

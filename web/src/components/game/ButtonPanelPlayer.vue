@@ -12,32 +12,12 @@ import { computed, inject, ref } from 'vue';
 
 const ws = inject('connector') as WebsocketConnector
 
-const GameStore = useGameStore()
-const userStore = useUserStore()
+const gameStore = useGameStore()
+// const userStore = useUserStore()
 
-
-function StartGame() {
-    ws.Send({
-        Type: 'HUB_STARTGAME',
-        Name: userStore.UserCreds!.room.toString()
-    })
-}
-function GetElement() {
-    console.log('Get element!')
-    ws.Send({
-        Type: 'ENGINE_ACTION',
-        Action: 'GetElement'
-    })
-}
-function SendContinue() {
-    ws.Send({
-        Type: 'ENGINE_ACTION',
-        Action: 'Continue'
-    })
-}
 
 const currPlayer = computed(() => {
-    return GameStore.gameState.Players.find(player => player.Name === curInfoPlayer.value)
+    return gameStore.gameState.Players.find(player => player.Name === curInfoPlayer.value)
 })
 
 const curInfoPlayer = ref('')
@@ -49,19 +29,19 @@ const TradeButton = ref(false)
 
 </script>
 <template>
-    <template v-if="!GameStore.gameState.Started">
+    <template v-if="!gameStore.gameState.Started">
         <button disabled >Ждем начала</button>
     </template>
     <template v-else>
-        <template v-if="GameStore.gameState.State == 'OBTAIN'">
+        <template v-if="gameStore.gameState.State == 'OBTAIN'">
             <button @click="RaiseHandButton = !RaiseHandButton">Поднять
                 руку</button>
         </template>
-        <template v-if="GameStore.gameState.State == 'HAND'">
+        <template v-if="gameStore.gameState.State == 'HAND'">
             <button  @click="RaiseHandButton = !RaiseHandButton">Поднять
                 руку</button>
         </template>
-        <template v-if="GameStore.gameState.State == 'TRADE'">
+        <template v-if="gameStore.gameState.State == 'TRADE'">
             <button @click="TradeButton = !TradeButton">Обменять</button>
         </template>
     </template>
@@ -78,15 +58,15 @@ const TradeButton = ref(false)
         <template #header>
             <h3 class="font-bold text-center">Поднять руку</h3>
         </template>
-        <template v-if="GameStore.SelfPlayer" #body>
-            <RaiseHandComp :player="GameStore.SelfPlayer" />
+        <template v-if="gameStore.SelfPlayer" #body>
+            <RaiseHandComp :player="gameStore.SelfPlayer" />
         </template>
     </Modal>
     <Modal :show="TradeButton" @close="TradeButton = false">
         <template #header>
             <h3 class="font-bold text-center">Обменять</h3>
         </template>
-        <template v-if="GameStore.SelfPlayer" #body>
+        <template v-if="gameStore.SelfPlayer" #body>
             <TradeExchange />
         </template>
     </Modal>

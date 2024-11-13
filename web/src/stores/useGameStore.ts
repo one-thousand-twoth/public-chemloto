@@ -6,15 +6,15 @@ import { useUserStore } from './useUserStore'
 
 
 const ROOMNAME_LOCAL_STORAGE_KEY = "roomname"
-const CONNECTED_LOCAL_STORAGE_KEY = "connected"
+// const CONNECTED_LOCAL_STORAGE_KEY = "connected"
 const getName = () => {
     const value = localStorage.getItem(ROOMNAME_LOCAL_STORAGE_KEY)
     return value ?? "";
 }
-const getConnected = () => {
-    const value = localStorage.getItem(CONNECTED_LOCAL_STORAGE_KEY)
-    return value === "true";
-}
+// const getConnected = () => {
+//     const value = localStorage.getItem(CONNECTED_LOCAL_STORAGE_KEY)
+//     return value === "true";
+// }
 // Base interface for state handlers
 interface GameStateHandler {
     getState(): string;
@@ -56,12 +56,25 @@ export class TradeStateHandler implements GameStateHandler {
 }
 
 // Obtain state handler
-class ObtainStateHandler implements GameStateHandler {
+export class ObtainStateHandler implements GameStateHandler {
+    constructor(private ws: WebsocketConnector) { }
     getState() {
         return 'OBTAIN';
     }
+    getElement() {
+        this.ws.Send({
+            Type: 'ENGINE_ACTION',
+            Action: 'GetElement'
+        });
+    }
+    sendContinue() {
+        this.ws.Send({
+            Type: 'ENGINE_ACTION',
+            Action: 'Continue'
+        })
+    }
 
-    // Add obtain-specific methods here
+    
 }
 // Factory to create state handlers
 class GameStateFactory {
@@ -71,7 +84,7 @@ class GameStateFactory {
             case 'TRADE':
                 return new TradeStateHandler(this.ws);
             case 'OBTAIN':
-                return new ObtainStateHandler();
+                return new ObtainStateHandler(this.ws);
             default:
                 throw new Error(`Unknown state: ${state}`);
         }

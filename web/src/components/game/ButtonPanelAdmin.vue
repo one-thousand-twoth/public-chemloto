@@ -2,10 +2,11 @@
 import { WebsocketConnector } from '@/api/websocket/websocket';
 import RaiseHandComp from '@/components/game/RaiseHandComp.vue';
 import { Modal } from '@/components/UI/index';
-import { Hand, useGameStore } from '@/stores/useGameStore';
+import {Hand, ObtainStateHandler, TradeStateHandler, useGameStore} from '@/stores/useGameStore';
 import { useUserStore } from '@/stores/useUserStore';
 import { computed, inject, ref } from 'vue';
 import Trade from './Trade.vue';
+import {storeToRefs} from "pinia";
 
 // const props = defineProps<{
 //     modal: string;
@@ -13,7 +14,8 @@ import Trade from './Trade.vue';
 
 const ws = inject('connector') as WebsocketConnector
 
-const GameStore = useGameStore()
+const gameStore = useGameStore()
+const { gameState } = storeToRefs(gameStore)
 const userStore = useUserStore()
 
 
@@ -23,58 +25,63 @@ function StartGame() {
         Name: userStore.UserCreds!.room.toString()
     })
 }
+
+const isObtainState = computed(() => gameState.value.State === "OBTAIN");
+
+const ObtainHandler = computed(() => {
+  if (!isObtainState.value) return null;
+  return gameStore.currentStateHandler as ObtainStateHandler;
+});
+
+
+
 function GetElement() {
-    console.log('Get element!')
-    ws.Send({
-        Type: 'ENGINE_ACTION',
-        Action: 'GetElement'
-    })
+  if (!ObtainHandler.value) return;
+  ObtainHandler.value.getElement()
 }
-function SendContinue() {
-    ws.Send({
-        Type: 'ENGINE_ACTION',
-        Action: 'Continue'
-    })
+function sendContinue() {
+  if (!ObtainHandler.value) return;
+  ObtainHandler.value.sendContinue()
 }
 
-const currPlayer = computed(() => {
-    return GameStore.gameState.Players.find(player => player.Name === curInfoPlayer.value)
-})
+// const currPlayer = computed(() => {
+//     return gameState.Players.find(player => player.Name === curInfoPlayer.value)
+// })
 
-const curInfoPlayer = ref('')
-const curCheckPlayer = ref<Hand>()
-const RaiseHandButton = ref(false)
+// const curInfoPlayer = ref('')
+// const curCheckPlayer = ref<Hand>()
+// const RaiseHandButton = ref(false)
 const TradeButton = ref(false)
 
 
 
 </script>
 <template>
-    <template v-if="!GameStore.gameState.Started">
+    <template v-if="!gameStore.gameState.Started">
         <button @click="StartGame()">
             Начать игру
         </button>
     </template>
     <template v-else>
-        <template v-if="GameStore.gameState.State == 'OBTAIN'">
+        <template v-if="gameStore.gameState.State == 'OBTAIN'">
             <button @click="GetElement()">Достать
                 элемент</button>
         </template>
-        <template v-if="GameStore.gameState.State == 'HAND'">
+        <template v-if="gameStore.gameState.State == 'HAND'">
             <button disabled @click="GetElement()">Ждем
                 проверки</button>
         </template>
-        <template v-if="GameStore.gameState.State == 'TRADE'">
+        <template v-if="gameStore.gameState.State == 'TRADE'">
             <button @click="TradeButton = !TradeButton">Обменять</button>
-            <button @click="SendContinue()">Продолжить</button>
+            <button @click="sendContinue()">Продолжить</button>
         </template>
     </template>
     <Modal :show="TradeButton" @close="TradeButton = false">
         <template #header>
             <h3 class="font-bold text-center">Обменять</h3>
         </template>
-        <template v-if="GameStore.SelfPlayer" #body>
-            <Trade :players="GameStore.gameState.Players" />
+        <template v-if="gameStore.SelfPlayer" #body>
+            <Trade :players="gameStore.gameState.Players" />
         </template>
     </Modal>
 </template>
