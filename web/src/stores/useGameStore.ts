@@ -53,6 +53,13 @@ export class TradeStateHandler implements GameStateHandler {
             Accept:  accept
         });
     }
+    ackTrade(requestID: string) {
+        this.ws.Send({
+            Type: 'ENGINE_ACTION',
+            Action: "TradeAck",
+            TargetID: requestID,
+        })
+    }
     sendContinue() {
         this.ws.Send({
             Type: 'ENGINE_ACTION',
@@ -220,7 +227,7 @@ export interface StockEntity {
     Owner: string
     Element: string
     ToElement: string
-    Requests: { [id: string]: { Request: RequestEntity }; }
+    Requests: { [id: string]:  RequestEntity  }
 }
 
 export interface StateTRADE {

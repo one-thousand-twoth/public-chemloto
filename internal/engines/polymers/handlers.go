@@ -25,7 +25,7 @@ func RaiseHand(engine *PolymersEngine) HandlerFunc {
 	}
 	return func(e models.Action) (stateInt, error) {
 		const op enerr.Op = "polymers/RaiseHand"
-		data, err := dataFromAction[Data](e, engine)
+		data, err := dataFromAction[Data](e)
 		if err != nil {
 			return NO_TRANSITION, enerr.E(op, err)
 		}
@@ -91,7 +91,7 @@ func Check(engine *PolymersEngine) HandlerFunc {
 	return func(e models.Action) (stateInt, error) {
 
 		const op enerr.Op = "polymers/Check"
-		data, err := dataFromAction[Data](e, engine)
+		data, err := dataFromAction[Data](e)
 		if err != nil {
 			return NO_TRANSITION, err
 		}
@@ -239,10 +239,10 @@ func (*PolymersEngine) exchange(
 	element2 string,
 	player2 *Participant) error {
 	const op enerr.Op = "polymers/PolymersEngine.exchange"
-	if player1.Bag[element1] <= 1 {
+	if player1.Bag[element1] < 1 {
 		return enerr.E(op, fmt.Sprintf("У игрока %s нет такого элемента", player1.Name))
 	}
-	if player2.Bag[element2] <= 1 {
+	if player2.Bag[element2] < 1 {
 		return enerr.E(op, fmt.Sprintf("У игрока %s нет такого элемента", player2.Name))
 	}
 	player1.Bag[element1] -= 1

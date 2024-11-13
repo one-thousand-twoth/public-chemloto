@@ -210,6 +210,7 @@ func (eng *PolymersEngine) NewTradeState(timer time.Duration) (state *TradeState
 	state.Add("RemoveTradeOffer", state.removeTradeOffer(), false)
 
 	state.Add("TradeRequest", state.addTradeRequest(), false)
+	state.Add("TradeAck", state.addTradeAck(), false)
 	state.Add("Continue", func(a models.Action) (stateInt, error) { return OBTAIN, nil }, true)
 
 	return
@@ -260,12 +261,31 @@ func (stk *Stock) MarshalJSON() ([]byte, error) {
 	}
 	return json.Marshal(st)
 }
+func (stk *Stock) Request(id string) (*StockRequest, error) {
+	const op enerr.Op = "polymers/Stock.Request"
+	for _, request := range stk.Requests {
+		if request.ID == id {
+			return request, nil
+		}
+	}
+	return nil, enerr.E(op, "Предложение не найдено", enerr.InvalidRequest)
+}
 
 func (s *StockExchange) AddStock(id string, stck *Stock) {
 	if stck.Requests == nil {
 		stck.Requests = make(map[string]*StockRequest, 0)
 	}
 	s.StockList = append(s.StockList, stck)
+}
+
+func (s *StockExchange) StockByID(id string) (*Stock, error) {
+	const op enerr.Op = "polymers/StockExchange.StockByID"
+	for _, stock := range s.StockList {
+		if stock.ID == id {
+			return stock, nil
+		}
+	}
+	return nil, enerr.E(op, "Предложение не найдено", enerr.InvalidRequest)
 }
 
 func (s *StockExchange) StockByUser(user string) (*Stock, error) {
@@ -331,7 +351,7 @@ func (s *TradeState) addTradeOffer() HandlerFunc {
 	}
 	return func(e models.Action) (stateInt, error) {
 		const op enerr.Op = "polymers/TradeState.addTradeOffer"
-		data, err := dataFromAction[Data](e, s.eng)
+		data, err := dataFromAction[Data](e)
 		if err != nil {
 			return NO_TRANSITION, enerr.E(op, err)
 		}
@@ -350,12 +370,7 @@ func (s *TradeState) addTradeOffer() HandlerFunc {
 			ToElement: data.ToElement,
 			Requests:  make(map[string]*StockRequest),
 		})
-		s.eng.broadcast(common.Message{
-			Type: common.ENGINE_INFO,
-			Ok:   true,
-			Body: s.eng.PreHook(),
-		})
-		return NO_TRANSITION, nil
+		return UPDATE_CURRENT, nil
 	}
 }
 func (s *TradeState) removeTradeOffer() HandlerFunc {
@@ -387,7 +402,7 @@ func (s *TradeState) addTradeRequest() HandlerFunc {
 	}
 	return func(e models.Action) (stateInt, error) {
 		const op enerr.Op = "polymers/TradeState.addTradeRequest"
-		data, err := dataFromAction[Data](e, s.eng)
+		data, err := dataFromAction[Data](e)
 		if err != nil {
 			return NO_TRANSITION, enerr.E(op, err)
 		}
@@ -402,7 +417,7 @@ func (s *TradeState) addTradeRequest() HandlerFunc {
 		if err != nil {
 			return NO_TRANSITION, enerr.E(op, err)
 		}
-		return NO_TRANSITION, nil
+		return UPDATE_CURRENT, nil
 	}
 }
 
@@ -413,14 +428,40 @@ func (s *TradeState) addTradeAck() HandlerFunc {
 		TargetID string
 	}
 	return func(e models.Action) (stateInt, error) {
+		const op enerr.Op = "polymers/TradeState.addTradeAck"
 		player, err := s.eng.getPlayer(e.Player)
 		if err != nil {
 			return NO_TRANSITION, err
 		}
-		s.StockExchange.StockByUser(player.Name)
+		data, err := dataFromAction[Data](e)
+		if err != nil {
+			return NO_TRANSITION, err
+		}
+		stock, err := s.StockExchange.StockByUser(player.Name)
+		if err != nil {
+			return NO_TRANSITION, err
+		}
 		// s.StockExchange.Requests[]
 		// TODO:
-		return NO_TRANSITION, nil
+		request, err := stock.Request(data.TargetID)
+		if err != nil {
+			return NO_TRANSITION, err
+		}
+
+		if !request.Accept {
+			return NO_TRANSITION, enerr.E(op, "Игрок не хочет меняться", enerr.GameLogic)
+		}
+
+		playerRequest, err := s.eng.getPlayer(request.Player)
+		if err != nil {
+			return NO_TRANSITION, err
+		}
+		if err := s.eng.exchange(player, stock.Element, stock.ToElement, playerRequest); err != nil {
+			// по идее ошибки быть не может, но пусть будет проверка
+			return NO_TRANSITION, err
+		}
+
+		return UPDATE_CURRENT, nil
 	}
 }
 func (s *TradeState) MarshalJSON() ([]byte, error) {

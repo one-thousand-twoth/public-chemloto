@@ -56,6 +56,10 @@ function requestTrade(req: TradeRequest) {
     if (!tradeHandler.value) return;
     tradeHandler.value.requestTrade(req.StockID, req.Accept);
 }
+function ackTrade(req: string) {
+    if (!tradeHandler.value) return;
+    tradeHandler.value.ackTrade(req);
+}
 function accepted(stock: StockEntity) {
     // return stock.Requests
     console.log(stock.Requests);
@@ -123,27 +127,14 @@ const stockList = computed(() => {
                 <summary>
                     <div
                         class="inline-flex w-5 h-5 text-[1rem] items-center justify-center rounded-full bg-blue-400 text-white  font-bold">
-                        {{ 1 }}
+                        {{  Object.entries(selfStock.Requests).length }}
                     </div>
                     Согласны:
                 </summary>
-                <IconButton class="" :icon="XMarkIcon" />
-                <p>
-                    Requires a computer running an operating system. The computer must have some
-                    memory and ideally some kind of long-term storage. An input device as well
-                    as some form of output device is recommended.Requires a computer running an operating system. The
-                    computer must have some
-                    memory and ideally some kind of long-term storage. An input device as well
-                    as some form of output device is recommended.Requires a computer running an operating system. The
-                    computer must have some
-                    memory and ideally some kind of long-term storage. An input device as well
-                    as some form of output device is recommended.Requires a computer running an operating system. The
-                    computer must have some
-                    memory and ideally some kind of long-term storage. An input device as well
-                    as some form of output device is recommended.Requires a computer running an operating system. The
-                    computer must have some
-                    memory and ideally some kind of long-term storage. An input device as well
-                    as some form of output device is recommended.
+<!--                <IconButton class="" :icon="XMarkIcon" />-->
+                <p class="inline-flex items-center w-full" v-for="(request, name) in selfStock.Requests">
+                  {{   name  }}
+                  <IconButton class="ml-auto"  @click="ackTrade(request.ID)" :icon="CheckIcon" />
                 </p>
             </details>
         </div>
