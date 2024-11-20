@@ -13,14 +13,7 @@ const timerString = computed(() => {
     }
     let minutes = Math.floor(GameStore.timer / 60);
     let remainingSeconds = GameStore.timer % 60;
-    if (GameStore.timer > 1) {
-        setTimeout(() => {
-            if (GameStore.timer ==null){
-                return
-            }
-            GameStore.timer--; // Decrement the timer count
-        }, 1000);
-    }
+
     return `${minutes} : ${remainingSeconds}`
 })
 
