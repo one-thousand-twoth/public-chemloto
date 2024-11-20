@@ -121,7 +121,7 @@ export const useGameStore = defineStore('game', () => {
         }
     })
     // TODO: Сделать getter`om
-    const timer = ref(0)
+    const timer = computed({get:() => getStateTimer(gameState.value), set: (v ) => updateTimer(gameState.value, v as number)})
     const gameState = ref<GameInfo>({
         Bag: {
             Elements: {},
@@ -155,11 +155,6 @@ export const useGameStore = defineStore('game', () => {
     function EngineInfo(e: WEBSOCKET_EVENT) {
         const b = e.Body["engine"] as GameInfo
         gameState.value = b
-        if (gameState.value.State === "OBTAIN")
-            if (gameState.value.StateStruct) {
-                timer.value = gameState.value.StateStruct.Timer
-            }
-
     }
     
     const handlerFactory = new GameStateFactory(inject('connector')!);
@@ -185,6 +180,31 @@ export const useGameStore = defineStore('game', () => {
     }
 
 })
+
+// Type definition for any object that might have a timer
+type WithTimer = {
+    StateStruct: {
+        Timer: number
+    }
+}
+
+// Type guard to check if state has timer structure
+export const hasTimer = (state: State): state is State & WithTimer => {
+    return typeof (state as WithTimer).StateStruct?.Timer === 'number';
+};
+
+// Simple timer utility
+export const getStateTimer = (state: State): number | null => {
+    return hasTimer(state) ? state.StateStruct.Timer : null;
+};
+
+// Timer update utility with type narrowing
+export const updateTimer = (state: State, newTimer: number) => {
+    if (!hasTimer(state)) {
+        return state;
+    }
+    state.StateStruct.Timer = newTimer
+};
 
 export interface Bag {
     Elements: { [id: string]: number; },
@@ -233,11 +253,18 @@ export interface StockEntity {
 export interface StateTRADE {
     State: "TRADE",
     StateStruct?: {
+        Timer: number
         StockExchange: {
             StockList: StockEntity[]
+            TradeLog:  TradeLog[]
         }
     },
     // Trade(): void,
+}
+export interface TradeLog{
+    User: string,
+    GetElement: string,
+    GaveElement: string,
 }
 export interface StateCOMPLETED {
     State: "COMPLETED"

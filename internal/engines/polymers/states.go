@@ -10,6 +10,7 @@ import (
 	"github.com/anrew1002/Tournament-ChemLoto/internal/common"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/engines/models"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/engines/models/enerr"
+	"github.com/anrew1002/Tournament-ChemLoto/internal/sl"
 	"github.com/google/uuid"
 )
 
@@ -204,12 +205,14 @@ func (eng *PolymersEngine) NewTradeState(timer time.Duration) (state *TradeState
 		SimpleState:  NewState(),
 		StockExchange: &StockExchange{
 			StockList: make([]*Stock, 0, 10),
+			TradeLog:  make([]*TradeLog, 0, eng.maxPlayers),
 		},
 	}
 	state.Add("TradeOffer", state.addTradeOffer(), false)
 	state.Add("RemoveTradeOffer", state.removeTradeOffer(), false)
 
 	state.Add("TradeRequest", state.addTradeRequest(), false)
+	state.Add("RemoveTradeRequest", state.removeTradeRequest(), false)
 	state.Add("TradeAck", state.addTradeAck(), false)
 	state.Add("Continue", func(a models.Action) (stateInt, error) { return OBTAIN, nil }, true)
 
@@ -218,6 +221,8 @@ func (eng *PolymersEngine) NewTradeState(timer time.Duration) (state *TradeState
 }
 
 func (s *TradeState) PreHook() {
+	s.StockExchange.StockList = s.StockExchange.StockList[:0]
+	s.StockExchange.TradeLog = s.StockExchange.TradeLog[:0]
 	s.ticker.Reset(s.timeForTrade)
 }
 
@@ -232,6 +237,7 @@ func (s *TradeState) Update() (stateInt, error) {
 
 type StockExchange struct {
 	StockList []*Stock
+	TradeLog  []*TradeLog
 	// Requests  map[string][]*StockRequest
 }
 
@@ -242,11 +248,27 @@ type StockRequest struct {
 }
 
 type Stock struct {
-	ID        string
-	Owner     *Participant
-	Element   string
-	ToElement string
-	Requests  map[string]*StockRequest
+	ID          string
+	Owner       *Participant
+	GaveElement string
+	GetElement  string
+	Requests    map[string]*StockRequest
+}
+type TradeLog struct {
+	User        *Participant
+	GetElement  string
+	GaveElement string
+}
+
+func (tl *TradeLog) MarshalJSON() ([]byte, error) {
+	st := struct {
+		User        string
+		GetElement  string
+		GaveElement string
+	}{
+		tl.User.Name, tl.GetElement, tl.GaveElement,
+	}
+	return json.Marshal(st)
 }
 
 func (stk *Stock) MarshalJSON() ([]byte, error) {
@@ -257,7 +279,7 @@ func (stk *Stock) MarshalJSON() ([]byte, error) {
 		ToElement string
 		Requests  map[string]*StockRequest
 	}{
-		stk.ID, stk.Owner.Name, stk.Element, stk.ToElement, stk.Requests,
+		stk.ID, stk.Owner.Name, stk.GaveElement, stk.GetElement, stk.Requests,
 	}
 	return json.Marshal(st)
 }
@@ -271,11 +293,31 @@ func (stk *Stock) Request(id string) (*StockRequest, error) {
 	return nil, enerr.E(op, "Предложение не найдено", enerr.InvalidRequest)
 }
 
+func (stk *Stock) RemoveRequest(id string) error {
+	const op enerr.Op = "polymers/Stock.RemoveRequest"
+	if _, ok := stk.Requests[id]; !ok {
+		return enerr.E(op, "Предложение не найдено", enerr.InvalidRequest)
+	}
+	delete(stk.Requests, id)
+	return nil
+}
+
 func (s *StockExchange) AddStock(id string, stck *Stock) {
 	if stck.Requests == nil {
 		stck.Requests = make(map[string]*StockRequest, 0)
 	}
 	s.StockList = append(s.StockList, stck)
+}
+func (s *StockExchange) checkTraded(user *Participant, getElement string, gaveElement string) {
+	s.TradeLog = append(s.TradeLog, &TradeLog{User: user, GetElement: getElement, GaveElement: gaveElement})
+}
+func (s *StockExchange) isCheckTraded(username string) bool {
+	for _, log := range s.TradeLog {
+		if log.User.Name == username {
+			return true
+		}
+	}
+	return false
 }
 
 func (s *StockExchange) StockByID(id string) (*Stock, error) {
@@ -309,15 +351,24 @@ func (s *StockExchange) RemoveStockByUser(user string) error {
 	return enerr.E(op, "Предложение не найдено", enerr.InvalidRequest)
 }
 
-func (s *StockExchange) SetRequest(stock string, req *StockRequest) error {
+func (s *StockExchange) SetRequest(stockID string, req *StockRequest) error {
 	const op enerr.Op = "polymers/StockExchange.SetRequest"
-	for _, stck := range s.StockList {
-		if stck.ID == stock {
+	for _, stock := range s.StockList {
+		if stock.ID == stockID {
 			// if _, ok := stck.Requests[req.Player]; ok {
 			// 	return enerr.E(op, "Пользователь уже дал ответ", enerr.InvalidRequest)
 			// }
-			stck.Requests[req.Player] = req
+			stock.Requests[req.Player] = req
 			return nil
+		}
+	}
+	return enerr.E(op, "Предложение не найдено", enerr.NotExist)
+}
+func (s *StockExchange) DeleteRequest(stock string, req string) error {
+	const op enerr.Op = "polymers/StockExchange.SetRequest"
+	for _, stck := range s.StockList {
+		if stck.ID == stock {
+			return stck.RemoveRequest(req)
 		}
 	}
 	return enerr.E(op, "Предложение не найдено", enerr.NotExist)
@@ -359,16 +410,20 @@ func (s *TradeState) addTradeOffer() HandlerFunc {
 		if err != nil {
 			return NO_TRANSITION, enerr.E(op, err)
 		}
+		if s.StockExchange.isCheckTraded(owner.Name) {
+			return NO_TRANSITION, enerr.E(op, "Вы уже менялись на этом ходу", enerr.GameLogic)
+		}
 		if owner.Bag[data.Element] < 1 {
 			return NO_TRANSITION, enerr.E(op, "У вас нет такого элемента", enerr.GameLogic)
 		}
+
 		uuid := uuid.NewString()
 		s.StockExchange.AddStock(uuid, &Stock{
-			ID:        uuid,
-			Owner:     owner,
-			Element:   data.Element,
-			ToElement: data.ToElement,
-			Requests:  make(map[string]*StockRequest),
+			ID:          uuid,
+			Owner:       owner,
+			GaveElement: data.Element,
+			GetElement:  data.ToElement,
+			Requests:    make(map[string]*StockRequest),
 		})
 		return UPDATE_CURRENT, nil
 	}
@@ -386,7 +441,7 @@ func (s *TradeState) removeTradeOffer() HandlerFunc {
 		}
 		err = s.StockExchange.RemoveStockByUser(player.Name)
 		if err != nil {
-			return NO_TRANSITION, err
+			return NO_TRANSITION, enerr.E(op, err)
 		}
 
 		return UPDATE_CURRENT, nil
@@ -410,6 +465,9 @@ func (s *TradeState) addTradeRequest() HandlerFunc {
 		if err != nil {
 			return NO_TRANSITION, enerr.E(op, err)
 		}
+		if s.StockExchange.isCheckTraded(player.Name) {
+			return NO_TRANSITION, enerr.E(op, "Вы уже менялись на этом ходу", enerr.GameLogic)
+		}
 		err = s.StockExchange.SetRequest(
 			data.StockID,
 			&StockRequest{ID: uuid.NewString(), Player: player.Name, Accept: data.Accept},
@@ -421,6 +479,32 @@ func (s *TradeState) addTradeRequest() HandlerFunc {
 	}
 }
 
+func (s *TradeState) removeTradeRequest() HandlerFunc {
+	type Data struct {
+		Type    string
+		Action  string
+		StockID string
+	}
+	return func(e models.Action) (stateInt, error) {
+		const op enerr.Op = "polymers/TradeState.removeTradeRequest"
+		data, err := dataFromAction[Data](e)
+		if err != nil {
+			return NO_TRANSITION, enerr.E(op, err)
+		}
+		player, err := s.eng.getPlayer(e.Player)
+		if err != nil {
+			return NO_TRANSITION, enerr.E(op, err)
+		}
+		if s.StockExchange.isCheckTraded(player.Name) {
+			return NO_TRANSITION, enerr.E(op, "Вы уже менялись на этом ходу", enerr.GameLogic)
+		}
+		err = s.StockExchange.DeleteRequest(data.StockID, player.Name)
+		if err != nil {
+			return NO_TRANSITION, enerr.E(op, err)
+		}
+		return UPDATE_CURRENT, nil
+	}
+}
 func (s *TradeState) addTradeAck() HandlerFunc {
 	type Data struct {
 		Type     string
@@ -429,37 +513,49 @@ func (s *TradeState) addTradeAck() HandlerFunc {
 	}
 	return func(e models.Action) (stateInt, error) {
 		const op enerr.Op = "polymers/TradeState.addTradeAck"
-		player, err := s.eng.getPlayer(e.Player)
+		owner, err := s.eng.getPlayer(e.Player)
 		if err != nil {
-			return NO_TRANSITION, err
+			return NO_TRANSITION, enerr.E(op, err)
+		}
+		if s.StockExchange.isCheckTraded(owner.Name) {
+			return NO_TRANSITION, enerr.E(op, "Вы уже менялись на этом ходу", enerr.GameLogic)
 		}
 		data, err := dataFromAction[Data](e)
 		if err != nil {
-			return NO_TRANSITION, err
+			return NO_TRANSITION, enerr.E(op, err)
 		}
-		stock, err := s.StockExchange.StockByUser(player.Name)
+		stock, err := s.StockExchange.StockByUser(owner.Name)
 		if err != nil {
-			return NO_TRANSITION, err
+			return NO_TRANSITION, enerr.E(op, err)
 		}
-		// s.StockExchange.Requests[]
-		// TODO:
 		request, err := stock.Request(data.TargetID)
 		if err != nil {
-			return NO_TRANSITION, err
+			return NO_TRANSITION, enerr.E(op, err)
 		}
 
 		if !request.Accept {
 			return NO_TRANSITION, enerr.E(op, "Игрок не хочет меняться", enerr.GameLogic)
 		}
 
-		playerRequest, err := s.eng.getPlayer(request.Player)
+		player, err := s.eng.getPlayer(request.Player)
 		if err != nil {
-			return NO_TRANSITION, err
+			return NO_TRANSITION, enerr.E(op, err)
 		}
-		if err := s.eng.exchange(player, stock.Element, stock.ToElement, playerRequest); err != nil {
+		if err := s.eng.exchange(owner, stock.GaveElement, stock.GetElement, player); err != nil {
 			// по идее ошибки быть не может, но пусть будет проверка
-			return NO_TRANSITION, err
+			return NO_TRANSITION, enerr.E(op, err)
 		}
+		err = s.StockExchange.RemoveStockByUser(player.Name)
+		if err != nil {
+			s.eng.log.Error("while removing trading state", sl.Err(err))
+		}
+		err = s.StockExchange.RemoveStockByUser(owner.Name)
+		if err != nil {
+			s.eng.log.Error("while removing trading state", sl.Err(err))
+		}
+
+		s.StockExchange.checkTraded(owner, stock.GetElement, stock.GaveElement)
+		s.StockExchange.checkTraded(player, stock.GaveElement, stock.GetElement)
 
 		return UPDATE_CURRENT, nil
 	}

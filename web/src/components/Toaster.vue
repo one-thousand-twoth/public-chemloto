@@ -10,11 +10,11 @@
     </Teleport>
 </template>
 <script setup lang="ts">
-import {useToasterStore} from "../stores/useToasterStore";
 import {
-  ExclamationCircleIcon,
-  InformationCircleIcon,
+    ExclamationCircleIcon,
+    InformationCircleIcon,
 } from "@heroicons/vue/24/outline";
+import { useToasterStore } from "../stores/useToasterStore";
 const toastStore = useToasterStore();
 
 </script>
