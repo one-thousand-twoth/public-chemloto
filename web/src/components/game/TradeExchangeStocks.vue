@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ElementImage, IconButton, IconButtonChecked, UserInfo } from '@/components/UI';
+import { ElementImage, IconButtonChecked, UserInfo } from '@/components/UI';
 import { Role } from '@/models/User';
 import { StockEntity, TradeStateHandler, useGameStore } from '@/stores/useGameStore';
 import {
@@ -7,8 +7,7 @@ import {
 	CheckIcon, XMarkIcon
 } from "@heroicons/vue/24/outline";
 import { ChatBubbleOvalLeftEllipsisIcon } from "@heroicons/vue/24/solid";
-import { storeToRefs } from 'pinia';
-import { computed, ComputedRef } from 'vue';
+import { computed } from 'vue';
 
 const gameStore = useGameStore()
 // const { gameState } = storeToRefs(gameStore)

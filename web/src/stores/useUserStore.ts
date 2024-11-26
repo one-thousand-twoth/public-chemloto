@@ -2,7 +2,6 @@ import { APISettings } from '@/api/config';
 import { Client } from '@/api/core/client';
 import { Role, UserInfo } from '@/models/User';
 import { acceptHMRUpdate, defineStore } from 'pinia';
-import { ref } from 'vue';
 import { useToasterStore } from "../stores/useToasterStore";
 
 const USER_LOCAL_STORAGE_KEY = 'user'

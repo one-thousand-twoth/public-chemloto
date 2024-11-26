@@ -1,16 +1,13 @@
 <script setup lang="ts">
-import { WebsocketConnector } from '@/api/websocket/websocket';
-import { ElementImage, IconButton, IconButtonChecked, UserInfo } from '@/components/UI';
-import { Role } from '@/models/User';
-import { GameInfo, Player, StateTRADE, StockEntity, TradeStateHandler, useGameStore } from '@/stores/useGameStore';
-import { useUserStore } from '@/stores/useUserStore';
+import { ElementImage, IconButton } from '@/components/UI';
+import { GameInfo, StateTRADE, TradeStateHandler, useGameStore } from '@/stores/useGameStore';
 import {
     // ChatBubbleOvalLeftEllipsisIcon,
     CheckIcon, XMarkIcon
 } from "@heroicons/vue/24/outline";
 
 import { storeToRefs } from 'pinia';
-import { computed, inject, onMounted, ref } from 'vue';
+import { computed, ref } from 'vue';
 import TradeExchangeStocks from './TradeExchangeStocks.vue';
 
 
@@ -61,7 +58,7 @@ const selfStock = computed(() => tradeState.value?.StateStruct?.StockExchange.St
 
 const stockList = computed(() => {
     if (!tradeState.value?.StateStruct?.StockExchange.StockList) return [];
-    return Object.entries(tradeState.value.StateStruct.StockExchange.StockList).filter(([k, v]) => v.Owner !== player.Name);
+    return Object.entries(tradeState.value.StateStruct.StockExchange.StockList).filter(([_, v]) => v.Owner !== player.Name);
 });
 const requests = computed(() => {
     if (!selfStock.value) return []
@@ -139,7 +136,7 @@ const alreadyTradedStruct = computed(() => {
                         Согласны:
                     </summary>
                     <!--                <IconButton class="" :icon="XMarkIcon" />-->
-                    <p class="inline-flex items-center w-full" v-for="([name, request]) in requests">
+                    <p class="inline-flex items-center w-full" v-for="([_, request]) in requests">
                         {{ request.Player }}
                         <IconButton class="ml-auto" @click="ackTrade(request.ID)" :icon="CheckIcon" />
                     </p>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { IconRole, UserInfo, Role } from '@/models/User';
+import { IconRole, Role } from '@/models/User';
 // defineProps(["icon"]);
 defineProps<{
     role: Role,

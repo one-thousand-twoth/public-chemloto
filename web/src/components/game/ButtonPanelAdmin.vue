@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { WebsocketConnector } from '@/api/websocket/websocket';
-import RaiseHandComp from '@/components/game/RaiseHandComp.vue';
 import { Modal } from '@/components/UI/index';
-import { Hand, ObtainStateHandler, TradeStateHandler, useGameStore } from '@/stores/useGameStore';
+import { ObtainStateHandler, TradeStateHandler, useGameStore } from '@/stores/useGameStore';
 import { useUserStore } from '@/stores/useUserStore';
 import { storeToRefs } from "pinia";
 import { computed, inject, ref } from 'vue';
