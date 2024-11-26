@@ -13,6 +13,7 @@ import (
 	"github.com/anrew1002/Tournament-ChemLoto/internal/engines/models/enerr"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/sl"
 	"github.com/mitchellh/mapstructure"
+	"github.com/samber/lo"
 )
 
 // New returns PolymersEngine with cfg parameters
@@ -130,12 +131,26 @@ type Participant struct {
 	Score      int // Game score only for Players
 }
 
-// score will decrease Participant`s score with min value = -2
-func (p *Participant) score(score int) {
+// setScore will decrease Participant`s setScore with min value = -2
+func (p *Participant) setScore(score int) {
 	p.Score += score
 	if p.Score < -2 {
 		p.Score = -2
 	}
+}
+func (p *Participant) raiseHand() error {
+	return nil
+}
+
+// checkIfHasElements проверяет есть ли у игрока достаточно elements в его сумке
+func (p *Participant) checkIfHasElements(elements map[string]int) error {
+	_, ok := lo.FindKeyBy(elements, func(k string, v int) bool {
+		return v < p.Bag[k]
+	})
+	if ok {
+		return enerr.E("Указаны элементы которых нет в таком количестве", enerr.GameLogic)
+	}
+	return nil
 }
 
 // Start Game.

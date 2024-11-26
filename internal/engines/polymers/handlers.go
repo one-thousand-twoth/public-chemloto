@@ -39,29 +39,14 @@ func RaiseHand(engine *PolymersEngine) HandlerFunc {
 			slog.Any("players", engine.players()),
 			enerr.OpAttr(op))
 
-		var less bool
-		for k := range data.Structure {
-			less = player.Bag[k] < data.Structure[k]
-			if less {
-				return NO_TRANSITION, enerr.E(op, "Указаны элементы которых нет в таком количестве", enerr.GameLogic)
-			}
+		if err := player.checkIfHasElements(data.Structure); err != nil {
+			return NO_TRANSITION, enerr.E(op, "У вас недостаточно элементов для этой структуры", enerr.GameLogic)
 		}
 
-		var eq bool
-		for _, entry := range engine.checks.Fields[data.Field][data.Name] {
-			eq = reflect.DeepEqual(removeZeroValues(entry), data.Structure)
-			if eq {
-				break
-			}
-		}
+		eq := checkFields(engine.checks, data.Field, data.Name, data.Structure)
 		if !eq {
-			player.score(-1)
-			engine.broadcast(common.Message{
-				Type: common.ENGINE_INFO,
-				Ok:   true,
-				Body: engine.PreHook(),
-			})
-			return NO_TRANSITION, enerr.E(op, "Неправильный состав элементов")
+			player.setScore(-1)
+			return UPDATE_CURRENT, enerr.E(op, "Неправильный состав элементов")
 		}
 		player.RaisedHand = true
 		engine.raisedHands = append(engine.raisedHands,
@@ -144,7 +129,7 @@ func Check(engine *PolymersEngine) HandlerFunc {
 				enerr.OpAttr(op),
 			)
 			target.RaisedHand = false
-			target.score(-1)
+			target.setScore(-1)
 			for i := 0; i < len(engine.raisedHands); i++ {
 				if engine.raisedHands[i].Player.Name == e.Player {
 					engine.raisedHands = append(engine.raisedHands[:i], engine.raisedHands[i+1:]...)
@@ -156,7 +141,7 @@ func Check(engine *PolymersEngine) HandlerFunc {
 		if len(engine.unchecked()) == 0 {
 			engine.log.Debug("all players checked", enerr.OpAttr(op))
 			for _, hand := range engine.raisedHands {
-				hand.Player.score(engine.fields[hand.Field].decrementScore())
+				hand.Player.setScore(engine.fields[hand.Field].decrementScore())
 			}
 			engine.raisedHands = engine.raisedHands[:0]
 			return OBTAIN, nil

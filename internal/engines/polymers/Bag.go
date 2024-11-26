@@ -73,7 +73,6 @@ func (b *GameBag) getRandomElement() (string, error) {
 	b.Elements[elem] = item - 1
 	b.Values = removeByValue(b.Values, elem)
 	b.PushedValues = append(b.PushedValues, elem)
-
 	return elem, nil
 }
 
