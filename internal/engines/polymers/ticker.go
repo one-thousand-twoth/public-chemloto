@@ -37,7 +37,11 @@ func (t *Ticker) Passed() time.Duration {
 }
 
 func (t *Ticker) Remains() time.Duration {
-	return t.currentDuration - time.Since(t.startTime)
+	dur := t.currentDuration - time.Since(t.startTime)
+	if dur < 0 {
+		return 0
+	}
+	return dur
 }
 func (t *Ticker) Ticked() bool {
 	select {
