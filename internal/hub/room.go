@@ -5,7 +5,6 @@ import (
 	"errors"
 	"io"
 	"log/slog"
-	"os"
 	"sync"
 
 	"github.com/anrew1002/Tournament-ChemLoto/internal/appvalidation"
@@ -13,6 +12,7 @@ import (
 	enmodels "github.com/anrew1002/Tournament-ChemLoto/internal/engines/models"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/engines/polymers"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/sl"
+	"github.com/anrew1002/Tournament-ChemLoto/web"
 )
 
 type Engine interface {
@@ -85,7 +85,7 @@ func (h *Hub) AddNewRoom(r Room) error {
 }
 
 func parseEngineJson(h *Hub) polymers.Checks {
-	jsonFile, err := os.Open("polymers.json")
+	jsonFile, err := web.Polymers.Open("polymers.json")
 	if err != nil {
 		h.log.Error("Cannot open polymers config", sl.Err(err))
 	}

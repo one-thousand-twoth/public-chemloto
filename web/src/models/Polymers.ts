@@ -1,4 +1,4 @@
-import polymers from '@/../../polymers.json';
+import polymers from '@/../polymers.json';
 /** Содержит в себе перечисление полей с вложеными структурами 
  * 
  * Десериализуется из файла polymers.json в корне проекта */ 

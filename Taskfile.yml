@@ -16,6 +16,10 @@ tasks:
       - npx vite -l info --clearScreen false --host
       # - echo 'hi'
     silent: true
+  build:vue:
+    dir: '.\\web'
+    cmds:
+      - npm run build
   watch:
     desc: Watch tailwindcss
     dir: '.\\web'

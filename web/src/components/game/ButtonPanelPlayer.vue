@@ -1,16 +1,14 @@
 <script setup lang="ts">
-import { WebsocketConnector } from '@/api/websocket/websocket';
 import { RaiseHandComp, TradeExchange, UserElements } from '@/components/game/';
 import { Modal } from '@/components/UI/index';
-import { Hand, useGameStore } from '@/stores/useGameStore';
-import { useUserStore } from '@/stores/useUserStore';
-import { computed, inject, ref } from 'vue';
+import { useGameStore } from '@/stores/useGameStore';
+import { computed, ref } from 'vue';
 
 // const props = defineProps<{
 //     modal: string;
 // }>()
 
-const ws = inject('connector') as WebsocketConnector
+// const ws = inject('connector') as WebsocketConnector
 
 const gameStore = useGameStore()
 // const userStore = useUserStore()
@@ -21,7 +19,7 @@ const currPlayer = computed(() => {
 })
 
 const curInfoPlayer = ref('')
-const curCheckPlayer = ref<Hand>()
+// const curCheckPlayer = ref<Hand>()
 const RaiseHandButton = ref(false)
 const TradeButton = ref(false)
 

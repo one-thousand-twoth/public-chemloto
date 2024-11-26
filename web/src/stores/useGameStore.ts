@@ -50,7 +50,7 @@ export class TradeStateHandler implements GameStateHandler {
             Type: "ENGINE_ACTION",
             Action: "TradeRequest",
             StockId: stockId,
-            Accept:  accept
+            Accept: accept
         });
     }
     ackTrade(requestID: string) {
@@ -87,11 +87,11 @@ export class ObtainStateHandler implements GameStateHandler {
         })
     }
 
-    
+
 }
 // Factory to create state handlers
 class GameStateFactory {
-    constructor(private readonly ws: WebsocketConnector){}
+    constructor(private readonly ws: WebsocketConnector) { }
     public createHandler(state: string): GameStateHandler {
         switch (state) {
             case 'TRADE':
@@ -103,7 +103,7 @@ class GameStateFactory {
         }
     }
 }
-
+let lastTimerID: NodeJS.Timeout
 export const useGameStore = defineStore('game', () => {
     const userStore = useUserStore()
     const fetching = ref(false)
@@ -121,7 +121,10 @@ export const useGameStore = defineStore('game', () => {
         }
     })
     // TODO: Сделать getter`om
-    const timer = ref(0)
+    const timer = computed({
+        get: () => getStateTimer(gameState.value),
+        set: (v) => () => { updateTimer(gameState.value, v as number) }
+    })
     const gameState = ref<GameInfo>({
         Bag: {
             Elements: {},
@@ -155,17 +158,25 @@ export const useGameStore = defineStore('game', () => {
     function EngineInfo(e: WEBSOCKET_EVENT) {
         const b = e.Body["engine"] as GameInfo
         gameState.value = b
-        if (gameState.value.State === "OBTAIN")
-            if (gameState.value.StateStruct) {
-                timer.value = gameState.value.StateStruct.Timer
-            }
 
+        const state = gameState.value
+
+        clearInterval(lastTimerID)
+        if (hasTimer(state) && state.StateStruct.Timer > 1) {
+            lastTimerID = setInterval(() => {
+                if (state.StateStruct.Timer == null) {
+                    return
+                }
+                state.StateStruct.Timer--; // Decrement the timer count
+            }, 1000);
+
+        }
     }
-    
+
     const handlerFactory = new GameStateFactory(inject('connector')!);
 
     const currentStateHandler = computed(() => {
-        if (gameState.value.State === undefined){
+        if (gameState.value.State === undefined) {
             return null
         }
         return handlerFactory.createHandler(gameState.value.State)
@@ -185,6 +196,32 @@ export const useGameStore = defineStore('game', () => {
     }
 
 })
+
+// Type definition for any object that might have a timer
+type WithTimer = {
+    StateStruct: {
+        Timer: number
+    }
+}
+
+// Type guard to check if state has timer structure
+export const hasTimer = (state: State): state is State & WithTimer => {
+    return typeof (state as WithTimer).StateStruct?.Timer === 'number';
+};
+
+// Simple timer utility
+export const getStateTimer = (state: State): number | null => {
+    return hasTimer(state) ? state.StateStruct.Timer : null;
+};
+
+// Timer update utility with type narrowing
+export const updateTimer = (state: State, newTimer: number): state is State & WithTimer => {
+    if (!hasTimer(state)) {
+        return false
+    }
+    state.StateStruct.Timer = newTimer
+    return true
+};
 
 export interface Bag {
     Elements: { [id: string]: number; },
@@ -227,17 +264,24 @@ export interface StockEntity {
     Owner: string
     Element: string
     ToElement: string
-    Requests: { [id: string]:  RequestEntity  }
+    Requests: { [id: string]: RequestEntity }
 }
 
 export interface StateTRADE {
     State: "TRADE",
     StateStruct?: {
+        Timer: number
         StockExchange: {
             StockList: StockEntity[]
+            TradeLog: TradeLog[]
         }
     },
     // Trade(): void,
+}
+export interface TradeLog {
+    User: string,
+    GetElement: string,
+    GaveElement: string,
 }
 export interface StateCOMPLETED {
     State: "COMPLETED"

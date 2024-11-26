@@ -5,16 +5,15 @@ import { computed } from 'vue';
 const GameStore = useGameStore();
 
 const timerString = computed(() => {
+    if (!GameStore.timer || GameStore.timer == null){
+        return `0 : 0`
+    }
     if (GameStore.timer < 0) {
          return `0 : 0`
     }
-    var minutes = Math.floor(GameStore.timer / 60);
-    var remainingSeconds = GameStore.timer % 60;
-    if (GameStore.timer > 1) {
-        setTimeout(() => {
-            GameStore.timer--; // Decrement the timer count
-        }, 1000);
-    }
+    let minutes = Math.floor(GameStore.timer / 60);
+    let remainingSeconds = GameStore.timer % 60;
+
     return `${minutes} : ${remainingSeconds}`
 })
 
