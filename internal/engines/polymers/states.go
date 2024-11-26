@@ -231,7 +231,8 @@ func (s *TradeState) Update() (stateInt, error) {
 }
 
 type StockExchange struct {
-	StockList []*Stock
+	StockList     []*Stock
+	ExchangedList map[string]bool
 	// Requests  map[string][]*StockRequest
 }
 
@@ -313,14 +314,25 @@ func (s *StockExchange) SetRequest(stock string, req *StockRequest) error {
 	const op enerr.Op = "polymers/StockExchange.SetRequest"
 	for _, stck := range s.StockList {
 		if stck.ID == stock {
-			// if _, ok := stck.Requests[req.Player]; ok {
-			// 	return enerr.E(op, "Пользователь уже дал ответ", enerr.InvalidRequest)
-			// }
 			stck.Requests[req.Player] = req
 			return nil
 		}
 	}
 	return enerr.E(op, "Предложение не найдено", enerr.NotExist)
+}
+func (s *StockExchange) SetUserExchanged(user string) error {
+	const op enerr.Op = "polymers/StockExchange.SetUserExchanged"
+	_, ok := s.ExchangedList[user]
+	if ok {
+		return enerr.E(op, "Пользователь уже обменялся ранее", enerr.GameLogic)
+	}
+	s.ExchangedList[user] = true
+	return nil
+}
+func (s *StockExchange) isUserExchanged(user string) bool {
+	const op enerr.Op = "polymers/StockExchange.isUserExchanged"
+	_, ok := s.ExchangedList[user]
+	return ok
 }
 
 func (s *StockExchange) SetAck(stockId string, RequestID string) error {
@@ -359,6 +371,9 @@ func (s *TradeState) addTradeOffer() HandlerFunc {
 		if err != nil {
 			return NO_TRANSITION, enerr.E(op, err)
 		}
+		if s.StockExchange.isUserExchanged(owner.Name) {
+			return NO_TRANSITION, enerr.E(op, "Вы уже обменялись на этом ходу", enerr.GameLogic)
+		}
 		if owner.Bag[data.Element] < 1 {
 			return NO_TRANSITION, enerr.E(op, "У вас нет такого элемента", enerr.GameLogic)
 		}
@@ -374,10 +389,6 @@ func (s *TradeState) addTradeOffer() HandlerFunc {
 	}
 }
 func (s *TradeState) removeTradeOffer() HandlerFunc {
-	// type Data struct {
-	// 	Type   string
-	// 	Action string
-	// }
 	return func(e models.Action) (stateInt, error) {
 		const op enerr.Op = "polymers/TradeState.removeTradeOffer"
 		player, err := s.eng.getPlayer(e.Player)
@@ -410,6 +421,9 @@ func (s *TradeState) addTradeRequest() HandlerFunc {
 		if err != nil {
 			return NO_TRANSITION, enerr.E(op, err)
 		}
+		if s.StockExchange.isUserExchanged(player.Name) {
+			return NO_TRANSITION, enerr.E(op, "Вы уже обменялись на этом ходу", enerr.GameLogic)
+		}
 		err = s.StockExchange.SetRequest(
 			data.StockID,
 			&StockRequest{ID: uuid.NewString(), Player: player.Name, Accept: data.Accept},
@@ -431,39 +445,45 @@ func (s *TradeState) addTradeAck() HandlerFunc {
 		const op enerr.Op = "polymers/TradeState.addTradeAck"
 		player, err := s.eng.getPlayer(e.Player)
 		if err != nil {
-			return NO_TRANSITION, err
+			return NO_TRANSITION, enerr.E(op, err)
+		}
+		if s.StockExchange.isUserExchanged(player.Name) {
+			return NO_TRANSITION, enerr.E(op, "Вы уже обменялись на этом ходу", enerr.GameLogic)
 		}
 		data, err := dataFromAction[Data](e)
 		if err != nil {
-			return NO_TRANSITION, err
+			return NO_TRANSITION, enerr.E(op, err)
 		}
 		stock, err := s.StockExchange.StockByUser(player.Name)
 		if err != nil {
-			return NO_TRANSITION, err
+			return NO_TRANSITION, enerr.E(op, err)
 		}
-		// s.StockExchange.Requests[]
-		// TODO:
 		request, err := stock.Request(data.TargetID)
 		if err != nil {
-			return NO_TRANSITION, err
+			return NO_TRANSITION, enerr.E(op, err)
 		}
 
 		if !request.Accept {
 			return NO_TRANSITION, enerr.E(op, "Игрок не хочет меняться", enerr.GameLogic)
 		}
 
-		playerRequest, err := s.eng.getPlayer(request.Player)
+		playerThatRequest, err := s.eng.getPlayer(request.Player)
 		if err != nil {
-			return NO_TRANSITION, err
+			return NO_TRANSITION, enerr.E(op, err)
 		}
-		if err := s.eng.exchange(player, stock.Element, stock.ToElement, playerRequest); err != nil {
-			// по идее ошибки быть не может, но пусть будет проверка
-			return NO_TRANSITION, err
+		if s.StockExchange.isUserExchanged(player.Name) {
+			return NO_TRANSITION, enerr.E(op, "Этот игрок уже обменялся с кем то другим", enerr.GameLogic)
 		}
 
+		if err := s.eng.exchange(player, stock.Element, stock.ToElement, playerThatRequest); err != nil {
+			// по идее ошибки быть не может, но пусть будет проверка
+			return NO_TRANSITION, enerr.E(op, err)
+		}
+		s.StockExchange.RemoveStockByUser(player.Name)
 		return UPDATE_CURRENT, nil
 	}
 }
+
 func (s *TradeState) MarshalJSON() ([]byte, error) {
 	st := struct {
 		StockExchange StockExchange
