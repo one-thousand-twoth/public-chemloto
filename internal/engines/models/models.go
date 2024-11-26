@@ -13,7 +13,7 @@ type Action struct {
 	Envelope map[string]any
 }
 
-type Player struct {
+type Participant struct {
 	Name string
 	Role common.Role
 }

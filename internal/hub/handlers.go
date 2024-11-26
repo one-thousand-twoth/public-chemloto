@@ -83,7 +83,7 @@ func Subscribe(h *Hub, e internalEventWrap) {
 			}
 			return
 		}
-		if err := room.engine.AddPlayer(enmodels.Player{
+		if err := room.engine.AddPlayer(enmodels.Participant{
 			Name: usr.Name,
 			Role: usr.Role,
 		}); err != nil {

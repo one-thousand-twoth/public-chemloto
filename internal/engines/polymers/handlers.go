@@ -219,10 +219,10 @@ func (engine *PolymersEngine) TradeHandler() HandlerFunc {
 //
 // element1 is player1 element, element2 is player2 element
 func (*PolymersEngine) exchange(
-	player1 *Participant,
+	player1 *Player,
 	element1 string,
 	element2 string,
-	player2 *Participant) error {
+	player2 *Player) error {
 	const op enerr.Op = "polymers/PolymersEngine.exchange"
 	if player1.Bag[element1] < 1 {
 		return enerr.E(op, fmt.Sprintf("У игрока %s нет такого элемента", player1.Name))

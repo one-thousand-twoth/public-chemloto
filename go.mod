@@ -27,7 +27,6 @@ require (
 	github.com/google/go-cmp v0.6.0 // indirect
 	github.com/hpcloud/tail v1.0.0 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
-	github.com/samber/lo v1.47.0 // indirect
 	golang.org/x/crypto v0.19.0 // indirect
 	golang.org/x/text v0.16.0 // indirect
 	gopkg.in/fsnotify.v1 v1.4.7 // indirect
@@ -54,6 +53,7 @@ require (
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/mitchellh/go-wordwrap v1.0.1 // indirect
 	github.com/pmezard/go-difflib v1.0.0 // indirect
+	github.com/samber/lo v1.47.0
 	github.com/sanity-io/litter v1.5.5 // indirect
 	github.com/sergi/go-diff v1.0.0 // indirect
 	github.com/stretchr/testify v1.9.0

@@ -40,7 +40,7 @@ type stateMachine struct {
 }
 
 type State interface {
-	Handle(e models.Action, player *Participant) (stateInt, error)
+	Handle(e models.Action, player *Player) (stateInt, error)
 	PreHook()
 	// Handlers() map[string]HandlerFunc
 	Update() (stateInt, error)
@@ -82,7 +82,7 @@ func (s SimpleState) Add(action string, fun HandlerFunc, secure bool) SimpleStat
 
 // Handle can return ErrNoAuthorized if action cannot be sent by player.
 // ErrNoHandler if no handler was found for action
-func (s SimpleState) Handle(e models.Action, player *Participant) (stateInt, error) {
+func (s SimpleState) Handle(e models.Action, player *Player) (stateInt, error) {
 	// Default not to transition to another state
 	st := NO_TRANSITION
 
@@ -249,13 +249,13 @@ type StockRequest struct {
 
 type Stock struct {
 	ID          string
-	Owner       *Participant
+	Owner       *Player
 	GaveElement string
 	GetElement  string
 	Requests    map[string]*StockRequest
 }
 type TradeLog struct {
-	User        *Participant
+	User        *Player
 	GetElement  string
 	GaveElement string
 }
@@ -308,7 +308,7 @@ func (s *StockExchange) AddStock(id string, stck *Stock) {
 	}
 	s.StockList = append(s.StockList, stck)
 }
-func (s *StockExchange) checkTraded(user *Participant, getElement string, gaveElement string) {
+func (s *StockExchange) checkTraded(user *Player, getElement string, gaveElement string) {
 	s.TradeLog = append(s.TradeLog, &TradeLog{User: user, GetElement: getElement, GaveElement: gaveElement})
 }
 func (s *StockExchange) isCheckTraded(username string) bool {

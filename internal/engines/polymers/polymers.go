@@ -90,7 +90,7 @@ type PolymersEngine struct {
 	checks   Checks
 	internal chan time.Time
 
-	participants []*Participant
+	participants []*Player
 	maxPlayers   int
 
 	unicast   models.UnicastFunction
@@ -103,7 +103,7 @@ type PolymersEngine struct {
 
 // Hand defines struct for RaisedHand
 type Hand struct {
-	Player    *Participant
+	Player    *Player
 	Field     string
 	Name      string
 	Structure map[string]int
@@ -123,27 +123,27 @@ func (f *Field) decrementScore() int {
 	return o
 }
 
-// a Participant represents all users including Admin, Judje, Player roles.
-type Participant struct {
-	models.Player
+// a Player represents Participant with Player roles with engine specific data.
+type Player struct {
+	models.Participant
 	RaisedHand bool
 	Bag        map[string]int
 	Score      int // Game score only for Players
 }
 
 // setScore will decrease Participant`s setScore with min value = -2
-func (p *Participant) setScore(score int) {
+func (p *Player) setScore(score int) {
 	p.Score += score
 	if p.Score < -2 {
 		p.Score = -2
 	}
 }
-func (p *Participant) raiseHand() error {
+func (p *Player) raiseHand() error {
 	return nil
 }
 
 // checkIfHasElements проверяет есть ли у игрока достаточно elements в его сумке
-func (p *Participant) checkIfHasElements(elements map[string]int) error {
+func (p *Player) checkIfHasElements(elements map[string]int) error {
 	_, ok := lo.FindKeyBy(elements, func(k string, v int) bool {
 		return v < p.Bag[k]
 	})
@@ -268,7 +268,7 @@ func (engine *PolymersEngine) GetResults() [][]string {
 	return results
 }
 
-func (engine *PolymersEngine) AddPlayer(player models.Player) error {
+func (engine *PolymersEngine) AddPlayer(player models.Participant) error {
 	engine.mu.Lock()
 	defer engine.mu.Unlock()
 	if engine.started {
@@ -279,7 +279,7 @@ func (engine *PolymersEngine) AddPlayer(player models.Player) error {
 			return enerr.E("Недостаточно прав", enerr.MaxPlayers)
 		}
 	}
-	engine.participants = append(engine.participants, &Participant{Player: player, Bag: make(map[string]int)})
+	engine.participants = append(engine.participants, &Player{Participant: player, Bag: make(map[string]int)})
 	return nil
 }
 
@@ -303,19 +303,19 @@ func (engine *PolymersEngine) RemovePlayer(name string) error {
 // Can return:
 //
 //	enerr.Unidentified
-func (engine *PolymersEngine) getPlayer(name string) (*Participant, error) {
+func (engine *PolymersEngine) getPlayer(name string) (*Player, error) {
 	const op enerr.Op = "polymers/PolymersEngine.getPlayer"
 	for i := 0; i < len(engine.participants); i++ {
 		if engine.participants[i].Name == name {
 			return engine.participants[i], nil
 		}
 	}
-	return &Participant{}, enerr.E("Игрок с таким именем не найден", enerr.Unidentified, op)
+	return &Player{}, enerr.E("Игрок с таким именем не найден", enerr.Unidentified, op)
 }
 
 // players() return engine.Participants with Player Role
-func (engine *PolymersEngine) players() []*Participant {
-	players := make([]*Participant, 0, len(engine.participants))
+func (engine *PolymersEngine) players() []*Player {
+	players := make([]*Player, 0, len(engine.participants))
 	for i := 0; i < len(engine.participants); i++ {
 		if engine.participants[i].Role == common.Player_Role {
 			players = append(players, engine.participants[i])
@@ -325,8 +325,8 @@ func (engine *PolymersEngine) players() []*Participant {
 }
 
 // Возвращает список игроков которых еще не проверяли
-func (engine *PolymersEngine) unchecked() []*Participant {
-	players := make([]*Participant, 0, len(engine.participants))
+func (engine *PolymersEngine) unchecked() []*Player {
+	players := make([]*Player, 0, len(engine.participants))
 	for i := 0; i < len(engine.participants); i++ {
 		if engine.participants[i].Role == common.Player_Role && engine.participants[i].RaisedHand {
 			players = append(players, engine.participants[i])
@@ -339,7 +339,7 @@ func (engine *PolymersEngine) unchecked() []*Participant {
 func (engine *PolymersEngine) MarshalJSON() ([]byte, error) {
 	engine.mu.Lock()
 	defer engine.mu.Unlock()
-	players := make([]Participant, len(engine.participants))
+	players := make([]Player, len(engine.participants))
 	fields := make(map[string]Field, len(engine.fields))
 
 	// Проходим по каждому элементу и копируем его в новый срез
@@ -353,7 +353,7 @@ func (engine *PolymersEngine) MarshalJSON() ([]byte, error) {
 		Started     bool
 		State       string
 		Bag         GameBag
-		Players     []Participant
+		Players     []Player
 		RaisedHands []Hand
 		Fields      map[string]Field
 		StateStruct State

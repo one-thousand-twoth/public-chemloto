@@ -22,7 +22,7 @@ type Engine interface {
 	Input(enmodels.Action)
 	Start()
 	GetResults() [][]string
-	AddPlayer(enmodels.Player) error
+	AddPlayer(enmodels.Participant) error
 	RemovePlayer(name string) error
 }
 
