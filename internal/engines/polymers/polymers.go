@@ -271,15 +271,15 @@ func (engine *PolymersEngine) players() []*Player {
 	return players
 }
 
-// Возвращает список игроков которых еще не проверяли
-func (engine *PolymersEngine) unchecked() []*Player {
-	players := make([]*Player, 0, len(engine.participants))
-	for i := 0; i < len(engine.participants); i++ {
-		if engine.participants[i].Role == common.Player_Role && engine.participants[i].RaisedHand {
-			players = append(players, engine.participants[i])
+// Возвращает список игроков которых еще не проверяли после RaiseHand
+func uncheckedPlayers(players []*Player) []*Player {
+	unchecked := make([]*Player, 0, len(players))
+	for i := 0; i < len(players); i++ {
+		if players[i].Role == common.Player_Role && players[i].RaisedHand {
+			players = append(players, players[i])
 		}
 	}
-	return players
+	return unchecked
 }
 
 // Control what data will be send on [ENGINE_INFO] Message and etc.
