@@ -38,8 +38,9 @@ func RaiseHand(engine *PolymersEngine) HandlerFunc {
 			slog.Any("players", engine.players()),
 			enerr.OpAttr(op))
 
-		if err := player.checkIfHasElements(data.Structure); err != nil {
-			return NO_TRANSITION, enerr.E(op, "У вас недостаточно элементов для этой структуры", enerr.GameLogic)
+		if invalid, err := player.checkIfHasElements(data.Structure); err != nil {
+			return NO_TRANSITION, enerr.E(op, "У вас недостаточно элементов для этой структуры",
+				enerr.GameLogic, enerr.Parameter(fmt.Sprintf("%+v", invalid)))
 		}
 
 		eq := checkFields(engine.checks, data.Field, data.Name, data.Structure)
@@ -94,7 +95,7 @@ func Check(engine *PolymersEngine) HandlerFunc {
 			enerr.OpAttr(op),
 		)
 		// Проверяем что судья случайно не задал больше элементов чем в действительности есть у игрока
-		if err := target.checkIfHasElements(data.Structure); err != nil {
+		if _, err := target.checkIfHasElements(data.Structure); err != nil {
 			return NO_TRANSITION, enerr.E(op, "Слишком много элементов", enerr.GameLogic)
 		}
 		// Если судья ошибся ничего не делаем, даем возможность поправить

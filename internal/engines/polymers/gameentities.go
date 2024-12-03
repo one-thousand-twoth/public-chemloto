@@ -48,12 +48,12 @@ func (p *Player) raiseHand() error {
 }
 
 // checkIfHasElements проверяет есть ли у игрока достаточно elements в его сумке
-func (p *Player) checkIfHasElements(elements map[string]int) error {
-	_, ok := lo.FindKeyBy(elements, func(k string, v int) bool {
-		return v < p.Bag[k]
+func (p *Player) checkIfHasElements(elements map[string]int) ([]string, error) {
+	invalid := lo.PickBy(elements, func(k string, v int) bool {
+		return v > p.Bag[k]
 	})
-	if ok {
-		return enerr.E("Указаны элементы которых нет в таком количестве", enerr.GameLogic)
+	if len(invalid) > 0 {
+		return lo.Keys(invalid), enerr.E("Указаны элементы которых нет в таком количестве", enerr.GameLogic)
 	}
-	return nil
+	return lo.Keys(invalid), nil
 }
