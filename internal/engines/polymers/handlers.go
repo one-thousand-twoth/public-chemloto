@@ -4,7 +4,6 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
-	"reflect"
 
 	"github.com/anrew1002/Tournament-ChemLoto/internal/common"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/engines/models"
@@ -94,22 +93,14 @@ func Check(engine *PolymersEngine) HandlerFunc {
 			slog.Any("Structure", data.Structure),
 			enerr.OpAttr(op),
 		)
-		// TODO: роазобраться, тут кажется напутана логика
-		var less bool
-		for k := range data.Structure {
-			less = target.Bag[k] < data.Structure[k]
-			if less {
-				engine.log.Error("To many elements, than player has")
-				return NO_TRANSITION, enerr.E(op, "Слишком много элементов", enerr.GameLogic)
-			}
+		// Проверяем что судья случайно не задал больше элементов чем в действительности есть у игрока
+		if err := target.checkIfHasElements(data.Structure); err != nil {
+			return NO_TRANSITION, enerr.E(op, "Слишком много элементов", enerr.GameLogic)
 		}
-		var eq bool
-		// Смотрим достаточно ли элементов у игрока в мешке
-		for _, entry := range engine.checks.Fields[data.Field][data.Name] {
-			eq = reflect.DeepEqual(removeZeroValues(entry), data.Structure)
-			if eq {
-				break
-			}
+		// Если судья ошибся ничего не делаем, даем возможность поправить
+		eq := checkFields(engine.checks, data.Field, data.Name, data.Structure)
+		if !eq {
+			return UPDATE_CURRENT, enerr.E(op, "Неправильный состав элементов")
 		}
 		// TODO: обработать ошибку
 		if eq {
@@ -122,22 +113,23 @@ func Check(engine *PolymersEngine) HandlerFunc {
 				target.Bag[k] -= data.Structure[k]
 			}
 
-		} else {
-			engine.log.Error("Failed to check Polymers",
-				slog.Any("data", data),
-				slog.Any("example", engine.checks.Fields[data.Field][data.Name]),
-				enerr.OpAttr(op),
-			)
-			target.RaisedHand = false
-			target.setScore(-1)
-			for i := 0; i < len(engine.raisedHands); i++ {
-				if engine.raisedHands[i].Player.Name == e.Player {
-					engine.raisedHands = append(engine.raisedHands[:i], engine.raisedHands[i+1:]...)
-					break
-				}
-			}
-
 		}
+		// else {
+		// 	engine.log.Error("Failed to check Polymers",
+		// 		slog.Any("data", data),
+		// 		slog.Any("example", engine.checks.Fields[data.Field][data.Name]),
+		// 		enerr.OpAttr(op),
+		// 	)
+		// 	target.RaisedHand = false
+		// 	target.setScore(-1)
+		// 	for i := 0; i < len(engine.raisedHands); i++ {
+		// 		if engine.raisedHands[i].Player.Name == e.Player {
+		// 			engine.raisedHands = append(engine.raisedHands[:i], engine.raisedHands[i+1:]...)
+		// 			break
+		// 		}
+		// 	}
+
+		// }
 		if len(engine.unchecked()) == 0 {
 			engine.log.Debug("all players checked", enerr.OpAttr(op))
 			for _, hand := range engine.raisedHands {
