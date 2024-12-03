@@ -93,26 +93,35 @@ export const useUserStore = defineStore('users', {
 
     },
     async check() {
-      if (!this.UserCreds) {
-        return false
-      }
-      const client = new Client(APISettings.protocol + APISettings.baseURL, "");
-      try {
-        const token = this.UserCreds.token;
-        const resp = await client.get("/users/" + token);
-        // console.log(resp.status)
-        if (resp.status == 200) {
-          const json = await resp.json();
-          json["token"] = token
-          this.UserCreds = json
-          return true
-        } else {
-          this.UserCreds = null
+      let self = this 
+      this.fetching = true
+      const ok = await (async function () {
+        // do something
+
+        if (!self.UserCreds) {
+          return false
         }
-      } catch (e) {
-        this.UserCreds = null
-      }
-      return false
+
+        const client = new Client(APISettings.protocol + APISettings.baseURL, "");
+        try {
+          const token = self.UserCreds.token;
+          const resp = await client.get("/users/" + token);
+          // console.log(resp.status)
+          if (resp.status == 200) {
+            const json = await resp.json();
+            json["token"] = token
+            self.UserCreds = json
+            return true
+          } else {
+            self.UserCreds = null
+          }
+        } catch (e) {
+          self.UserCreds = null
+        }
+        return false
+      })()
+      this.fetching = false
+      return ok
     },
     $reset() {
       localStorage.removeItem(USER_LOCAL_STORAGE_KEY)
