@@ -28,7 +28,7 @@ func RaiseHand(engine *PolymersEngine) HandlerFunc {
 		if err != nil {
 			return NO_TRANSITION, enerr.E(op, err)
 		}
-		player, err := engine.getPlayer(e.Player)
+		player, err := engine.getParticipant(e.Player)
 		if err != nil {
 			return NO_TRANSITION, enerr.E(op, err)
 		}
@@ -80,7 +80,7 @@ func Check(engine *PolymersEngine) HandlerFunc {
 		if err != nil {
 			return NO_TRANSITION, err
 		}
-		target, err := engine.getPlayer(data.Player)
+		target, err := engine.getParticipant(data.Player)
 		if err != nil {
 			return NO_TRANSITION, err
 		}
@@ -191,11 +191,11 @@ func (engine *PolymersEngine) TradeHandler() HandlerFunc {
 		if err := mapstructure.Decode(e.Envelope, &data); err != nil {
 			return NO_TRANSITION, err
 		}
-		pl1, err := engine.getPlayer(data.Player1)
+		pl1, err := engine.getParticipant(data.Player1)
 		if err != nil {
 			return NO_TRANSITION, err
 		}
-		pl2, err := engine.getPlayer(data.Player2)
+		pl2, err := engine.getParticipant(data.Player2)
 		if err != nil {
 			return NO_TRANSITION, err
 		}

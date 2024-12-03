@@ -422,7 +422,7 @@ func (s *TradeState) addTradeOffer() HandlerFunc {
 		if err != nil {
 			return NO_TRANSITION, enerr.E(op, err)
 		}
-		owner, err := s.eng.getPlayer(e.Player)
+		owner, err := s.eng.getParticipant(e.Player)
 		if err != nil {
 			return NO_TRANSITION, enerr.E(op, err)
 		}
@@ -447,7 +447,7 @@ func (s *TradeState) addTradeOffer() HandlerFunc {
 func (s *TradeState) removeTradeOffer() HandlerFunc {
 	return func(e models.Action) (stateInt, error) {
 		const op enerr.Op = "polymers/TradeState.removeTradeOffer"
-		player, err := s.eng.getPlayer(e.Player)
+		player, err := s.eng.getParticipant(e.Player)
 		if err != nil {
 			return NO_TRANSITION, enerr.E(op, err)
 		}
@@ -473,7 +473,7 @@ func (s *TradeState) addTradeRequest() HandlerFunc {
 		if err != nil {
 			return NO_TRANSITION, enerr.E(op, err)
 		}
-		player, err := s.eng.getPlayer(e.Player)
+		player, err := s.eng.getParticipant(e.Player)
 		if err != nil {
 			return NO_TRANSITION, enerr.E(op, err)
 		}
@@ -503,7 +503,7 @@ func (s *TradeState) removeTradeRequest() HandlerFunc {
 		if err != nil {
 			return NO_TRANSITION, enerr.E(op, err)
 		}
-		player, err := s.eng.getPlayer(e.Player)
+		player, err := s.eng.getParticipant(e.Player)
 		if err != nil {
 			return NO_TRANSITION, enerr.E(op, err)
 		}
@@ -525,7 +525,7 @@ func (s *TradeState) addTradeAck() HandlerFunc {
 	}
 	return func(e models.Action) (stateInt, error) {
 		const op enerr.Op = "polymers/TradeState.addTradeAck"
-		owner, err := s.eng.getPlayer(e.Player)
+		owner, err := s.eng.getParticipant(e.Player)
 		if err != nil {
 			return NO_TRANSITION, enerr.E(op, err)
 		}
@@ -549,7 +549,7 @@ func (s *TradeState) addTradeAck() HandlerFunc {
 			return NO_TRANSITION, enerr.E(op, "Игрок не хочет меняться", enerr.GameLogic)
 		}
 
-		player, err := s.eng.getPlayer(request.Player)
+		player, err := s.eng.getParticipant(request.Player)
 		if err != nil {
 			return NO_TRANSITION, enerr.E(op, err)
 		}

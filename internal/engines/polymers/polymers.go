@@ -120,7 +120,7 @@ func (engine *PolymersEngine) Start() {
 				engine.mu.Lock()
 				engine.log.Debug("locked engine")
 				func() {
-					player, err := engine.getPlayer(e.Player)
+					player, err := engine.getParticipant(e.Player)
 					if err != nil {
 						enerr.ErrorResponse(engine.unicast, e.Player, engine.log, err)
 						return
@@ -215,7 +215,7 @@ func (engine *PolymersEngine) GetResults() [][]string {
 	return results
 }
 
-func (engine *PolymersEngine) AddPlayer(player models.Participant) error {
+func (engine *PolymersEngine) AddParticipant(player models.Participant) error {
 	engine.mu.Lock()
 	defer engine.mu.Unlock()
 	if engine.started {
@@ -230,7 +230,7 @@ func (engine *PolymersEngine) AddPlayer(player models.Participant) error {
 	return nil
 }
 
-func (engine *PolymersEngine) RemovePlayer(name string) error {
+func (engine *PolymersEngine) RemoveParticipant(name string) error {
 	engine.mu.Lock()
 	defer engine.mu.Unlock()
 	if engine.started {
@@ -245,12 +245,12 @@ func (engine *PolymersEngine) RemovePlayer(name string) error {
 	return nil
 }
 
-// getPlayer internal. Not conccurent safe.
+// getParticipant internal. Not concurrent safe.
 //
 // Can return:
 //
 //	enerr.Unidentified
-func (engine *PolymersEngine) getPlayer(name string) (*Player, error) {
+func (engine *PolymersEngine) getParticipant(name string) (*Player, error) {
 	const op enerr.Op = "polymers/PolymersEngine.getPlayer"
 	for i := 0; i < len(engine.participants); i++ {
 		if engine.participants[i].Name == name {
@@ -262,7 +262,7 @@ func (engine *PolymersEngine) getPlayer(name string) (*Player, error) {
 
 // players() return engine.Participants with Player Role
 func (engine *PolymersEngine) players() []*Player {
-	players := make([]*Player, 0, len(engine.participants))
+	players := make([]*Player, 0, engine.maxPlayers)
 	for i := 0; i < len(engine.participants); i++ {
 		if engine.participants[i].Role == common.Player_Role {
 			players = append(players, engine.participants[i])

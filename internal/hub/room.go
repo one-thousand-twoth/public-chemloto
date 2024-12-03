@@ -22,8 +22,8 @@ type Engine interface {
 	Input(enmodels.Action)
 	Start()
 	GetResults() [][]string
-	AddPlayer(enmodels.Participant) error
-	RemovePlayer(name string) error
+	AddParticipant(enmodels.Participant) error
+	RemoveParticipant(name string) error
 }
 
 func (h *Hub) AddNewRoom(r Room) error {

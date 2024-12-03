@@ -83,7 +83,7 @@ func Subscribe(h *Hub, e internalEventWrap) {
 			}
 			return
 		}
-		if err := room.engine.AddPlayer(enmodels.Participant{
+		if err := room.engine.AddParticipant(enmodels.Participant{
 			Name: usr.Name,
 			Role: usr.Role,
 		}); err != nil {
@@ -107,7 +107,7 @@ func Subscribe(h *Hub, e internalEventWrap) {
 		oldRoomID := usr.setRoom(data.Name)
 		oldRoom, ok := h.Rooms.get(oldRoomID)
 		if ok {
-			if err := oldRoom.engine.RemovePlayer(e.userId); err != nil {
+			if err := oldRoom.engine.RemoveParticipant(e.userId); err != nil {
 				log.Error("Failed to delete player", sl.Err(err))
 				return
 			}
@@ -195,7 +195,7 @@ func UnSubscribe(h *Hub, e internalEventWrap) {
 			}
 			return
 		}
-		if err := room.engine.RemovePlayer(e.userId); err != nil {
+		if err := room.engine.RemoveParticipant(e.userId); err != nil {
 			if enerr.KindIs(enerr.AlreadyStarted, err) {
 				conn.MessageChan <- common.Message{
 					Type:   common.HUB_UNSUBSCRIBE,
