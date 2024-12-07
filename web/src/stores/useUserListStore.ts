@@ -1,6 +1,6 @@
 import { APISettings } from '@/api/config';
 import { Client } from '@/api/core/client';
-import { Role, UserInfo } from '@/models/User';
+import { Role, User, UserCreds, UserInfo } from '@/models/User';
 import { acceptHMRUpdate, defineStore } from 'pinia';
 import { ref } from 'vue';
 import { useToasterStore } from "../stores/useToasterStore";
@@ -9,7 +9,7 @@ import { useUserStore } from './useUserStore';
 export const useUsersListStore = defineStore('usersList', {
   state: () => {
     return {
-      UsersList: ref<Array<UserInfo>>([]),
+      UsersList: ref<Array<User>>([]),
       fetching: ref(false)
     }
   },

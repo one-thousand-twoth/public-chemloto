@@ -1,6 +1,6 @@
 import { APISettings } from '@/api/config';
 import { Client } from '@/api/core/client';
-import { Role, UserInfo } from '@/models/User';
+import { Role, User, UserCreds, UserInfo } from '@/models/User';
 import { acceptHMRUpdate, defineStore } from 'pinia';
 import { useToasterStore } from "../stores/useToasterStore";
 
@@ -14,13 +14,18 @@ const getUser = () => {
 export const useUserStore = defineStore('users', {
   state: () => {
     return {
-      UserCreds: getUser() as UserInfo | null,
+      // изменение UserCreds вызывает обновление вебсокета
+      UserCreds: getUser() as UserCreds | null,
+      UserInfo: { room: "" } as UserInfo,
       fetching: false
     }
   },
   actions:
   {
-    async PatchUser(usr: UserInfo) {
+    getUser() {
+      return { ...this.UserCreds, ...this.UserInfo }
+    },
+    async PatchUser(usr: UserCreds) {
       const toasterStore = useToasterStore();
       const client = new Client(APISettings.protocol + APISettings.baseURL, "");
       let role = ""
@@ -84,8 +89,8 @@ export const useUserStore = defineStore('users', {
         });
         return;
       }
-      // localStorage.setItem("token", token.value);
-      this.UserCreds = { username: input, token: json["token"], role: json["role"], room: "" }
+      this.UserCreds = { username: input, token: json["token"], role: json["role"] }
+      // this.UserInfo = { room: json["room"] }
       localStorage.setItem(USER_LOCAL_STORAGE_KEY, JSON.stringify(this.UserCreds));
 
       toasterStore.info(`Вы вошли под именем ${this.UserCreds.username}`);
@@ -93,7 +98,7 @@ export const useUserStore = defineStore('users', {
 
     },
     async check() {
-      let self = this 
+      let self = this
       this.fetching = true
       const ok = await (async function () {
         // do something
@@ -109,8 +114,9 @@ export const useUserStore = defineStore('users', {
           // console.log(resp.status)
           if (resp.status == 200) {
             const json = await resp.json();
-            json["token"] = token
-            self.UserCreds = json
+            // json["token"] = token
+            self.UserCreds = { username: json["username"], token: token, role: json["role"] }
+            self.UserInfo = { room: json["room"] }
             return true
           } else {
             self.UserCreds = null
@@ -130,7 +136,7 @@ export const useUserStore = defineStore('users', {
 
   },
   getters: {
-    connected: (state) => state.UserCreds?.room ? true : false,
+    connected: (state) => state.UserInfo?.room != "",
   }
 })
 

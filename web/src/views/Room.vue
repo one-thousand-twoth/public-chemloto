@@ -20,7 +20,7 @@ function DisconnectGame() {
         {
             "Type": "HUB_UNSUBSCRIBE",
             "Target": "room",
-            "Name": userStore.UserCreds!.room
+            "Name": userStore.UserInfo.room
         }
     )
 }

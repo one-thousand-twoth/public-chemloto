@@ -123,7 +123,7 @@ export const useGameStore = defineStore('game', () => {
     // TODO: Сделать getter`om
     const timer = computed({
         get: () => getStateTimer(gameState.value),
-        set: (v) => () => { updateTimer(gameState.value, v as number) }
+        set: (v) => { updateTimer(gameState.value, v as number) }
     })
     const gameState = ref<GameInfo>({
         Bag: {

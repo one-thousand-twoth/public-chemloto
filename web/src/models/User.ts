@@ -21,10 +21,15 @@ export function i18nRole(role: Role) {
 export function IconRole(role: Role): FunctionalComponent<HTMLAttributes & VNodeProps> {
     return roleData[role]?.icon || ExclamationCircleIcon
 }
-export interface UserInfo {
+export type User = UserCreds & UserInfo
+export interface UserCreds {
     username: string
     token: string
     role: Role
-    room: string
+    // room: string
     // status: string
+}
+
+export interface UserInfo {
+    room: string
 }

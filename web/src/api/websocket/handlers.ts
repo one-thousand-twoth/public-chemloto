@@ -12,9 +12,9 @@ export function Subscribe(e: WEBSOCKET_EVENT) {
     const user = useUserStore()
     console.log("changing to room")
     const b = e.Body as HUB_SUBSCRIBE_EVENT
-    if (b.Target == "room"){
+    if (b.Target == "room") {
         console.log("Hi")
-        user.UserCreds!.room = b.Name
+        user.UserInfo!.room = b.Name
         store.name = b.Name
     }
 }
@@ -22,13 +22,13 @@ export function UNSubscribe(e: WEBSOCKET_EVENT) {
     const store = useGameStore()
     const user = useUserStore()
     const b = e.Body as HUB_SUBSCRIBE_EVENT
-    if (b.Target == "room"){
+    if (b.Target == "room") {
         console.log("exiting room", b)
-        if (user.UserCreds == null){
+        if (user.UserCreds == null) {
             console.error("user is null")
             return
         }
-        user.UserCreds.room = ""
+        user.UserInfo.room = ""
         console.log(user.UserCreds)
         store.name = ""
     }
@@ -37,18 +37,18 @@ export function UNSubscribe(e: WEBSOCKET_EVENT) {
 export function EngineAction(e: WEBSOCKET_EVENT) {
     const store = useGameStore()
     console.log("changing to room")
-    switch (e.Body["Action"]){
-        case "GetElement":{
+    switch (e.Body["Action"]) {
+        case "GetElement": {
             console.log(e.Body["Element"])
-            store.gameState.Bag.LastElements = e.Body["LastElements"]; 
-            store.gameState.Players.forEach((pl) => {pl.Bag[store.currElement] = (pl.Bag[store.currElement] || 0) + 1;} )
+            store.gameState.Bag.LastElements = e.Body["LastElements"];
+            store.gameState.Players.forEach((pl) => { pl.Bag[store.currElement] = (pl.Bag[store.currElement] || 0) + 1; })
             break;
         }
-        case "RaiseHand":{
+        case "RaiseHand": {
             store.gameState.Players = e.Body["Players"]
             break;
         }
-        case "NewTimer":{
+        case "NewTimer": {
             store.timer = e.Body["Value"] as number
             break;
         }
@@ -59,7 +59,7 @@ export function EngineAction(e: WEBSOCKET_EVENT) {
 
 }
 
-export function StartGame(_: WEBSOCKET_EVENT){
+export function StartGame(_: WEBSOCKET_EVENT) {
     const toaster = useToasterStore()
     const store = useGameStore()
     store.gameState.Started = true

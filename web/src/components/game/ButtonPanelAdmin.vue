@@ -21,7 +21,7 @@ const userStore = useUserStore()
 function StartGame() {
     ws.Send({
         Type: 'HUB_STARTGAME',
-        Name: userStore.UserCreds!.room.toString()
+        Name: userStore.UserInfo!.room
     })
 }
 
