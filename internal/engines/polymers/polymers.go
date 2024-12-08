@@ -128,7 +128,7 @@ func (engine *PolymersEngine) Start() {
 					state, err := engine.stateMachine.States[engine.stateMachine.Current].Handle(e, player)
 					if err != nil {
 						enerr.ErrorResponse(engine.unicast, e.Player, engine.log, err)
-						return
+						// return
 					}
 					if state == UPDATE_CURRENT {
 						engine.broadcast(common.Message{
