@@ -18,6 +18,7 @@ export const useRoomsStore = defineStore('rooms', () => {
     async function Fetch() {
         fetching.value = true
         if (userStore.UserCreds == null) {
+            fetching.value = false;
             return
         }
         const client = new Client(APISettings.protocol + APISettings.baseURL, userStore.UserCreds.token);
@@ -69,7 +70,7 @@ export interface RoomInfo {
     elementCounts: { [id: string]: number; }
     time: number
     isAuto: boolean
-} 
+}
 
 if (import.meta.hot) {
     import.meta.hot.accept(acceptHMRUpdate(useRoomsStore, import.meta.hot))

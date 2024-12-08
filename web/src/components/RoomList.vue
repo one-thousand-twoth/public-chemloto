@@ -19,6 +19,7 @@ export default defineComponent({
     const rooms = computed(() => roomStore.roomList)
     const showModal = ref(false)
     const ws = inject('connector') as WebsocketConnector
+    roomStore.Fetch()
     function ConnectGame(roomName: string) {
       ws.Send(
         {
