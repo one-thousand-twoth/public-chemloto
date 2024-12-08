@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { WebsocketConnector } from '@/api/websocket/websocket';
 import { ButtonPanelAdmin, ButtonPanelPlayer, CheckPlayer, LeaderBoard, UserElements } from '@/components/game';
-import { ElementImage, IconButtonBackground, Modal, Timer } from '@/components/UI/';
+import { ElementImage, IconButtonBackground, Modal, Timer, UserInfo } from '@/components/UI/';
 import { Role } from '@/models/User';
 import { Hand, useGameStore } from '@/stores/useGameStore';
 import { useUserStore } from '@/stores/useUserStore';
@@ -41,7 +41,7 @@ const curCheckPlayer = ref<Hand>()
                 <div class="bars p-3 min-w-[8.5rem]  grow-[1] bg-gray-50">
                     <LeaderBoard @selectPlayer="(name: string) => { curInfoPlayer = name }"></LeaderBoard>
                 </div>
-                <IconButtonBackground v-if="!GameStore.gameState.Started || userStore.UserCreds?.role != Role.Player"
+                <IconButtonBackground v-if="!GameStore.gameState.Started || userStore.UserInfo.role != Role.Player"
                     class="w-full bg-red-700 text-white  rounded-lg" :icon="ArrowLeftStartOnRectangleIcon"
                     @click="DisconnectGame()">Выйти</IconButtonBackground>
             </div>
@@ -58,7 +58,7 @@ const curCheckPlayer = ref<Hand>()
                 </div>
 
                 <FieldsTable />
-                <ButtonPanelAdmin v-if="userStore.UserCreds?.role != Role.Player" />
+                <ButtonPanelAdmin v-if="userStore.UserInfo.role != Role.Player" />
                 <ButtonPanelPlayer v-else />
 
             </div>
@@ -69,7 +69,7 @@ const curCheckPlayer = ref<Hand>()
                 <ul class="list-none p-0 font-bold m-0">
                     <li @click="curCheckPlayer = pl" class="break-words flex justify-between items-center p-2 hover:underline rounded-md my-2 mx-0
                     border-solid border-2 border-gray-600 m-3" v-for="pl in GameStore.gameState.RaisedHands">
-                        {{ pl.Player.Name }} - {{ pl.Field }}
+                        <UserInfo :role="pl.Player.Role" :name="pl.Player.Name" /> {{ pl.Field }}
                     </li>
                 </ul>
             </div>
@@ -88,7 +88,7 @@ const curCheckPlayer = ref<Hand>()
                 <UserElements v-if="currPlayer" :player="currPlayer" />
             </template>
         </Modal>
-        <Modal v-if="userStore.UserCreds?.role != Role.Player" :show="curCheckPlayer !== undefined"
+        <Modal v-if="userStore.UserInfo.role != Role.Player" :show="curCheckPlayer !== undefined"
             @close="curCheckPlayer = undefined">
             <template #header>
                 <h3 class="font-bold text-center">Проверка структуры {{ curCheckPlayer?.Player.Name }}</h3>

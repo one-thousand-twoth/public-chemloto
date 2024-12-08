@@ -14,6 +14,7 @@ export default defineComponent({
   components: { IconButton, Modal, CreateRoom },
   setup() {
     const userStore = useUserStore()
+    const selfuser = userStore.getUser()
     const roomStore = useRoomsStore()
     const rooms = computed(() => roomStore.roomList)
     const showModal = ref(false)
@@ -30,6 +31,7 @@ export default defineComponent({
     return {
       rooms,
       Role,
+      selfuser,
       roomStore,
       userStore,
       ArrowPathIcon,
@@ -70,7 +72,7 @@ export default defineComponent({
 
     <div class="mb-5">
       <div class=" flex flex-row gap-2">
-        <button v-if="userStore.UserCreds?.role != Role.Player" @click="showModal = !showModal">Создать</button>
+        <button v-if="selfuser.role != Role.Player" @click="showModal = !showModal">Создать</button>
         <IconButton :icon="ArrowPathIcon" @click="roomStore.Fetch()" />
       </div>
     </div>

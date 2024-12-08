@@ -25,11 +25,12 @@ export type User = UserCreds & UserInfo
 export interface UserCreds {
     username: string
     token: string
-    role: Role
+
     // room: string
     // status: string
 }
 
 export interface UserInfo {
+    role: Role
     room: string
 }

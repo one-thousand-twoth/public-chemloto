@@ -16,7 +16,7 @@ export const useUserStore = defineStore('users', {
     return {
       // изменение UserCreds вызывает обновление вебсокета
       UserCreds: getUser() as UserCreds | null,
-      UserInfo: { room: "" } as UserInfo,
+      UserInfo: { room: "", role: Role.Player } as UserInfo,
       fetching: false
     }
   },
@@ -25,7 +25,7 @@ export const useUserStore = defineStore('users', {
     getUser() {
       return { ...this.UserCreds, ...this.UserInfo }
     },
-    async PatchUser(usr: UserCreds) {
+    async PatchUser(usr: User) {
       const toasterStore = useToasterStore();
       const client = new Client(APISettings.protocol + APISettings.baseURL, "");
       let role = ""
@@ -89,8 +89,8 @@ export const useUserStore = defineStore('users', {
         });
         return;
       }
-      this.UserCreds = { username: input, token: json["token"], role: json["role"] }
-      // this.UserInfo = { room: json["room"] }
+      this.UserCreds = { username: input, token: json["token"], }
+      this.UserInfo = { room: json["room"] ?? "", role: json["role"] }
       localStorage.setItem(USER_LOCAL_STORAGE_KEY, JSON.stringify(this.UserCreds));
 
       toasterStore.info(`Вы вошли под именем ${this.UserCreds.username}`);
@@ -115,8 +115,8 @@ export const useUserStore = defineStore('users', {
           if (resp.status == 200) {
             const json = await resp.json();
             // json["token"] = token
-            self.UserCreds = { username: json["username"], token: token, role: json["role"] }
-            self.UserInfo = { room: json["room"] }
+            self.UserCreds = { username: json["username"], token: token }
+            self.UserInfo = { room: json["room"], role: json["role"] }
             return true
           } else {
             self.UserCreds = null

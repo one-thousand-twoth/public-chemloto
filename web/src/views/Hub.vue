@@ -30,7 +30,7 @@ async function Remove() {
         <div class="relative md:p-8 flex flex-col " v-if="!connected">
             <div
                 class="flex  items-center relative pl-2 py-[0.1rem]  mb:p-8 text-lg font-semibold border-[5px] border-blue-400 rounded-lg w-fit self-end">
-                <UserInfo :role="userStore.UserCreds!.role" :name="userStore.UserCreds!.username" />
+                <UserInfo :role="userStore.UserInfo.role" :name="userStore.UserCreds?.username ?? ''" />
                 <IconButton :icon="ArrowLeftStartOnRectangleIcon" @click="Remove()" />
             </div>
             <div class="">
