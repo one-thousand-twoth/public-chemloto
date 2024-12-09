@@ -25,15 +25,19 @@ type Field struct {
 func (f *Field) decrementScore() int {
 	o := f.Score
 	f.Score -= 1
+	if f.Score < 0 {
+		f.Score = 0
+	}
 	return o
 }
 
 // a Player represents Participant with Player roles with engine specific data.
 type Player struct {
 	models.Participant
-	RaisedHand bool
-	Bag        map[string]int
-	Score      int // Game score only for Players
+	RaisedHand      bool
+	Bag             map[string]int
+	Score           int // Game score only for Players
+	CompletedFields []string
 }
 
 // setScore will decrease Participant`s setScore with min value = -2

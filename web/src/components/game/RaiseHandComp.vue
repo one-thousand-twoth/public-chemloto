@@ -26,8 +26,11 @@ function Check(ch: CheckStruct, str: { [id: string]: number; }) {
 		Structure: Object.fromEntries(Object.entries(str).filter(([_, v]) => v !== 0)),
 	})
 }
+
+const availableFields = Object.entries(Polymers).filter(([field, v]) => { return !props.player.CompletedFields.includes(field) })
+console.debug(availableFields)
 const check = ref<CheckStruct>({
-	Field: 'Альфа',
+	Field: availableFields[0][0],
 	Name: '',
 })
 
@@ -43,7 +46,7 @@ const struct = ref<{ [id: string]: number; }>(
 				<label for="roomName">Поле:</label>
 				<select v-model="check.Field">
 					<option disabled value="">Выберите</option>
-					<option v-for="[field, _] in Object.entries(Polymers)">{{ field }}</option>
+					<option v-for="[field, _] in availableFields">{{ field }}</option>
 				</select>
 			</section>
 			<section v-if='check.Field'>

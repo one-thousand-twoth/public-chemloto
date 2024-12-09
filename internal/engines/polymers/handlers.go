@@ -10,6 +10,7 @@ import (
 	"github.com/anrew1002/Tournament-ChemLoto/internal/engines/models/enerr"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/sl"
 	"github.com/mitchellh/mapstructure"
+	"github.com/samber/lo"
 )
 
 type HandlerFunc func(models.Action) (stateInt, error)
@@ -31,6 +32,11 @@ func RaiseHand(engine *PolymersEngine) HandlerFunc {
 		player, err := engine.getParticipant(e.Player)
 		if err != nil {
 			return NO_TRANSITION, enerr.E(op, err)
+		}
+
+		_, ok := lo.Find(engine.raisedHands, func(v Hand) bool { return v.Player.Name == player.Name && v.Field == data.Field })
+		if ok {
+			return NO_TRANSITION, enerr.E(op, "Вы уже подняли руку", enerr.GameLogic)
 		}
 
 		engine.log.Debug("Handle RaiseHand",
@@ -66,12 +72,10 @@ func RaiseHand(engine *PolymersEngine) HandlerFunc {
 
 func Check(engine *PolymersEngine) HandlerFunc {
 	type Data struct {
-		Type      string
-		Action    string
-		Player    string
-		Field     string
-		Name      string
-		Structure map[string]int
+		Type   string
+		Action string
+		Accept bool
+		Player string
 	}
 	return func(e models.Action) (stateInt, error) {
 
@@ -88,58 +92,42 @@ func Check(engine *PolymersEngine) HandlerFunc {
 		engine.log.Debug("Handle Check action",
 			slog.String("from_player", e.Player),
 			slog.String("target", data.Player),
-			slog.Any("players", engine.players()),
-			slog.String("Field", data.Field),
-			slog.String("Name", data.Name),
-			slog.Any("Structure", data.Structure),
+			slog.Any("players-not-checked", uncheckedPlayers(engine.players())),
+			slog.Any("players-not-checked", engine.players()),
+
 			enerr.OpAttr(op),
 		)
-		// Проверяем что судья случайно не задал больше элементов чем в действительности есть у игрока
-		if _, err := target.checkIfHasElements(data.Structure); err != nil {
-			return NO_TRANSITION, enerr.E(op, "Слишком много элементов", enerr.GameLogic)
+		fmt.Println("после engine log")
+		hand, ok := lo.Find(engine.raisedHands, func(v Hand) bool { return v.Player.Name == data.Player })
+		if !ok {
+			return NO_TRANSITION, enerr.E(op, "Не найдено", enerr.NotExist)
 		}
-		// Если судья ошибся ничего не делаем, даем возможность поправить
-		eq := checkFields(engine.checks, data.Field, data.Name, data.Structure)
-		if !eq {
-			return UPDATE_CURRENT, enerr.E(op, "Неправильный состав элементов")
-		}
-		// TODO: обработать ошибку
-		if eq {
-			engine.log.Info("Succesful check Polymers",
-				slog.String("Player", e.Player),
-				slog.Any("Data", data),
-				enerr.OpAttr(op))
-			target.RaisedHand = false
+		fmt.Println("после lo find")
+		if !data.Accept {
+			target.setScore(-1)
+		} else {
+			target.CompletedFields = append(target.CompletedFields, hand.Field)
 			for k := range target.Bag {
-				target.Bag[k] -= data.Structure[k]
+				target.Bag[k] -= hand.Structure[k]
 			}
-
 		}
-		// else {
-		// 	engine.log.Error("Failed to check Polymers",
-		// 		slog.Any("data", data),
-		// 		slog.Any("example", engine.checks.Fields[data.Field][data.Name]),
-		// 		enerr.OpAttr(op),
-		// 	)
-		// 	target.RaisedHand = false
-		// 	target.setScore(-1)
-		// 	for i := 0; i < len(engine.raisedHands); i++ {
-		// 		if engine.raisedHands[i].Player.Name == e.Player {
-		// 			engine.raisedHands = append(engine.raisedHands[:i], engine.raisedHands[i+1:]...)
-		// 			break
-		// 		}
-		// 	}
+		target.RaisedHand = false
 
-		// }
+		engine.log.Info("Succesful check Polymers",
+			slog.String("Player", e.Player),
+			slog.Any("Data", data),
+			enerr.OpAttr(op))
+
 		if len(uncheckedPlayers(engine.players())) == 0 {
 			engine.log.Debug("all players checked", enerr.OpAttr(op))
 			for _, hand := range engine.raisedHands {
 				hand.Player.setScore(engine.fields[hand.Field].decrementScore())
 			}
+			// clear slice, without changing capacity
 			engine.raisedHands = engine.raisedHands[:0]
 			return OBTAIN, nil
 		}
-		return HAND, nil
+		return UPDATE_CURRENT, nil
 	}
 }
 func GetElement(engine *PolymersEngine) HandlerFunc {

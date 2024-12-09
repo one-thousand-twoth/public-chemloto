@@ -96,7 +96,6 @@ func (s SimpleState) Handle(e models.Action, player *Player) (stateInt, error) {
 			return st, enerr.E("Недостаточно прав", enerr.Unauthorized)
 		}
 	}
-
 	handle, ok := s.handlers[action]
 	if !ok {
 		return st, enerr.E(fmt.Sprintf("Неизвестное действие: %s", action), enerr.NotExistAction)

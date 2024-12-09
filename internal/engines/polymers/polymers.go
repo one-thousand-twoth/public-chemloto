@@ -276,7 +276,7 @@ func uncheckedPlayers(players []*Player) []*Player {
 	unchecked := make([]*Player, 0, len(players))
 	for i := 0; i < len(players); i++ {
 		if players[i].Role == common.Player_Role && players[i].RaisedHand {
-			players = append(players, players[i])
+			unchecked = append(unchecked, players[i])
 		}
 	}
 	return unchecked

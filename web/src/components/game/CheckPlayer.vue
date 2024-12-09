@@ -14,15 +14,12 @@ interface CheckStruct {
 	Field: string,
 	Name: string,
 }
-function Check(ch: CheckStruct, str: { [id: string]: number; }, Player: string) {
-	console.log(str)
+function Check(Player: string, accept: boolean) {
 	ws.Send({
 		Type: "ENGINE_ACTION",
 		Action: "Check",
 		Player: Player,
-		Field: ch.Field,
-		Name: ch.Name,
-		Structure: Object.fromEntries(Object.entries(str).filter(([_, v]) => v !== 0)),
+		Accept: true
 	})
 }
 const check = ref<CheckStruct>({
@@ -38,27 +35,19 @@ console.log("str", struct.value)
 </script>
 
 <template>
-	<form @submit.prevent="Check(check, struct, player.Player.Name)">
+	<form @submit.prevent>
 		<div class="flex flex-col gap-4 ">
-			<section>
-				<label for="roomName">Поле:</label>
-				<select v-model="check.Field">
-					<option disabled value="">Выберите</option>
-					<option v-for="[field] in Object.entries(Polymers)">{{ field }}</option>
-				</select>
-			</section>
-			<section v-if='check.Field'>
-				<label for="roomName">Название структуры:</label>
-				<select v-model="check.Name">
-					<option disabled value="">Выберите</option>
-					<option v-for="[v, _] in Object.entries(Polymers[check.Field])">{{ v }}</option>
-				</select>
-			</section>
+			<div class="text-lg">Поле: {{ player.Field }}</div>
+			<div class="text-lg">Структура: {{ player.Name }}</div>
 			<div v-if="Polymers[check.Field][check.Name] !== undefined" class="flex flex-wrap justify-between">
-				<ChemicalElementFormInput v-for="[elname] in Object.entries(Polymers[check.Field][check.Name][0])"
-					:elname="elname" :max="player.Player.Bag[elname]" v-model.number="struct[elname]" />
+				<ChemicalElementFormInput :disabled="true"
+					v-for="[elname] in Object.entries(Polymers[check.Field][check.Name][0])" :elname="elname"
+					:max="player.Player.Bag[elname]" v-model.number="struct[elname]" />
 			</div>
-			<button type="submit">Отправить</button>
+			<div class="  inline-flex gap-1 justify-between">
+				<button @click="Check(player.Player.Name, true)">Принять</button>
+				<button class="bg-red-500" @click="Check(player.Player.Name, false)">Отклонить</button>
+			</div>
 		</div>
 	</form>
 </template>

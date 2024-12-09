@@ -233,6 +233,7 @@ export interface Player {
     Score: number,
     RaisedHand: boolean,
     Bag: { [id: string]: number; }
+    CompletedFields: Array<string>
 }
 export interface Hand {
     Player: Player,
