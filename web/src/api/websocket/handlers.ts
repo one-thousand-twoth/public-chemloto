@@ -1,4 +1,4 @@
-import { useGameStore } from "@/stores/useGameStore"
+import { StartTimer, useGameStore } from "@/stores/useGameStore"
 import { useToasterStore } from "@/stores/useToasterStore"
 import { useUserStore } from "@/stores/useUserStore"
 import { WEBSOCKET_EVENT } from "./websocket"
@@ -42,6 +42,7 @@ export function EngineAction(e: WEBSOCKET_EVENT) {
             console.log(e.Body["Element"])
             store.gameState.Bag.LastElements = e.Body["LastElements"];
             store.gameState.Players.forEach((pl) => { pl.Bag[store.currElement] = (pl.Bag[store.currElement] || 0) + 1; })
+
             break;
         }
         case "RaiseHand": {
@@ -50,6 +51,7 @@ export function EngineAction(e: WEBSOCKET_EVENT) {
         }
         case "NewTimer": {
             store.timer = e.Body["Value"] as number
+            StartTimer()
             break;
         }
         default:

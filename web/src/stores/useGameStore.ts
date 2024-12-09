@@ -1,7 +1,7 @@
 import { WEBSOCKET_EVENT, WebsocketConnector } from '@/api/websocket/websocket'
 import { Role } from '@/models/User'
 import { acceptHMRUpdate, defineStore } from 'pinia'
-import { computed, inject, ref } from 'vue'
+import { computed, inject, ref, watch } from 'vue'
 import { useUserStore } from './useUserStore'
 
 
@@ -104,6 +104,26 @@ class GameStateFactory {
     }
 }
 let lastTimerID: NodeJS.Timeout
+
+export function StartTimer() {
+    const gameStore = useGameStore()
+    const state = gameStore.gameState
+    console.log("Hei")
+    clearInterval(lastTimerID)
+    if (hasTimer(state) && state.StateStruct.Timer > 1) {
+        console.log("Cool")
+        lastTimerID = setInterval(() => {
+            if (state.StateStruct.Timer == null) {
+                return
+            }
+            state.StateStruct.Timer--; // Decrement the timer count
+        }, 1000);
+        
+    }
+    console.log("Hi")
+}
+
+
 export const useGameStore = defineStore('game', () => {
     const userStore = useUserStore()
     const fetching = ref(false)
@@ -159,18 +179,7 @@ export const useGameStore = defineStore('game', () => {
         const b = e.Body["engine"] as GameInfo
         gameState.value = b
 
-        const state = gameState.value
-
-        clearInterval(lastTimerID)
-        if (hasTimer(state) && state.StateStruct.Timer > 1) {
-            lastTimerID = setInterval(() => {
-                if (state.StateStruct.Timer == null) {
-                    return
-                }
-                state.StateStruct.Timer--; // Decrement the timer count
-            }, 1000);
-
-        }
+        StartTimer()
     }
 
     const handlerFactory = new GameStateFactory(inject('connector')!);
