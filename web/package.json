@@ -10,6 +10,7 @@
   },
   "dependencies": {
     "@heroicons/vue": "^2.1.5",
+    "@vueuse/sound": "^2.0.1",
     "axios": "^1.7.2",
     "logrocket": "^8.1.1",
     "pinia": "^2.1.7",

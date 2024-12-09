@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { WebsocketConnector } from '@/api/websocket/websocket';
+import obtain from "@/assets/sounds/obtain.wav";
 import { ButtonPanelAdmin, ButtonPanelPlayer, CheckPlayer, LeaderBoard, UserElements } from '@/components/game';
 import { ElementImage, IconButtonBackground, Modal, Timer, UserInfo } from '@/components/UI/';
 import { Role } from '@/models/User';
@@ -8,7 +9,7 @@ import { useUserStore } from '@/stores/useUserStore';
 import {
     ArrowLeftStartOnRectangleIcon
 } from "@heroicons/vue/24/outline";
-import { computed, inject, ref, } from 'vue';
+import { computed, inject, ref, watch, } from 'vue';
 import FieldsTable from './FieldsTable.vue';
 
 const GameStore = useGameStore()
@@ -31,7 +32,9 @@ const currPlayer = computed(() => {
 
 const curInfoPlayer = ref('')
 const curCheckPlayer = ref<Hand>()
+    let audio = new Audio(obtain);
 
+watch(() => GameStore.gameState.Bag.LastElements, () => {audio.play()})
 </script>
 <template>
     <div class="relative flex max-h-lvh flex-col items-center overflow-x-hidden">

@@ -22,12 +22,18 @@ interface IToast {
     id: number;
 }
 
+ 
+
 export const useToasterStore = defineStore("toaster-store", {
-    state: (): { toasts: IToast[] } => ({
+    state: (): { toasts: IToast[], callback: (() => void) | null } => ({
         toasts: [],
+        callback: null
     }),
     actions: {
         updateState(payload: ToastPayload, status: TToastStatus) {
+            if (this.callback != null){
+                this.callback()
+            }
             // Get text and timeout from payload
             const { text, timeout } = payload;
             // We create the toast with function above

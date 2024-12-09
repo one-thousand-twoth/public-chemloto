@@ -10,11 +10,18 @@
     </Teleport>
 </template>
 <script setup lang="ts">
+import notification from "@/assets/sounds/notification.mp3";
+import obtain from "@/assets/sounds/obtain.wav";
 import {
     ExclamationCircleIcon,
     InformationCircleIcon,
 } from "@heroicons/vue/24/outline";
+import { storeToRefs } from "pinia";
+import { watch } from "vue";
 import { useToasterStore } from "../stores/useToasterStore";
 const toastStore = useToasterStore();
-
+let audio = new Audio(notification);
+toastStore.callback = () => {
+    audio.play();
+}
 </script>
