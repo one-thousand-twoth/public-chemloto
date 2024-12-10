@@ -37,6 +37,7 @@ const check = ref<CheckStruct>({
 const struct = ref<{ [id: string]: number; }>(
 	Object.fromEntries(Object.entries(props.player.Bag).map(([name]) => { return [name, 0] }))
 )
+
 </script>
 
 <template>
@@ -58,7 +59,7 @@ const struct = ref<{ [id: string]: number; }>(
 			</section>
 			<div v-if="Polymers[check.Field][check.Name] !== undefined" class="flex flex-wrap justify-between">
 				<ChemicalElementFormInput v-for="[elname] in Object.entries(Polymers[check.Field][check.Name][0])"
-					:elname="elname" :max="player.Bag[elname]" v-model.number="struct[elname]" />
+					:elname="elname" :max="player.Bag[elname] ?? 0" v-model.number="struct[elname]" />
 			</div>
 			<button type="submit">Отправить</button>
 		</div>

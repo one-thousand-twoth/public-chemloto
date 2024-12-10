@@ -226,7 +226,9 @@ func (engine *PolymersEngine) AddParticipant(player models.Participant) error {
 			return enerr.E("Недостаточно прав", enerr.MaxPlayers)
 		}
 	}
-	engine.participants = append(engine.participants, &Player{Participant: player, Bag: make(map[string]int)})
+	engine.participants = append(engine.participants,
+		&Player{Participant: player, Bag: make(map[string]int), CompletedFields: make([]string, 0, engine.maxPlayers)},
+	)
 	return nil
 }
 
