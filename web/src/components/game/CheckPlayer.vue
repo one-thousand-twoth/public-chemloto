@@ -19,7 +19,7 @@ function Check(Player: string, accept: boolean) {
 		Type: "ENGINE_ACTION",
 		Action: "Check",
 		Player: Player,
-		Accept: true
+		Accept: accept,
 	})
 }
 const check = ref<CheckStruct>({

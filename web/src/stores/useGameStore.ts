@@ -103,6 +103,7 @@ class GameStateFactory {
         }
     }
 }
+
 let lastTimerID: NodeJS.Timeout
 
 export function StartTimer() {
@@ -118,7 +119,7 @@ export function StartTimer() {
             }
             state.StateStruct.Timer--; // Decrement the timer count
         }, 1000);
-        
+
     }
     console.log("Hi")
 }
@@ -249,6 +250,7 @@ export interface Hand {
     Field: string,
     Name: string,
     Structure: { [id: string]: number; }
+    Checked: boolean,
 }
 export type GameInfo = {
     Bag: Bag,

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"slices"
 
 	"github.com/anrew1002/Tournament-ChemLoto/internal/common"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/engines/models"
@@ -97,15 +98,22 @@ func Check(engine *PolymersEngine) HandlerFunc {
 
 			enerr.OpAttr(op),
 		)
-		fmt.Println("после engine log")
-		hand, ok := lo.Find(engine.raisedHands, func(v Hand) bool { return v.Player.Name == data.Player })
+		hand, index, ok := lo.FindIndexOf(engine.raisedHands, func(v Hand) bool { return v.Player.Name == data.Player })
 		if !ok {
 			return NO_TRANSITION, enerr.E(op, "Не найдено", enerr.NotExist)
 		}
-		fmt.Println("после lo find")
+		if hand.Checked {
+			return NO_TRANSITION, enerr.E(op, "Вы уже проверили этого игрока", enerr.GameLogic)
+		}
 		if !data.Accept {
 			target.setScore(-1)
+			// NOTE: Не делаю zeroing elements, так как после перехода на новые версии компилятора
+			// DeleteFunc сам будет занулять их. Пока влиянием на производительность можно принебречь.
+			engine.raisedHands = slices.DeleteFunc(engine.raisedHands, func(v Hand) bool {
+				return v.Player.Name == hand.Player.Name
+			})
 		} else {
+			engine.raisedHands[index].Checked = true
 			target.CompletedFields = append(target.CompletedFields, hand.Field)
 			for k := range target.Bag {
 				target.Bag[k] -= hand.Structure[k]

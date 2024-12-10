@@ -12,6 +12,7 @@ type Hand struct {
 	Field     string
 	Name      string
 	Structure map[string]int
+	Checked   bool
 }
 
 // Game field with Scoring counter

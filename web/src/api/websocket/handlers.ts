@@ -36,7 +36,7 @@ export function UNSubscribe(e: WEBSOCKET_EVENT) {
 
 export function EngineAction(e: WEBSOCKET_EVENT) {
     const store = useGameStore()
-    console.log("changing to room")
+    console.log("handling engine action")
     switch (e.Body["Action"]) {
         case "GetElement": {
             console.log(e.Body["Element"])

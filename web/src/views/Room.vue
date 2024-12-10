@@ -9,6 +9,9 @@ import { useUserStore } from '@/stores/useUserStore';
 import {
     ArrowLeftStartOnRectangleIcon
 } from "@heroicons/vue/24/outline";
+import {
+    CheckIcon
+} from "@heroicons/vue/24/outline";
 import { computed, inject, ref, watch, } from 'vue';
 import FieldsTable from './FieldsTable.vue';
 
@@ -32,9 +35,9 @@ const currPlayer = computed(() => {
 
 const curInfoPlayer = ref('')
 const curCheckPlayer = ref<Hand>()
-    let audio = new Audio(obtain);
+let audio = new Audio(obtain);
 
-watch(() => GameStore.gameState.Bag.LastElements, () => {audio.play()})
+watch(() => GameStore.gameState.Bag.LastElements, () => { audio.play() })
 </script>
 <template>
     <div class="relative flex max-h-lvh flex-col items-center overflow-x-hidden">
@@ -72,7 +75,11 @@ watch(() => GameStore.gameState.Bag.LastElements, () => {audio.play()})
                 <ul class="list-none p-0 font-bold m-0">
                     <li @click="curCheckPlayer = pl" class="break-words flex justify-between items-center p-2 hover:underline rounded-md my-2 mx-0
                     border-solid border-2 border-gray-600 m-3" v-for="pl in GameStore.gameState.RaisedHands">
-                        <UserInfo :role="pl.Player.Role" :name="pl.Player.Name" /> {{ pl.Field }}
+                        <div class=" inline-flex">
+                            <CheckIcon v-if="pl.Checked" class="text-lg size-6" />
+                            <UserInfo :role="pl.Player.Role" :name="pl.Player.Name" />
+                        </div>
+                        {{ pl.Field }}
                     </li>
                 </ul>
             </div>
