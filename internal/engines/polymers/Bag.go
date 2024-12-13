@@ -3,6 +3,7 @@ package polymers
 import (
 	"encoding/json"
 	"errors"
+	"maps"
 	"math/rand"
 	"time"
 
@@ -19,8 +20,8 @@ type Bag struct {
 type GameBag struct {
 	// Общий мешок key = название элемента, value = количество
 	Elements map[string]int
-	// Названия элементов в количестве, необходим для вычисления случайного элемента
-	Values []string
+	// Текущие элементы в мешке
+	iterElements map[string]int
 	// Вытащенные элементы
 	PushedValues []string
 	rnd          *rand.Rand
@@ -49,7 +50,7 @@ func NewGameBag(elements map[string]int) GameBag {
 	}
 	return GameBag{
 		Elements:     elements,
-		Values:       keys,
+		iterElements: maps.Clone(elements),
 		PushedValues: make([]string, 0, len(keys)),
 		rnd:          rand.New(rand.NewSource(time.Now().UnixNano())),
 	}
@@ -57,23 +58,41 @@ func NewGameBag(elements map[string]int) GameBag {
 
 func (b *GameBag) getRandomElement() (string, error) {
 	const op enerr.Op = "polymers/GameBag.getRandomElement"
-	if len(b.Values) == 0 {
+	element, err := pickRandom(b.iterElements, b.rnd)
+	if err != nil {
+		return "", enerr.E(op, err)
+	}
+	b.PushedValues = append(b.PushedValues, element)
+	return element, nil
+}
 
+// pickRandom возвращает случайный элемент из from
+func pickRandom(from map[string]int, rand *rand.Rand) (string, error) {
+	const op enerr.Op = "polymers/GameBag.pickRandom"
+	// Вычисляем общее количество
+	total := 0
+	for _, count := range from {
+		total += count
+	}
+
+	// Если ничего не осталось
+	if total == 0 {
 		return "", enerr.E(op, ErrEmptyBag)
 	}
 
-	randIndex := b.rnd.Intn(len(b.Values))
-	elem := b.Values[randIndex]
-	item, ok := b.Elements[elem]
-	if !ok {
-		// log.Error("Failed to pick an element", slog.String("Element", elem))
-		return "", enerr.E(op, "Ошибка при вытаскивании нового элемента из мешка", enerr.Internal)
+	randomNumber := rand.Intn(total)
+
+	// Определяем, какой ключ выбран, и уменьшаем его количество
+	cumulative := 0
+	for k, count := range from {
+		cumulative += count
+		if randomNumber < cumulative {
+			from[k]--
+			return k, nil
+		}
 	}
 
-	b.Elements[elem] = item - 1
-	b.Values = removeByValue(b.Values, elem)
-	b.PushedValues = append(b.PushedValues, elem)
-	return elem, nil
+	return "", enerr.E(op, "Ошибка при вытаскивании нового элемента из мешка", enerr.Internal)
 }
 
 func (b *GameBag) LastElements() []string {
