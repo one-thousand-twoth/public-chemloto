@@ -40,6 +40,7 @@ const (
 	ENGINE_ACTION
 	ENGINE_INFO
 	HUB_STARTGAME
+	HUB_EXITGAME
 	// HUB_NEW_ROOM указывается последним чтобы работала функция [MapEnumStringToMessageType]
 	HUB_NEW_ROOM
 )

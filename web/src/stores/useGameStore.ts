@@ -152,7 +152,7 @@ export const useGameStore = defineStore('game', () => {
             LastElements: []
         },
         Players: [],
-        Started: false,
+        Status: 'STATUS_WAITING',
         State: undefined,
         RaisedHands: [],
         Fields: {
@@ -256,7 +256,7 @@ export type GameInfo = {
     Bag: Bag,
     Players: Array<Player>,
     RaisedHands: Array<Hand>
-    Started: boolean,
+    Status: "STATUS_WAITING"|"STATUS_STARTED"| "STATUS_COMPLETED"
     // State
     Fields: { [id: string]: { Score: number }; }
 } & State

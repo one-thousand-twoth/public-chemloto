@@ -75,8 +75,8 @@ type PolymersEngineConfig struct {
 	MaxPlayers int
 }
 type PolymersEngine struct {
-	log     *slog.Logger
-	started bool
+	log    *slog.Logger
+	status models.EngineStatus
 	// FSM для управления игровыми состояниями
 	stateMachine stateMachine
 	// Игровой мешок
@@ -102,19 +102,20 @@ type PolymersEngine struct {
 	// Функция для отправки сообщения всем в комнате
 	broadcast models.BroadcastFunction
 
-	mu  sync.Mutex
-	rnd *rand.Rand
+	done chan struct{}
+	mu   sync.Mutex
+	rnd  *rand.Rand
 }
 
 // Start Game.
 //
 // All inputs must lock engine mutex.
 func (engine *PolymersEngine) Start() {
-	if engine.started {
-		// TODO:
+	if engine.status != models.STATUS_WAITING {
+		// TODO: вернуть ошибку
 		return
 	}
-	engine.started = true
+	engine.status = models.STATUS_STARTED
 	for _, field := range engine.fields {
 		field.Score = len(engine.players())
 	}
@@ -159,6 +160,11 @@ func (engine *PolymersEngine) Start() {
 				}()
 				engine.mu.Unlock()
 				engine.log.Debug("unlocked engine")
+			case <-engine.done:
+				engine.mu.Lock()
+				engine.status = models.STATUS_COMPLETED
+				engine.mu.Unlock()
+				return
 			default:
 				engine.mu.Lock()
 				state, err := engine.stateMachine.States[engine.stateMachine.Current].Update()
@@ -189,10 +195,13 @@ func (engine *PolymersEngine) Start() {
 	engine.broadcast(common.Message{Type: common.HUB_STARTGAME, Ok: true})
 	engine.broadcast(common.Message{Type: common.ENGINE_INFO, Ok: true, Body: engine.PreHook()})
 }
+func (engine *PolymersEngine) Exit() {
+	engine.done <- struct{}{}
+}
 
 // Input will send action to engine for processing
 func (engine *PolymersEngine) Input(e models.Action) {
-	if !engine.started {
+	if engine.status != models.STATUS_STARTED {
 		engine.unicast(e.Player, common.Message{
 			Type:   common.UNDEFINED,
 			Ok:     false,
@@ -224,7 +233,7 @@ func (engine *PolymersEngine) GetResults() [][]string {
 func (engine *PolymersEngine) AddParticipant(player models.Participant) error {
 	engine.mu.Lock()
 	defer engine.mu.Unlock()
-	if engine.started {
+	if engine.status == models.STATUS_STARTED {
 		return enerr.E("Игрок не может быть добавлен так как игра уже начата", enerr.AlreadyStarted)
 	}
 	if player.Role == common.Player_Role {
@@ -241,7 +250,7 @@ func (engine *PolymersEngine) AddParticipant(player models.Participant) error {
 func (engine *PolymersEngine) RemoveParticipant(name string) error {
 	engine.mu.Lock()
 	defer engine.mu.Unlock()
-	if engine.started {
+	if engine.status == models.STATUS_STARTED {
 		return enerr.E("Игрок не может быть удалён так как игра уже начата", enerr.AlreadyStarted)
 	}
 	for i := 0; i < len(engine.participants); i++ {
@@ -305,7 +314,7 @@ func (engine *PolymersEngine) MarshalJSON() ([]byte, error) {
 		fields[k] = *v
 	}
 	eng := struct {
-		Started     bool
+		Status      string
 		State       string
 		Bag         GameBag
 		Players     []Player
@@ -313,7 +322,7 @@ func (engine *PolymersEngine) MarshalJSON() ([]byte, error) {
 		Fields      map[string]Field
 		StateStruct State
 	}{
-		engine.started,
+		engine.status.String(),
 		engine.stateMachine.Current.String(),
 		engine.bag,
 		players,

@@ -14,23 +14,24 @@ func _() {
 	_ = x[ENGINE_ACTION-3]
 	_ = x[ENGINE_INFO-4]
 	_ = x[HUB_STARTGAME-5]
-	_ = x[HUB_NEW_ROOM-6]
+	_ = x[HUB_EXITGAME-6]
+	_ = x[HUB_NEW_ROOM-7]
 }
 
 const (
 	_MessageType_name_0 = "UNDEFINED"
-	_MessageType_name_1 = "HUB_SUBSCRIBEHUB_UNSUBSCRIBEENGINE_ACTIONENGINE_INFOHUB_STARTGAMEHUB_NEW_ROOM"
+	_MessageType_name_1 = "HUB_SUBSCRIBEHUB_UNSUBSCRIBEENGINE_ACTIONENGINE_INFOHUB_STARTGAMEHUB_EXITGAMEHUB_NEW_ROOM"
 )
 
 var (
-	_MessageType_index_1 = [...]uint8{0, 13, 28, 41, 52, 65, 77}
+	_MessageType_index_1 = [...]uint8{0, 13, 28, 41, 52, 65, 77, 89}
 )
 
 func (i MessageType) String() string {
 	switch {
 	case i == -1:
 		return _MessageType_name_0
-	case 1 <= i && i <= 6:
+	case 1 <= i && i <= 7:
 		i -= 1
 		return _MessageType_name_1[_MessageType_index_1[i]:_MessageType_index_1[i+1]]
 	default:

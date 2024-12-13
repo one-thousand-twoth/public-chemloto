@@ -66,7 +66,7 @@ const TradeButton = ref(false)
 
 </script>
 <template>
-    <template v-if="!gameStore.gameState.Started">
+    <template v-if="gameStore.gameState.Status === 'STATUS_WAITING'">
         <button @click="StartGame()">
             Начать игру
         </button>

@@ -22,11 +22,57 @@ func (h *Hub) SetupHandlers() {
 	h.UseHandler(common.HUB_UNSUBSCRIBE, UnSubscribe)
 	h.UseHandler(common.ENGINE_ACTION, EngineAction)
 	h.UseHandler(common.HUB_STARTGAME, StartGame)
+	h.UseHandler(common.HUB_EXITGAME, StopGame)
+
 }
 
 // use handler f for messages t
 func (h *Hub) UseHandler(t common.MessageType, f HandlerFunc) {
 	h.eventHandlers[t.String()] = f
+}
+
+func StopGame(h *Hub, e internalEventWrap) {
+	type dataT struct {
+		Type string
+		Name string
+	}
+	op := "Hub/StopGame"
+	log := h.log.With("op", op)
+	log.Debug("Start Handle Event StopGame", "usr", e.userId, "room", e.room, "data", fmt.Sprintf("%v", e.msg))
+	var data dataT
+	if err := mapstructure.Decode(e.msg, &data); err != nil {
+		log.Error("failed to decode event body", sl.Err(err))
+		return
+	}
+
+	usr, ok := h.Users.Get(e.userId)
+	if !ok {
+		log.Error("Error getting usr")
+		return
+	}
+	if usr.Role == common.Player_Role {
+		log.Error("No Access")
+		return
+	}
+
+	log.Debug("Context for Subscribe Event", "user", usr.Name, "data", data)
+	connID := usr.conn
+	conn, ok := h.Connections.Get(connID)
+	if !ok {
+		log.Error("Failed getting connection of user")
+		return
+	}
+	room, ok := h.Rooms.get(data.Name)
+	if !ok {
+		conn.MessageChan <- common.Message{
+			Type:   common.HUB_SUBSCRIBE,
+			Ok:     false,
+			Errors: []string{"Не существующая комната"},
+		}
+		return
+	}
+	room.engine.Exit()
+
 }
 
 // Subscribe обрабатывает логику добавления user`a в подписчики канала

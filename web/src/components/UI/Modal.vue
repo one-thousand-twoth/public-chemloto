@@ -9,7 +9,7 @@ defineEmits(['close'])
   <Teleport to="body">
     <Transition name="modal">
       <div v-if="props.show"
-        class="fixed z-5 overflow-visible top-0 left-0 flex justify-center items-center m-auto w-screen h-dvh overflow-y-scroll bg-opacity-20 bg-slate-500">
+        class="fixed z-10 overflow-visible top-0 left-0 flex justify-center items-center m-auto w-screen h-dvh overflow-y-scroll bg-opacity-20 bg-slate-500">
         <div class="h-fit m-auto bg-white p-4 shadow-lg rounded-sm">
           <div class="">
             <slot name="header"></slot>

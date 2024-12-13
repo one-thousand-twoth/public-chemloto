@@ -7,10 +7,9 @@ import { Role } from '@/models/User';
 import { Hand, useGameStore } from '@/stores/useGameStore';
 import { useUserStore } from '@/stores/useUserStore';
 import {
-    ArrowLeftStartOnRectangleIcon
-} from "@heroicons/vue/24/outline";
-import {
-    CheckIcon
+    ArrowLeftStartOnRectangleIcon,
+    CheckIcon,
+    EllipsisVerticalIcon
 } from "@heroicons/vue/24/outline";
 import { computed, inject, ref, watch, } from 'vue';
 import FieldsTable from './FieldsTable.vue';
@@ -28,6 +27,15 @@ function DisconnectGame() {
         }
     )
 }
+function EXITGame() {
+    ws.Send(
+        {
+            "Type": "HUB_EXITGAME",
+            "Name": userStore.UserInfo.room
+        }
+    )
+}
+
 
 const currPlayer = computed(() => {
     return GameStore.gameState.Players.find(player => player.Name === curInfoPlayer.value)
@@ -35,26 +43,28 @@ const currPlayer = computed(() => {
 
 const curInfoPlayer = ref('')
 const curCheckPlayer = ref<Hand>()
+const AdditionallyButton = ref(false)
 let audio = new Audio(obtain);
 
 watch(() => GameStore.gameState.Bag.LastElements, () => { audio.play() })
 </script>
 <template>
-    <div class="relative flex max-h-lvh flex-col items-center overflow-x-hidden">
-        <main class="flex justify-between w-lvw grow gap-10 bg-gray-100">
+    <div class="relative flex bg-gray-100  flex-col items-center overflow-x-hidden">
+        <div class="flex justify-between w-lvw grow gap-10 ">
             <!-- #region LEFT -->
             <div class="flex flex-col m-3 w-[20%] gap-2">
                 <div class="bars p-3 min-w-[8.5rem]  grow-[1] bg-gray-50">
                     <LeaderBoard @selectPlayer="(name: string) => { curInfoPlayer = name }"></LeaderBoard>
                 </div>
-                <IconButtonBackground v-if="!GameStore.gameState.Started || userStore.UserInfo.role != Role.Player"
+                <IconButtonBackground v-if="GameStore.gameState.Status !== 'STATUS_WAITING' || userStore.UserInfo.role != Role.Player"
                     class="w-full bg-red-700 text-white  rounded-lg" :icon="ArrowLeftStartOnRectangleIcon"
                     @click="DisconnectGame()">Выйти</IconButtonBackground>
             </div>
             <!-- #endregion LEFT -->
             <!-- #region CENTER -->
             <div class="flex flex-col items-center  h-lvh max-w-[900px] gap-2 p-5 pb-60 grow-[3]">
-                <Timer />
+                <div  v-if="GameStore.gameState.Status == 'STATUS_COMPLETED'" class="text-lg">Игра закрыта</div>
+                <Timer  />
 
                 <div class=" h-auto w-full max-w-[50lvh] gap-2 flex flex-wrap items-center justify-center">
                     <ElementImage class="grow-[2] center" :elname="GameStore.currElement" />
@@ -70,24 +80,34 @@ watch(() => GameStore.gameState.Bag.LastElements, () => { audio.play() })
             </div>
             <!-- #endregion CENTER -->
             <!-- #region RIGHT -->
-            <div class="bars min-w-[135px] p-3 bg-gray-50 w-[20%] m-3">
-                <h2>Поднятые руки</h2>
-                <ul class="list-none p-0 font-bold m-0">
-                    <li @click="curCheckPlayer = pl" class="break-words flex justify-between items-center p-2 hover:underline rounded-md my-2 mx-0
-                    border-solid border-2 border-gray-600 m-3" v-for="pl in GameStore.gameState.RaisedHands">
-                        <div class=" inline-flex">
-                            <CheckIcon v-if="pl.Checked" class="text-lg size-6" />
-                            <UserInfo :role="pl.Player.Role" :name="pl.Player.Name" />
-                        </div>
-                        {{ pl.Field }}
-                    </li>
-                </ul>
-            </div>
+        <div class='relative flex flex-col m-3 w-[20%] gap-2'>
+                <div class="bars p-3 min-w-[8.5rem]  grow-[1] bg-gray-50">
+                    <h2 class="text-clip overflow-hidden ">Поднятые руки</h2>
+                    <ul class="list-none p-0 font-bold m-0">
+                        <li @click="curCheckPlayer = pl" class="break-words flex justify-between items-center p-2 hover:underline rounded-md my-2 mx-0
+                        border-solid border-2 border-gray-600 m-3" v-for="pl in GameStore.gameState.RaisedHands">
+                            <div class=" inline-flex">
+                                <CheckIcon v-if="pl.Checked" class="text-lg size-6" />
+                                <UserInfo :role="pl.Player.Role" :name="pl.Player.Name" />
+                            </div>
+                            {{ pl.Field }}
+                        </li>
+                    </ul>
+                    
+                </div>
+                <div v-if="AdditionallyButton" class="relative z-[2]  top-[14px] border-solid border-2 text-sm border-blue-400 rounded-lg rounded-b-none p-3 ">
+                    <div @click="EXITGame()" class="underline hover:text-blue-500">Закрыть игру</div>
+                </div>
+                <IconButtonBackground 
+                        class="w-full z-[3] bg-blue-500 text-white  rounded-lg" :icon="EllipsisVerticalIcon"
+                        @click="AdditionallyButton = !AdditionallyButton">Дополнительно</IconButtonBackground>
+        </div>
             <!-- #endregion RIGHT -->
-        </main>
+       
+        </div>
 
 
-
+        <div class=" h-96"></div>
 
 
         <Modal :show="currPlayer !== undefined" @close="curInfoPlayer = ''">
