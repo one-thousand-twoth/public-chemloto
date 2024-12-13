@@ -23,17 +23,15 @@ func New(log *slog.Logger, cfg PolymersEngineConfig) *PolymersEngine {
 		log:    log.With(slog.String("engine", "PolymersEngine")),
 		checks: cfg.Checks,
 		bag:    NewGameBag(cfg.Elements),
-		// Fields will be filled latly on [[Start]]
+		// Fields will be filled lately on [[Start]]
 		fields: map[string]*Field{
 			"Альфа": {Score: 0},
 			"Бета":  {Score: 0},
 			"Гамма": {Score: 0}},
 		raisedHands: make([]Hand, 0),
 		actionChan:  make(chan models.Action),
-		internal:    make(chan time.Time),
 		unicast:     cfg.Unicast,
 		broadcast:   cfg.Broadcast,
-		timerInt:    cfg.TimerInt,
 		maxPlayers:  cfg.MaxPlayers,
 		rnd:         rand.New(src),
 	}
@@ -77,27 +75,35 @@ type PolymersEngineConfig struct {
 	MaxPlayers int
 }
 type PolymersEngine struct {
-	log          *slog.Logger
-	started      bool
+	log     *slog.Logger
+	started bool
+	// FSM для управления игровыми состояниями
 	stateMachine stateMachine
-	bag          GameBag
-	fields       map[string]*Field
-	raisedHands  []Hand
+	// Игровой мешок
+	bag GameBag
+	// Игровые поля представленные в игре
+	fields map[string]*Field
+	// Список поднятых рук игроков
+	raisedHands []Hand
 	// Канал для обработки действий игроков
 	actionChan chan models.Action
-	// handlers   map[string]HandlerFunc
-	checks   Checks
-	internal chan time.Time
+	// Для проверки правильности собранных структур
+	checks Checks
+	// NOTE: пока не реализованная идея
+	// internal chan time.Time
 
+	// Список участников
 	participants []*Player
-	maxPlayers   int
+	// Максимум игроков
+	maxPlayers int
 
-	unicast   models.UnicastFunction
+	// Функция для отправки сообщения одному адресату
+	unicast models.UnicastFunction
+	// Функция для отправки сообщения всем в комнате
 	broadcast models.BroadcastFunction
 
-	timerInt int
-	mu       sync.Mutex
-	rnd      *rand.Rand
+	mu  sync.Mutex
+	rnd *rand.Rand
 }
 
 // Start Game.
