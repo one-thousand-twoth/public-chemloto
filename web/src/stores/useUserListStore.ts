@@ -1,6 +1,6 @@
 import { APISettings } from '@/api/config';
 import { Client } from '@/api/core/client';
-import { Role, User, UserCreds, UserInfo } from '@/models/User';
+import { User } from '@/models/User';
 import { acceptHMRUpdate, defineStore } from 'pinia';
 import { ref } from 'vue';
 import { useToasterStore } from "../stores/useToasterStore";

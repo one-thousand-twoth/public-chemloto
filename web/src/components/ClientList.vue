@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import IconButton from '@/components/UI/IconButton.vue';
 import IconButtonBackground from '@/components/UI/IconButtonBackground.vue';
-import { i18nRole, Role, User, UserInfo } from '@/models/User';
+import { i18nRole, Role, User } from '@/models/User';
 import { useUsersListStore } from '@/stores/useUserListStore';
 import { useUserStore } from '@/stores/useUserStore';
 import { ArrowPathIcon, TrashIcon } from "@heroicons/vue/24/outline";

@@ -27,7 +27,7 @@ function Check(ch: CheckStruct, str: { [id: string]: number; }) {
 	})
 }
 
-const availableFields = Object.entries(Polymers).filter(([field, v]) => { return !props.player.CompletedFields.includes(field) })
+const availableFields = Object.entries(Polymers).filter(([field, _]) => { return !props.player.CompletedFields.includes(field) })
 console.debug(availableFields)
 const check = ref<CheckStruct>({
 	Field: availableFields[0][0],

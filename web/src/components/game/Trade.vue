@@ -25,14 +25,16 @@ const struct = ref({
 		Role: Role.Player,
 		Score: 0,
 		RaisedHand: false,
-		Bag: {}
+		Bag: {},
+		CompletedFields: []
 	},
 	Player2: {
 		Name: '',
 		Role: Role.Player,
 		Score: 0,
 		RaisedHand: false,
-		Bag: {}
+		Bag: {},
+		CompletedFields: []
 	},
 	Element1: '',
 	Element2: '',

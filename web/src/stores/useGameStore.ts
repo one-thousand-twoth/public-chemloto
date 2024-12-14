@@ -1,7 +1,7 @@
 import { WEBSOCKET_EVENT, WebsocketConnector } from '@/api/websocket/websocket'
 import { Role } from '@/models/User'
 import { acceptHMRUpdate, defineStore } from 'pinia'
-import { computed, inject, ref, watch } from 'vue'
+import { computed, inject, ref } from 'vue'
 import { useUserStore } from './useUserStore'
 
 
