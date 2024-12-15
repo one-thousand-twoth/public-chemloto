@@ -286,7 +286,7 @@ func EngineAction(h *Hub, e internalEventWrap) {
 		h.log.Error("Cannot find room for EngineEvent", "room", e.room)
 		return
 	}
-	room.engine.Input(enmodels.Action{
+	go room.engine.Input(enmodels.Action{
 		Player:   e.userId,
 		Envelope: e.msg,
 	})

@@ -33,6 +33,7 @@ func New(log *slog.Logger, cfg PolymersEngineConfig) *PolymersEngine {
 		unicast:     cfg.Unicast,
 		broadcast:   cfg.Broadcast,
 		maxPlayers:  cfg.MaxPlayers,
+		done:        make(chan struct{}, 1),
 		rnd:         rand.New(src),
 	}
 
@@ -163,6 +164,11 @@ func (engine *PolymersEngine) Start() {
 			case <-engine.done:
 				engine.mu.Lock()
 				engine.status = models.STATUS_COMPLETED
+				engine.broadcast(common.Message{
+					Type: common.ENGINE_INFO,
+					Ok:   true,
+					Body: engine.PreHook(),
+				})
 				engine.mu.Unlock()
 				return
 			default:

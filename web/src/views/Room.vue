@@ -56,15 +56,17 @@ watch(() => GameStore.gameState.Bag.LastElements, () => { audio.play() })
                 <div class="bars p-3 min-w-[8.5rem]  grow-[1] bg-gray-50">
                     <LeaderBoard @selectPlayer="(name: string) => { curInfoPlayer = name }"></LeaderBoard>
                 </div>
-                <IconButtonBackground v-if="GameStore.gameState.Status !== 'STATUS_WAITING' || userStore.UserInfo.role != Role.Player"
+                <IconButtonBackground v-if="GameStore.gameState.Status !== 'STATUS_STARTED'"
                     class="w-full bg-red-700 text-white  rounded-lg" :icon="ArrowLeftStartOnRectangleIcon"
                     @click="DisconnectGame()">Выйти</IconButtonBackground>
             </div>
             <!-- #endregion LEFT -->
             <!-- #region CENTER -->
             <div class="flex flex-col items-center  h-lvh max-w-[900px] gap-2 p-5 pb-60 grow-[3]">
-                <div  v-if="GameStore.gameState.Status == 'STATUS_COMPLETED'" class="text-lg">Игра закрыта</div>
-                <Timer  />
+                <div  v-if="GameStore.gameState.Status == 'STATUS_COMPLETED'" class="text-lg">
+                    Игра завершена
+                </div>
+                <Timer v-else />
 
                 <div class=" h-auto w-full max-w-[50lvh] gap-2 flex flex-wrap items-center justify-center">
                     <ElementImage class="grow-[2] center" :elname="GameStore.currElement" />
@@ -74,9 +76,10 @@ watch(() => GameStore.gameState.Bag.LastElements, () => { audio.play() })
                 </div>
 
                 <FieldsTable />
+                <template v-if="GameStore.gameState.Status !=='STATUS_COMPLETED'">
                 <ButtonPanelAdmin v-if="userStore.UserInfo.role != Role.Player" />
                 <ButtonPanelPlayer v-else />
-
+            </template>
             </div>
             <!-- #endregion CENTER -->
             <!-- #region RIGHT -->
@@ -98,7 +101,7 @@ watch(() => GameStore.gameState.Bag.LastElements, () => { audio.play() })
                 <div v-if="AdditionallyButton" class="relative z-[2]  top-[14px] border-solid border-2 text-sm border-blue-400 rounded-lg rounded-b-none p-3 ">
                     <div @click="EXITGame()" class="underline hover:text-blue-500">Закрыть игру</div>
                 </div>
-                <IconButtonBackground 
+                <IconButtonBackground v-if="userStore.UserInfo.role != Role.Player"
                         class="w-full z-[3] bg-blue-500 text-white  rounded-lg" :icon="EllipsisVerticalIcon"
                         @click="AdditionallyButton = !AdditionallyButton">Дополнительно</IconButtonBackground>
         </div>
