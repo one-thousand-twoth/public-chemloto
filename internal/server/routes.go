@@ -11,6 +11,7 @@ import (
 
 	"github.com/anrew1002/Tournament-ChemLoto/web"
 	"github.com/go-chi/chi/v5"
+	"github.com/go-chi/chi/v5/middleware"
 	"github.com/go-chi/cors"
 )
 
@@ -25,6 +26,7 @@ func (s *Server) configureRoutes() {
 		AllowCredentials: false,
 		MaxAge:           300, // Maximum value not ignored by any of major browsers
 	}))
+	s.mux.Mount("/debug", middleware.Profiler())
 	s.mux.NotFound(NotFoundHandler)
 	s.mux.Route("/api/v1", func(r chi.Router) {
 		r.Get("/rooms", s.GetRooms())
