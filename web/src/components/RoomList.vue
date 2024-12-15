@@ -8,7 +8,7 @@ import {
   ArrowPathIcon
 } from "@heroicons/vue/24/outline";
 import { computed, defineComponent, inject, ref } from "vue";
-import { useRoomsStore } from '../stores/useRoomsStore';
+import { i18nStatus, useRoomsStore } from '../stores/useRoomsStore';
 import { IconButton } from './UI/index';
 export default defineComponent({
   components: { IconButton, Modal, CreateRoom },
@@ -37,6 +37,7 @@ export default defineComponent({
       userStore,
       ArrowPathIcon,
       showModal,
+      i18nStatus,
       ConnectGame,
     }
   }
@@ -63,7 +64,7 @@ export default defineComponent({
         </tr>
         <tr v-else v-for="room in rooms" :key="room.name">
           <td class="">{{ room.name }}</td>
-          <td></td>
+          <td> {{ i18nStatus(room.engine.Status) }}</td>
           <td>
             <button @click="ConnectGame(room.name)">Подключиться</button>
           </td>

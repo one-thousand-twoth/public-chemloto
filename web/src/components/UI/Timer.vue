@@ -1,10 +1,13 @@
 <script setup lang="ts">
 import { WebsocketConnector } from '@/api/websocket/websocket';
+import { Role } from '@/models/User';
 import { hasTimer, useGameStore } from '@/stores/useGameStore';
+import { useUserStore } from '@/stores/useUserStore';
 import { PauseIcon, PlayIcon, StopIcon } from '@heroicons/vue/24/solid';
 import { computed, inject } from 'vue';
 import IconButton from './IconButton.vue';
 const GameStore = useGameStore();
+const UserStore = useUserStore();
 
 const timerString = computed(() => {
     if (!GameStore.timer || GameStore.timer == null) {
@@ -55,15 +58,15 @@ function TimerPause() {
         <div class="px-4 py-4 whitespace-nowrap text-3xl font-3xl text-gray-800">
             {{ timerString }}
         </div>
-        <template v-if="hasTimer(GameStore.gameState)">
+        <template v-if="hasTimer(GameStore.gameState) && UserStore.UserInfo.role != Role.Player">
             <IconButton class="" :icon="StopIcon" @click="TimerStop"></IconButton>
             <IconButton v-if="GameStore.gameState.StateStruct.TimerStatus == 'Stopped'" class="" :icon="PlayIcon"
                 @click="TimerPlay"></IconButton>
             <IconButton v-if="GameStore.gameState.StateStruct.TimerStatus == 'Started'" class="" :icon="PauseIcon"
                 @click="TimerPause"></IconButton>
-            <div>
+            <!-- <div>
                 {{ GameStore.gameState.StateStruct.TimerStatus }}
-            </div>
+            </div> -->
         </template>
     </div>  
 </template>

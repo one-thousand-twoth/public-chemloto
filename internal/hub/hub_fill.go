@@ -43,7 +43,7 @@ func (h *Hub) FillRooms() {
 			Time:       10,
 			IsAuto:     true,
 			Elements:   elements,
-			engine: polymers.New(
+			Engine: polymers.New(
 				h.log.With(slog.String("room", roomName)),
 				polymers.PolymersEngineConfig{
 					Elements:   elements,

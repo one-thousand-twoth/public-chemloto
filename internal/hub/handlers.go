@@ -71,7 +71,7 @@ func StopGame(h *Hub, e internalEventWrap) {
 		}
 		return
 	}
-	room.engine.Exit()
+	room.Engine.Exit()
 
 }
 
@@ -129,7 +129,7 @@ func Subscribe(h *Hub, e internalEventWrap) {
 			}
 			return
 		}
-		if err := room.engine.AddParticipant(enmodels.Participant{
+		if err := room.Engine.AddParticipant(enmodels.Participant{
 			Name: usr.Name,
 			Role: usr.Role,
 		}); err != nil {
@@ -153,7 +153,7 @@ func Subscribe(h *Hub, e internalEventWrap) {
 		oldRoomID := usr.setRoom(data.Name)
 		oldRoom, ok := h.Rooms.get(oldRoomID)
 		if ok {
-			if err := oldRoom.engine.RemoveParticipant(e.userId); err != nil {
+			if err := oldRoom.Engine.RemoveParticipant(e.userId); err != nil {
 				log.Error("Failed to delete player", sl.Err(err))
 				return
 			}
@@ -165,7 +165,7 @@ func Subscribe(h *Hub, e internalEventWrap) {
 		go h.SendMessageOverChannel(data.Name, common.Message{
 			Type: common.ENGINE_INFO,
 			Ok:   true,
-			Body: room.engine.PreHook(),
+			Body: room.Engine.PreHook(),
 		})
 		// h.Channels.
 	case "channel":
@@ -241,7 +241,7 @@ func UnSubscribe(h *Hub, e internalEventWrap) {
 			}
 			return
 		}
-		if err := room.engine.RemoveParticipant(e.userId); err != nil {
+		if err := room.Engine.RemoveParticipant(e.userId); err != nil {
 			if enerr.KindIs(enerr.AlreadyStarted, err) {
 				conn.MessageChan <- common.Message{
 					Type:   common.HUB_UNSUBSCRIBE,
@@ -286,7 +286,7 @@ func EngineAction(h *Hub, e internalEventWrap) {
 		h.log.Error("Cannot find room for EngineEvent", "room", e.room)
 		return
 	}
-	go room.engine.Input(enmodels.Action{
+	go room.Engine.Input(enmodels.Action{
 		Player:   e.userId,
 		Envelope: e.msg,
 	})
@@ -309,5 +309,5 @@ func StartGame(h *Hub, e internalEventWrap) {
 		log.Error("Failed getting room", "roomname", e.room)
 		return
 	}
-	room.engine.Start()
+	room.Engine.Start()
 }

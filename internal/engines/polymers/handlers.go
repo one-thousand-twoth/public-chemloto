@@ -165,6 +165,7 @@ func GetElement(engine *PolymersEngine) HandlerFunc {
 			"LastElements": engine.bag.LastElements(),
 		}})
 		if elem == empty {
+			engine.done <- struct{}{}
 			return COMPLETED, nil
 		}
 		if elem == "TRADE" {

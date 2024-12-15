@@ -202,6 +202,9 @@ func (engine *PolymersEngine) Start() {
 	engine.broadcast(common.Message{Type: common.ENGINE_INFO, Ok: true, Body: engine.PreHook()})
 }
 func (engine *PolymersEngine) Exit() {
+	if engine.status != models.STATUS_STARTED {
+		return
+	}
 	engine.done <- struct{}{}
 }
 

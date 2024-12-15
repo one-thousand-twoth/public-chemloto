@@ -61,7 +61,7 @@ func (h *Hub) Run() {
 				continue eventLoop
 			}
 			h.log.Debug("start handle event in Hub.Run", "event", event.msgType.String())
-			handler.HandleEvent(h, event)
+			go handler.HandleEvent(h, event)
 			h.log.Debug("exit handler")
 		}
 	}()
@@ -84,7 +84,7 @@ func (h *Hub) SaveGamesStats() map[string]*bytes.Buffer {
 		writer := csv.NewWriter(buffer)
 
 		// Запись данных в CSV
-		err := writer.WriteAll(v.engine.GetResults())
+		err := writer.WriteAll(v.Engine.GetResults())
 		if err != nil {
 			h.log.Error("Error writing to buffer:", slog.String("room", k), sl.Err(err))
 			continue

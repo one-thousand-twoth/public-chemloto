@@ -38,7 +38,7 @@ func (h *Hub) AddNewRoom(r Room) error {
 		r.Time = 0
 	}
 	checks := parseEngineJson(h)
-	r.engine = polymers.New(
+	r.Engine = polymers.New(
 		h.log.With(slog.String("room", r.Name)),
 		polymers.PolymersEngineConfig{
 			Elements:   r.Elements,
@@ -74,7 +74,7 @@ func (h *Hub) AddNewRoom(r Room) error {
 	}
 	// Set Init function for all room channels
 	h.Channels.SetChannelFunc(r.Name, func(ch chan common.Message) {
-		body := r.engine.PreHook()
+		body := r.Engine.PreHook()
 		// h.log.Error("{Unsafe} sending engine state", "body", body)
 		ch <- common.Message{
 			Type: common.ENGINE_INFO,
@@ -109,7 +109,7 @@ type Room struct {
 	Elements   map[string]int `json:"elementCounts" validate:"required"`
 	Time       int            `validate:"excluded_if=isAuto false,gte=0"`
 	IsAuto     bool           `json:"isAuto"`
-	engine     Engine         `json:"-"`
+	Engine     Engine         `json:"engine"`
 }
 
 type roomsState struct {

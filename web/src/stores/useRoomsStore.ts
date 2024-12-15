@@ -67,9 +67,23 @@ export const useRoomsStore = defineStore('rooms', () => {
 export interface RoomInfo {
     name: string
     maxPlayers: number
+    engine: {Status: string}
     elementCounts: { [id: string]: number; }
     time: number
     isAuto: boolean
+}
+
+export function i18nStatus(status: string): string {
+    switch (status) {
+        case "STATUS_WAITING":
+            return "Ожидает"
+        case "STATUS_STARTED":
+            return "Запущена"
+        case "STATUS_COMPLETED":
+            return "Завершена"
+        default:
+            return "??";
+    }
 }
 
 if (import.meta.hot) {
