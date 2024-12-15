@@ -116,7 +116,7 @@ func (s *Server) PatchUser() http.HandlerFunc {
 }
 func (s *Server) CreateRoom() http.HandlerFunc {
 	type Request struct {
-		hub.Room
+		hub.CreateRoomRequest
 	}
 	type Response struct {
 		Rooms any      `json:"rooms"`
@@ -134,7 +134,7 @@ func (s *Server) CreateRoom() http.HandlerFunc {
 		}
 		log.Debug("request body decoded", slog.Any("request", req))
 		// TODO: добавить обработку уже имеющейся комнаты
-		if err := s.hub.AddNewRoom(req.Room); err != nil {
+		if err := s.hub.AddNewRoom(req.CreateRoomRequest); err != nil {
 			log.Error("failed to add room", sl.Err(err))
 			switch validateErr := err.(type) {
 			case validator.ValidationErrors:

@@ -27,7 +27,7 @@ type Engine interface {
 	Exit()
 }
 
-func (h *Hub) AddNewRoom(r Room) error {
+func (h *Hub) AddNewRoom(r CreateRoomRequest) error {
 
 	validate := appvalidation.Ins
 	if err := validate.Struct(r); err != nil {
@@ -37,9 +37,16 @@ func (h *Hub) AddNewRoom(r Room) error {
 	if !r.IsAuto {
 		r.Time = 0
 	}
+	room := Room{
+		Name:       r.Name,
+		MaxPlayers: r.MaxPlayers,
+		Elements:   r.Elements,
+		Time:       r.Time,
+		IsAuto:     r.IsAuto,
+	}
 	checks := parseEngineJson(h)
-	r.Engine = polymers.New(
-		h.log.With(slog.String("room", r.Name)),
+	room.Engine = polymers.New(
+		h.log.With(slog.String("room", room.Name)),
 		polymers.PolymersEngineConfig{
 			Elements:   r.Elements,
 			Checks:     checks,
@@ -69,12 +76,12 @@ func (h *Hub) AddNewRoom(r Room) error {
 		},
 	)
 
-	if err := h.Rooms.add(&r); err != nil {
+	if err := h.Rooms.add(&room); err != nil {
 		return err
 	}
 	// Set Init function for all room channels
 	h.Channels.SetChannelFunc(r.Name, func(ch chan common.Message) {
-		body := r.Engine.PreHook()
+		body := room.Engine.PreHook()
 		// h.log.Error("{Unsafe} sending engine state", "body", body)
 		ch <- common.Message{
 			Type: common.ENGINE_INFO,
@@ -110,6 +117,13 @@ type Room struct {
 	Time       int            `validate:"excluded_if=isAuto false,gte=0"`
 	IsAuto     bool           `json:"isAuto"`
 	Engine     Engine         `json:"engine"`
+}
+type CreateRoomRequest struct {
+	Name       string         `json:"name" validate:"required,min=1,safeinput"`
+	MaxPlayers int            `json:"maxPlayers" validate:"required,gt=1,lt=100"`
+	Elements   map[string]int `json:"elementCounts" validate:"required"`
+	Time       int            `validate:"excluded_if=isAuto false,gte=0"`
+	IsAuto     bool           `json:"isAuto"`
 }
 
 type roomsState struct {
