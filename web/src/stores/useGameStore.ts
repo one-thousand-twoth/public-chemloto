@@ -114,7 +114,7 @@ export function StartTimer() {
     if (hasTimer(state) && state.StateStruct.Timer > 1) {
         console.log("Cool")
         lastTimerID = setInterval(() => {
-            if (state.StateStruct.Timer == null) {
+            if (state.StateStruct.Timer == null || state.StateStruct.TimerStatus == "Stopped") {
                 return
             }
             state.StateStruct.Timer--; // Decrement the timer count
@@ -211,6 +211,7 @@ export const useGameStore = defineStore('game', () => {
 type WithTimer = {
     StateStruct: {
         Timer: number
+        TimerStatus: string
     }
 }
 
@@ -263,7 +264,7 @@ export type GameInfo = {
 export type State = StateOBTAIN | StateTRADE | StateCOMPLETED | StateHAND | StateUndefined
 export interface StateOBTAIN {
     State: "OBTAIN"
-    StateStruct?: { Timer: number }
+    StateStruct: { Timer: number, TimerStatus: string }
 }
 export interface RequestEntity {
     ID: string
@@ -281,8 +282,9 @@ export interface StockEntity {
 
 export interface StateTRADE {
     State: "TRADE",
-    StateStruct?: {
-        Timer: number
+    StateStruct: {
+        Timer: number,
+        TimerStatus: string,
         StockExchange: {
             StockList: StockEntity[]
             TradeLog: TradeLog[]

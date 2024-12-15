@@ -128,6 +128,7 @@ func (eng *PolymersEngine) NewObtainState(timer time.Duration) (state *ObtainSta
 	}
 	state.Add("GetElement", GetElement(eng), true)
 	state.Add("RaiseHand", RaiseHand(eng), false)
+	state.ticker.RegisterTo(state)
 	return
 }
 
@@ -137,9 +138,11 @@ func (s *ObtainState) Handlers() map[string]HandlerFunc {
 
 func (s *ObtainState) MarshalJSON() ([]byte, error) {
 	st := struct {
-		Timer int
+		Timer       int
+		TimerStatus string
 	}{
 		int(s.ticker.Remains().Seconds()),
+		s.ticker.Status(),
 	}
 	return json.Marshal(st)
 }
@@ -158,13 +161,13 @@ func (s *ObtainState) Update() (stateInt, error) {
 	if err != nil {
 		return st, err
 	}
-	if st == OBTAIN || st == NO_TRANSITION {
+	if st == OBTAIN || st == NO_TRANSITION || st == UPDATE_CURRENT {
 		s.step += 1
 		s.ticker.Reset(s.incrementalTime())
 		s.eng.broadcast(common.Message{
 			Type: common.ENGINE_ACTION,
 			Ok:   true,
-			Body: map[string]any{"Action": "NewTimer", "Value": (s.ticker.currentDuration).Seconds()},
+			Body: map[string]any{"Action": "NewTimer", "Value": (s.ticker.CurrentDuration()).Seconds()},
 		})
 	}
 
@@ -214,7 +217,7 @@ func (eng *PolymersEngine) NewTradeState(timer time.Duration) (state *TradeState
 	state.Add("RemoveTradeRequest", state.removeTradeRequest(), false)
 	state.Add("TradeAck", state.addTradeAck(), false)
 	state.Add("Continue", func(a models.Action) (stateInt, error) { return OBTAIN, nil }, true)
-
+	state.ticker.RegisterTo(state)
 	return
 
 }
@@ -576,6 +579,7 @@ func (s *TradeState) MarshalJSON() ([]byte, error) {
 	st := struct {
 		StockExchange StockExchange
 		Timer         int
-	}{*s.StockExchange, int(s.ticker.Remains().Seconds())}
+		TimerStatus   string
+	}{*s.StockExchange, int(s.ticker.Remains().Seconds()), s.ticker.Status()}
 	return json.Marshal(st)
 }
