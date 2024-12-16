@@ -48,10 +48,11 @@ func (h *Hub) AddNewRoom(r CreateRoomRequest) error {
 	room.Engine = polymers.New(
 		h.log.With(slog.String("room", room.Name)),
 		polymers.PolymersEngineConfig{
-			Elements:   r.Elements,
-			Checks:     checks,
-			TimerInt:   r.Time,
-			MaxPlayers: r.MaxPlayers,
+			Elements:    r.Elements,
+			Checks:      checks,
+			TimerInt:    r.Time,
+			MaxPlayers:  r.MaxPlayers,
+			IsAutoCheck: r.IsAutoCheck,
 			Unicast: func(userID string, msg common.Message) {
 				go func() {
 					h.log.Debug("Unicast message")
@@ -119,11 +120,12 @@ type Room struct {
 	Engine     Engine         `json:"engine"`
 }
 type CreateRoomRequest struct {
-	Name       string         `json:"name" validate:"required,min=1,safeinput"`
-	MaxPlayers int            `json:"maxPlayers" validate:"required,gt=1,lt=100"`
-	Elements   map[string]int `json:"elementCounts" validate:"required"`
-	Time       int            `validate:"excluded_if=isAuto false,gte=0"`
-	IsAuto     bool           `json:"isAuto"`
+	Name        string         `json:"name" validate:"required,min=1,safeinput"`
+	MaxPlayers  int            `json:"maxPlayers" validate:"required,gt=1,lt=100"`
+	Elements    map[string]int `json:"elementCounts" validate:"required"`
+	Time        int            `validate:"excluded_if=isAuto false,gte=0"`
+	IsAuto      bool           `json:"isAuto"`
+	IsAutoCheck bool           `json:isAutoCheck`
 }
 
 type roomsState struct {

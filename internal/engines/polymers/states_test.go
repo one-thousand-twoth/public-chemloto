@@ -61,7 +61,7 @@ func TestSimpleState(t *testing.T) {
 func TestObtainState(t *testing.T) {
 	t.Run("Create ObtainState", func(t *testing.T) {
 		eng := MockEngine()
-		obtainState := eng.NewObtainState(10 * time.Second)
+		obtainState := eng.NewObtainState(10*time.Second, false)
 
 		assert.NotNil(t, obtainState)
 		assert.Contains(t, obtainState.handlers, "GetElement")
