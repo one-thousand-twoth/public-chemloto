@@ -1,9 +1,22 @@
-version: '3'
+version: "3"
 
 tasks:
   build:
+    - task: build:vue
+    - task: build:go64
+    - task: build:go32
+  build:go64:
     cmds:
-      - go build -v .\\cmd\\tournament\\
+      - go build -o tournament_x64.exe .\\cmd\\tournament\\
+    env:
+      GOOS: windows
+      GOARCH: amd64
+  build:go32:
+    cmds:
+      - go build -o tournament_x32.exe .\\cmd\\tournament\\
+    env:
+      GOOS: windows
+      GOARCH: 386
   run:
     deps: [run:go, run:vue, watch]
   run:go:
