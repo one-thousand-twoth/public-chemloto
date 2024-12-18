@@ -42,7 +42,7 @@ const struct = ref({
 function Trade(st: TradeStruct) {
 	ws.Send({
 		Type: "ENGINE_ACTION",
-		Action: "Trade",
+		Action: "TradeAdmin",
 		Player1: st.Player1.Name,
 		Player2: st.Player2.Name,
 		Element1: st.Element1,

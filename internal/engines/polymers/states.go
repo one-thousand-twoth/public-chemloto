@@ -210,6 +210,7 @@ func (eng *PolymersEngine) NewTradeState(timer time.Duration) (state *TradeState
 			TradeLog:  make([]*TradeLog, 0, eng.maxPlayers),
 		},
 	}
+	state.Add("TradeAdmin", eng.TradeHandler(), true)
 	state.Add("TradeOffer", state.addTradeOffer(), false)
 	state.Add("RemoveTradeOffer", state.removeTradeOffer(), false)
 
