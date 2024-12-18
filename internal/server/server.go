@@ -48,7 +48,7 @@ func (s *Server) Run(port string) {
 		}
 	}()
 	ip := GetOutboundIP().String()
-	s.log.Info("Сервер запущен:", slog.String("IP address", ip+":"+port))
+	s.log.Info("Сервер запущен:", slog.String("IP address", "http://"+ip+":"+port))
 	s.log.Info("Cекретный код:",
 		slog.String("Password", *admin_code))
 	signal.Notify(signalQuit, syscall.SIGINT, syscall.SIGTERM)
