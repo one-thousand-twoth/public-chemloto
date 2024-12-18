@@ -11,7 +11,7 @@
     </Teleport>
 </template>
 <script setup lang="ts">
-import notification from "@/assets/sounds/notification.mp3";
+import obtain from "@/assets/sounds/obtain.wav";
 import {
     ExclamationCircleIcon,
     InformationCircleIcon,
@@ -19,7 +19,7 @@ import {
 
 import { useToasterStore } from "../stores/useToasterStore";
 const toastStore = useToasterStore();
-let audio = new Audio(notification);
+let audio = new Audio(obtain);
 toastStore.callback = () => {
     audio.play();
 }

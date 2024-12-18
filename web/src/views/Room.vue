@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { WebsocketConnector } from '@/api/websocket/websocket';
-import obtain from "@/assets/sounds/obtain.wav";
+import obtain from "@/assets/sounds/notification.mp3";
 import { ButtonPanelAdmin, ButtonPanelPlayer, CheckPlayer, LeaderBoard, UserElements } from '@/components/game';
 import { ElementImage, IconButtonBackground, Modal, Timer, UserInfo } from '@/components/UI/';
 import { Role } from '@/models/User';
