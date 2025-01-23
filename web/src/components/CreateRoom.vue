@@ -25,16 +25,23 @@ const room = ref<RoomInfo>({
         "C6H4": 16,
         "C": 40
     },
-    engine: {Status: ""},
+    engine: { Status: '' },
     time: 0,
-    isAuto: false
+    isAuto: false,
+    isAutoCheck: true,
 })
+
+function onChange(e: Event) {
+    console.log(e)
+    const tradeCount = Math.round(room.value.maxPlayers / 2)
+    room.value.elementCounts["TRADE"] = (tradeCount > 10) ? 10 : tradeCount
+}
 
 </script>
 
 <template>
     <form @submit.prevent="onSubmit()">
-        <div class="flex flex-col gap-4 ">
+        <div class="flex flex-col gap-4 w-[90vw] md:w-[50vw]">
             <section>
                 <label for="roomName">Название комнаты:</label>
                 <input v-model="room.name" type="text" name="roomName" required placeholder="Комната 402">
@@ -53,11 +60,28 @@ const room = ref<RoomInfo>({
             </section>
             <section>
                 <label for="maxPlayers">Макс. количество игроков:</label>
-                <input v-model="room.maxPlayers" type="number" id="maxPlayers" min="2" placeholder="Например, 24">
+                <input @change="onChange" v-model="room.maxPlayers" type="number" id="maxPlayers" min="2"
+                    placeholder="Например, 24">
             </section>
-            <div class="flex flex-wrap justify-evenly gap-1 " >
-                <ChemicalElementFormInput v-for="[name, _] in Object.entries(room.elementCounts)" :max="100" :elname="name"  v-model="room.elementCounts[name]" />
-            </div>
+            <details>
+                <summary class="mb-4">
+                    Количество элементов
+                </summary>
+                <div class="flex flex-wrap justify-evenly gap-1 ">
+                    <ChemicalElementFormInput :max="100" elname="TRADE" v-model="room.elementCounts['TRADE']" />
+                    <ChemicalElementFormInput
+                        v-for="[name, _] in Object.entries(room.elementCounts).filter(([name, _]) => name != 'TRADE')"
+                        :max="100" :elname="name" v-model="room.elementCounts[name]" />
+                </div>
+            </details>
+            <details>
+                <summary class="mb-4">
+                    Дополнительно
+                </summary>
+                <label for="isAutoCheck">Проверять игроков:</label>
+                <input id='isAutoCheck'v-model="room.isAutoCheck" class="m-2" type="checkbox" name="isAutoCheck">
+            </details>
+
             <button type="submit">Создать</button>
         </div>
     </form>

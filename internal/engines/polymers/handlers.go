@@ -16,7 +16,7 @@ import (
 
 type HandlerFunc func(models.Action) (stateInt, error)
 
-func RaiseHand(engine *PolymersEngine) HandlerFunc {
+func RaiseHand(engine *PolymersEngine, isAuto bool) HandlerFunc {
 	type Data struct {
 		Type      string
 		Action    string
@@ -35,7 +35,9 @@ func RaiseHand(engine *PolymersEngine) HandlerFunc {
 			return NO_TRANSITION, enerr.E(op, err)
 		}
 
-		_, ok := lo.Find(engine.raisedHands, func(v Hand) bool { return v.Player.Name == player.Name && v.Field == data.Field })
+		_, ok := lo.Find(engine.raisedHands, func(v Hand) bool {
+			return v.Player.Name == player.Name && v.Field == data.Field
+		})
 		if ok {
 			return NO_TRANSITION, enerr.E(op, "Вы уже подняли руку", enerr.GameLogic)
 		}
@@ -49,11 +51,12 @@ func RaiseHand(engine *PolymersEngine) HandlerFunc {
 			return NO_TRANSITION, enerr.E(op, "У вас недостаточно элементов для этой структуры",
 				enerr.GameLogic, enerr.Parameter(fmt.Sprintf("%+v", invalid)))
 		}
-
-		eq := checkFields(engine.checks, data.Field, data.Name, data.Structure)
-		if !eq {
-			player.setScore(-1)
-			return UPDATE_CURRENT, enerr.E(op, "Неправильный состав элементов")
+		if isAuto {
+			eq := checkFields(engine.checks, data.Field, data.Name, data.Structure)
+			if !eq {
+				player.setScore(-1)
+				return UPDATE_CURRENT, enerr.E(op, "Неправильный состав элементов")
+			}
 		}
 		player.RaisedHand = true
 		engine.raisedHands = append(engine.raisedHands,

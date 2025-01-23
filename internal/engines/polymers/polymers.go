@@ -39,12 +39,12 @@ func New(log *slog.Logger, cfg PolymersEngineConfig) *PolymersEngine {
 
 	var obtainState State
 	if cfg.TimerInt > 0 {
-		obtainState = eng.NewObtainState(time.Second * time.Duration(cfg.TimerInt))
+		obtainState = eng.NewObtainState(time.Second*time.Duration(cfg.TimerInt), cfg.IsAutoCheck)
 	}
 	if cfg.TimerInt == 0 {
 		obtainState = NewState().
 			Add("GetElement", GetElement(eng), true).
-			Add("RaiseHand", RaiseHand(eng), false)
+			Add("RaiseHand", RaiseHand(eng, cfg.IsAutoCheck), false)
 	}
 	// Конфигурация FSM и его обработчиков событий.
 	eng.stateMachine = stateMachine{
@@ -52,7 +52,7 @@ func New(log *slog.Logger, cfg PolymersEngineConfig) *PolymersEngine {
 		States: map[stateInt]State{
 			OBTAIN: obtainState,
 			HAND: NewState().
-				Add("RaiseHand", RaiseHand(eng), false).
+				Add("RaiseHand", RaiseHand(eng, cfg.IsAutoCheck), false).
 				Add("Check", Check(eng), true),
 			// TRADE: NewState().
 			// 	Add("Trade", eng.Trade(), true).
@@ -74,6 +74,8 @@ type PolymersEngineConfig struct {
 	Unicast    models.UnicastFunction
 	Broadcast  models.BroadcastFunction
 	MaxPlayers int
+	// Проверять ли структуру игрока при поднятии руки
+	IsAutoCheck bool
 }
 type PolymersEngine struct {
 	log    *slog.Logger

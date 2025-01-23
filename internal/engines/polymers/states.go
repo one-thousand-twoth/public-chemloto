@@ -118,7 +118,7 @@ type ObtainState struct {
 	eng *PolymersEngine
 }
 
-func (eng *PolymersEngine) NewObtainState(timer time.Duration) (state *ObtainState) {
+func (eng *PolymersEngine) NewObtainState(timer time.Duration, isAuto bool) (state *ObtainState) {
 	state = &ObtainState{
 		eng:         eng,
 		maxDur:      timer,
@@ -127,7 +127,7 @@ func (eng *PolymersEngine) NewObtainState(timer time.Duration) (state *ObtainSta
 		SimpleState: NewState(),
 	}
 	state.Add("GetElement", GetElement(eng), true)
-	state.Add("RaiseHand", RaiseHand(eng), false)
+	state.Add("RaiseHand", RaiseHand(eng, isAuto), false)
 	state.ticker.RegisterTo(state)
 	return
 }
@@ -210,6 +210,7 @@ func (eng *PolymersEngine) NewTradeState(timer time.Duration) (state *TradeState
 			TradeLog:  make([]*TradeLog, 0, eng.maxPlayers),
 		},
 	}
+	state.Add("TradeAdmin", eng.TradeHandler(), true)
 	state.Add("TradeOffer", state.addTradeOffer(), false)
 	state.Add("RemoveTradeOffer", state.removeTradeOffer(), false)
 

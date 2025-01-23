@@ -70,7 +70,8 @@ export interface RoomInfo {
     engine: {Status: string}
     elementCounts: { [id: string]: number; }
     time: number
-    isAuto: boolean
+    isAuto: boolean,
+    isAutoCheck: boolean,
 }
 
 export function i18nStatus(status: string): string {
