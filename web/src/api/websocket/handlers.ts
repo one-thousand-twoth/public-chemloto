@@ -64,7 +64,7 @@ export function EngineAction(e: WEBSOCKET_EVENT) {
 export function StartGame(_: WEBSOCKET_EVENT) {
     const toaster = useToasterStore()
     const store = useGameStore()
-    store.gameState.Started = true
+    store.gameState.Status = "STATUS_STARTED"
     toaster.info(
         "Игра начата!"
     )

@@ -1,7 +1,7 @@
 <script setup lang="ts">
+import ChemicalElementFormInput from '@/components/UI/ChemicalElementFormInput.vue';
 import { RoomInfo, useRoomsStore } from '@/stores/useRoomsStore';
 import { ref } from 'vue';
-import ChemicalElementFormInput from '@/components/UI/ChemicalElementFormInput.vue'
 
 const roomStore = useRoomsStore()
 
@@ -25,6 +25,7 @@ const room = ref<RoomInfo>({
         "C6H4": 16,
         "C": 40
     },
+    engine: {Status: ""},
     time: 0,
     isAuto: false
 })
