@@ -152,19 +152,21 @@ func TestSubscribe(t *testing.T) {
 		})
 	}
 }
-func TestSubscribe2(t *testing.T) {
+func TestSubscribeInternal(t *testing.T) {
 	channels := &channelsState{
 		state: make(map[string]mapset.Set[string]),
 		initFunctions: map[string]func(chan common.Message){
 			"default": func(c chan common.Message) {},
 		},
 	}
+	connectionsSt := &connectionsState{state: make(map[string]*SockConnection)}
+
 	hub := &Hub{
 		upgrader:      websocket.Upgrader{},
 		log:           MockLogger,
 		Rooms:         &roomsState{state: make(map[string]*Room)},
 		Users:         &usersState{state: make(map[string]*User)},
-		Connections:   &connectionsState{state: make(map[string]*SockConnection)},
+		Connections:   connectionsSt,
 		Channels:      channels,
 		eventHandlers: make(map[string]HandlerFunc),
 		eventChan:     make(chan internalEventWrap, 10),
@@ -176,10 +178,12 @@ func TestSubscribe2(t *testing.T) {
 		Apikey:   "apikey",
 		Room:     "uuid",
 		Role:     common.Player_Role,
-		conn:     "",
+		conn:     "conn_id",
 		channels: []string{},
 		mutex:    sync.Mutex{},
 	}
+	connectionsSt.state[user.conn] = &SockConnection{}
+	connectionsSt.state[user.conn].MessageChan = make(chan common.Message, 20)
 
 	hub.Users.Add(user)
 	t.Run("Subscribe User to channel", func(t *testing.T) {
@@ -188,13 +192,20 @@ func TestSubscribe2(t *testing.T) {
 			msg: map[string]interface{}{
 				"Type":   "HUB_SUBSCRIBE",
 				"Target": "channel",
-				"Name":   "test_channel"},
+				"Name":   "default"},
 			room:   "",
 			userId: username,
 		}
-		Subscribe(hub, event)
-
-		if !channels.state["test_channel"].Contains(user.conn) {
+		err := SubscribeInternal(hub, event)
+		if err != nil {
+			t.Fatalf("Subsribe func return error: %s", err.Error())
+		}
+		t.Log(channels.state)
+		cha, ok := channels.state["default"]
+		if !ok {
+			t.Fatal("Channel did not created")
+		}
+		if !cha.Contains(user.conn) {
 			t.Fatal("user not added to channel")
 		}
 

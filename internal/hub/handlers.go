@@ -76,29 +76,29 @@ func StopGame(h *Hub, e internalEventWrap) {
 }
 
 // Subscribe обрабатывает логику добавления user`a в подписчики канала
-func Subscribe(h *Hub, e internalEventWrap) {
+func SubscribeInternal(h *Hub, e internalEventWrap) error {
 	type dataT struct {
 		Type   string
 		Target string
 		Name   string
 	}
-	op := "Subscribe handler"
+	const op enerr.Op = "Subscribe handler"
 	log := h.log.With("op", op)
 	log.Debug("Start Handle Event", "usr", e.userId, "room", e.room, "data", fmt.Sprintf("%v", e.msg))
 	var data dataT
 	if err := mapstructure.Decode(e.msg, &data); err != nil {
 		log.Error("failed to decode event body", sl.Err(err))
-		return
+		return enerr.E(op, fmt.Sprintf("failed to decode event body: %s", err.Error()))
 	}
 	if data.Target == "" || data.Name == "" {
 		log.Error("empty field")
-		return
+		return enerr.E(op, "empty field")
 	}
 
 	usr, ok := h.Users.Get(e.userId)
 	if !ok {
 		log.Error("Error getting usr")
-		return
+		return enerr.E(op, "Error getting user")
 	}
 	usr.mutex.Lock()
 	defer usr.mutex.Unlock()
@@ -108,16 +108,16 @@ func Subscribe(h *Hub, e internalEventWrap) {
 	conn, ok := h.Connections.Get(connID)
 	if !ok {
 		log.Error("Failed getting connection of user")
-		return
+		return enerr.E(op, "Failed getting connection of user")
 	}
-	if usr.Room != "" {
-		conn.MessageChan <- common.Message{
-			Type:   common.HUB_SUBSCRIBE,
-			Ok:     false,
-			Errors: []string{"Вы уже подписаны на другую комнату"},
-		}
-		return
-	}
+	// if usr.Room != "" {
+	// 	// conn.MessageChan <- common.Message{
+	// 	// 	Type:   common.HUB_SUBSCRIBE,
+	// 	// 	Ok:     false,
+	// 	// 	Errors: []string{"Вы уже подписаны на другую комнату"},
+	// 	// }
+	// 	return enerr.E(op, "User already subscribed to other room")
+	// }
 	switch data.Target {
 	case "room":
 		room, ok := h.Rooms.get(data.Name)
@@ -127,7 +127,7 @@ func Subscribe(h *Hub, e internalEventWrap) {
 				Ok:     false,
 				Errors: []string{"Не существующая комната"},
 			}
-			return
+			return enerr.E(op, "room doesnt exist")
 		}
 		if err := room.Engine.AddParticipant(enmodels.Participant{
 			Name: usr.Name,
@@ -147,7 +147,7 @@ func Subscribe(h *Hub, e internalEventWrap) {
 					Errors: []string{"В комнате заняты все места"},
 				}
 			}
-			return
+			return enerr.E("error from engine")
 		}
 
 		oldRoomID := usr.setRoom(data.Name)
@@ -155,7 +155,7 @@ func Subscribe(h *Hub, e internalEventWrap) {
 		if ok {
 			if err := oldRoom.Engine.RemoveParticipant(e.userId); err != nil {
 				log.Error("Failed to delete player", sl.Err(err))
-				return
+				return enerr.E(op, "Failed to delete player")
 			}
 		} else {
 			log.Error("Failed to get room")
@@ -173,12 +173,12 @@ func Subscribe(h *Hub, e internalEventWrap) {
 		h.Channels.Add(data.Name, connID)
 	default:
 		log.Error(fmt.Sprintf("unknown target %s", data.Target))
-		return
+		return enerr.E(op, fmt.Sprintf("unknown target %s", data.Target))
 	}
 	channelSubs, ok := h.Channels.Get(data.Name)
 	if !ok {
 		log.Error("Cant find channel")
-		return
+		return enerr.E(op, "Cant find channel")
 	}
 	log.Debug("current status", "channelSubs", channelSubs, slog.Any("user", usr))
 
@@ -192,10 +192,16 @@ func Subscribe(h *Hub, e internalEventWrap) {
 	}
 	fun, ok := h.Channels.GetChannelFunc(data.Name)
 	if !ok {
-		return
+		return enerr.E("ChannelFunc doesnt exist")
 	}
 	fun(conn.MessageChan)
+	return nil
 }
+
+func Subscribe(h *Hub, e internalEventWrap) {
+	SubscribeInternal(h, e)
+}
+
 func UnSubscribe(h *Hub, e internalEventWrap) {
 	type dataT struct {
 		Type   string
