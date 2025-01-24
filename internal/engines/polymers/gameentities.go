@@ -1,8 +1,8 @@
 package polymers
 
 import (
+	"github.com/anrew1002/Tournament-ChemLoto/internal/common/enerr"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/engines/models"
-	"github.com/anrew1002/Tournament-ChemLoto/internal/engines/models/enerr"
 	"github.com/samber/lo"
 )
 

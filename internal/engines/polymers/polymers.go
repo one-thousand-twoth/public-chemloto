@@ -9,8 +9,8 @@ import (
 	"time"
 
 	"github.com/anrew1002/Tournament-ChemLoto/internal/common"
+	"github.com/anrew1002/Tournament-ChemLoto/internal/common/enerr"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/engines/models"
-	"github.com/anrew1002/Tournament-ChemLoto/internal/engines/models/enerr"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/sl"
 	"github.com/mitchellh/mapstructure"
 )

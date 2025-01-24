@@ -7,7 +7,7 @@ import (
 	"math/rand"
 	"time"
 
-	"github.com/anrew1002/Tournament-ChemLoto/internal/engines/models/enerr"
+	"github.com/anrew1002/Tournament-ChemLoto/internal/common/enerr"
 )
 
 var (
