@@ -18,15 +18,29 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+type UserStore interface {
+	Get(name string) (*User, bool)
+	GetByToken(token string) (*User, bool)
+	Add(user *User) error
+	Remove(username string)
+}
+type ChannelStore interface {
+	Get(channel string) ([]string, bool)
+	Add(channel string, connection string)
+	Remove(channel string, connection string)
+	GetChannelFunc(channel string) (func(chan common.Message), bool)
+	SetChannelFunc(channel string, fun func(chan common.Message))
+}
+
 type Hub struct {
 	log *slog.Logger
 
 	Rooms    *roomsState
-	Users    *usersState
+	Users    UserStore
 	upgrader websocket.Upgrader
 
 	Connections *connectionsState
-	Channels    *channelsState
+	Channels    ChannelStore
 
 	eventHandlers map[string]HandlerFunc
 	eventChan     chan internalEventWrap
