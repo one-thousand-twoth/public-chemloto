@@ -83,11 +83,7 @@ func (h *Hub) AddNewRoom(r CreateRoomRequest) error {
 	// Set Init function for all room channels
 	h.Channels.SetChannelFunc(r.Name, func(ch chan common.Message) {
 		go func() {
-		body := room.Engine.PreHook()
-		body := room.Engine.PreHook()
-		// h.log.Error("{Unsafe} sending engine state", "body", body)
 			body := room.Engine.PreHook()
-		// h.log.Error("{Unsafe} sending engine state", "body", body)
 			ch <- common.Message{
 				Type: common.ENGINE_INFO,
 				Ok:   true,
