@@ -2,13 +2,13 @@ package hub
 
 import (
 	"encoding/json"
-	"errors"
 	"io"
 	"log/slog"
 	"sync"
 
 	"github.com/anrew1002/Tournament-ChemLoto/internal/appvalidation"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/common"
+	"github.com/anrew1002/Tournament-ChemLoto/internal/common/enerr"
 	enmodels "github.com/anrew1002/Tournament-ChemLoto/internal/engines/models"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/engines/polymers"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/sl"
@@ -154,7 +154,7 @@ func (rs *roomsState) add(room *Room) error {
 
 	_, ok := rs.state[room.Name]
 	if ok {
-		return errors.New("already exist room")
+		return enerr.E("already exist room", enerr.Exist)
 	} else {
 		rs.state[room.Name] = room
 	}

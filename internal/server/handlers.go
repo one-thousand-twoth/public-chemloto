@@ -6,6 +6,7 @@ import (
 
 	"github.com/anrew1002/Tournament-ChemLoto/internal/appvalidation"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/common"
+	"github.com/anrew1002/Tournament-ChemLoto/internal/common/enerr"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/hub"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/sl"
 	"github.com/go-chi/chi/v5"
@@ -133,12 +134,16 @@ func (s *Server) CreateRoom() http.HandlerFunc {
 			return
 		}
 		log.Debug("request body decoded", slog.Any("request", req))
-		// TODO: добавить обработку уже имеющейся комнаты
+
 		if err := s.hub.AddNewRoom(req.CreateRoomRequest); err != nil {
 			log.Error("failed to add room", sl.Err(err))
 			switch validateErr := err.(type) {
 			case validator.ValidationErrors:
 				encode(w, r, http.StatusBadRequest, Response{Error: appvalidation.ValidationError(validateErr)})
+				return
+			}
+			if enerr.KindIs(enerr.Exist, err) {
+				encode(w, r, http.StatusConflict, Response{Error: []string{"Комната уже существует"}})
 				return
 			}
 			encode(w, r, http.StatusConflict, Response{Error: []string{"Сервер не смог создать комнату"}})
