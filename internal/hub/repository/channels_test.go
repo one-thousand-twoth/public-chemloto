@@ -1,4 +1,4 @@
-package hub
+package repository
 
 import (
 	"reflect"
@@ -12,12 +12,12 @@ func Test_channelsState_Add(t *testing.T) {
 		channel    string
 		connection string
 	}
-	state := &channelsState{state: make(map[string]mapset.Set[string], 0)}
-	wantState := &channelsState{state: make(map[string]mapset.Set[string], 0)}
+	state := &ChannelsState{state: make(map[string]mapset.Set[string], 0)}
+	wantState := &ChannelsState{state: make(map[string]mapset.Set[string], 0)}
 	wantState.state["default"] = mapset.NewThreadUnsafeSet("1033")
 	tests := []struct {
 		name     string
-		channels *channelsState
+		channels *ChannelsState
 		args     args
 		want     map[string]mapset.Set[string]
 	}{

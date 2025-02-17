@@ -13,8 +13,8 @@ import (
 	"time"
 
 	"github.com/anrew1002/Tournament-ChemLoto/internal/common"
+	"github.com/anrew1002/Tournament-ChemLoto/internal/hub/repository"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/sl"
-	mapset "github.com/deckarep/golang-set/v2"
 	"github.com/gorilla/websocket"
 )
 
@@ -24,7 +24,7 @@ type UserStore interface {
 	Add(user *User) error
 	Remove(username string)
 }
-type ChannelStore interface {
+type ChannelRepository interface {
 	Get(channel string) ([]string, bool)
 	Add(channel string, connection string)
 	Remove(channel string, connection string)
@@ -40,7 +40,7 @@ type Hub struct {
 	upgrader websocket.Upgrader
 
 	Connections *connectionsState
-	Channels    ChannelStore
+	Channels    ChannelRepository
 
 	eventHandlers map[string]HandlerFunc
 	eventChan     chan internalEventWrap
@@ -48,17 +48,12 @@ type Hub struct {
 
 func NewHub(log *slog.Logger, upgrader websocket.Upgrader) *Hub {
 	return &Hub{
-		upgrader:    upgrader,
-		log:         log,
-		Rooms:       &roomsState{state: make(map[string]*Room)},
-		Users:       &usersState{state: make(map[string]*User)},
-		Connections: &connectionsState{state: make(map[string]*SockConnection)},
-		Channels: &channelsState{
-			state: make(map[string]mapset.Set[string]),
-			initFunctions: map[string]func(chan common.Message){
-				"default": func(c chan common.Message) {},
-			},
-		},
+		upgrader:      upgrader,
+		log:           log,
+		Rooms:         &roomsState{state: make(map[string]*Room)},
+		Users:         &usersState{state: make(map[string]*User)},
+		Connections:   &connectionsState{state: make(map[string]*SockConnection)},
+		Channels:      repository.NewChannelState(),
 		eventHandlers: make(map[string]HandlerFunc),
 		eventChan:     make(chan internalEventWrap, 10),
 	}

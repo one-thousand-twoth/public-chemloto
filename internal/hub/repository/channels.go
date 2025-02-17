@@ -1,4 +1,4 @@
-package hub
+package repository
 
 import (
 	"encoding/json"
@@ -8,8 +8,17 @@ import (
 	mapset "github.com/deckarep/golang-set/v2"
 )
 
-// channelsState содержит карту со списками ID соединений подписанных на канал
-type channelsState struct {
+func NewChannelState() *ChannelsState {
+	return &ChannelsState{
+		state: make(map[string]mapset.Set[string]),
+		initFunctions: map[string]func(chan common.Message){
+			"default": func(c chan common.Message) {},
+		},
+	}
+}
+
+// ChannelsState содержит карту со списками ID соединений подписанных на канал
+type ChannelsState struct {
 	// map key is a channel name
 	state map[string]mapset.Set[string]
 	// Функции каналов срабатывающие при первом подключении.
@@ -18,27 +27,27 @@ type channelsState struct {
 	mutex         sync.RWMutex
 }
 
-func (rs *channelsState) MarshalJSON() ([]byte, error) {
+func (rs *ChannelsState) MarshalJSON() ([]byte, error) {
 	rs.mutex.RLock()
 	defer rs.mutex.RUnlock()
 
 	return json.Marshal(rs.state)
 }
 
-func (channels *channelsState) GetChannelFunc(channel string) (func(chan common.Message), bool) {
+func (channels *ChannelsState) GetChannelFunc(channel string) (func(chan common.Message), bool) {
 	channels.mutex.Lock()
 	defer channels.mutex.Unlock()
 	fun, ok := channels.initFunctions[channel]
 	return fun, ok
 }
-func (channels *channelsState) SetChannelFunc(channel string, fun func(chan common.Message)) {
+func (channels *ChannelsState) SetChannelFunc(channel string, fun func(chan common.Message)) {
 	channels.mutex.Lock()
 	defer channels.mutex.Unlock()
 	channels.initFunctions[channel] = fun
 }
 
 // Add добаляет ID соединения в подписчики канала
-func (channels *channelsState) Add(channel string, connection string) {
+func (channels *ChannelsState) Add(channel string, connection string) {
 	channels.mutex.Lock()
 	defer channels.mutex.Unlock()
 	if channel == "" || connection == "" {
@@ -53,7 +62,7 @@ func (channels *channelsState) Add(channel string, connection string) {
 	}
 }
 
-func (channels *channelsState) Remove(channel string, connection string) {
+func (channels *ChannelsState) Remove(channel string, connection string) {
 	channels.mutex.Lock()
 	defer channels.mutex.Unlock()
 	if channel == "" || connection == "" {
@@ -65,7 +74,7 @@ func (channels *channelsState) Remove(channel string, connection string) {
 	}
 }
 
-func (channels *channelsState) Get(channel string) ([]string, bool) {
+func (channels *ChannelsState) Get(channel string) ([]string, bool) {
 	channels.mutex.RLock()
 	defer channels.mutex.RUnlock()
 	channelEntry, channelExists := channels.state[channel]
