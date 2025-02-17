@@ -130,7 +130,7 @@ func SubscribeHandler(h *Hub, e internalEventWrap) error {
 		},
 	}
 	fun, ok := h.Channels.GetChannelFunc(data.Name)
-	if !ok {
+	if ok {
 		fun(conn.MessageChan)
 	}
 	return nil
