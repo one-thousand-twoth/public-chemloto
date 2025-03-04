@@ -3,6 +3,7 @@ package hub
 
 import (
 	"bytes"
+	"database/sql"
 	"encoding/csv"
 	"encoding/json"
 	"errors"
@@ -34,6 +35,7 @@ type ChannelRepository interface {
 
 type Hub struct {
 	log *slog.Logger
+	db  *sql.DB
 
 	Rooms    *roomsState
 	Users    UserStore

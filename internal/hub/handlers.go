@@ -94,66 +94,70 @@ func SubscribeHandler(h *Hub, e internalEventWrap) error {
 		return enerr.E(op, fmt.Sprintf("failed to decode event body: %s", err.Error()))
 	}
 
-	usr, ok := h.Users.Get(e.userId)
+	// connID := usr.conn
+	// conn, ok := h.Connections.Get(connID)
+	// if !ok {
+	// 	return enerr.E(op, "Failed getting connection of user")
+	// }
+
+	switch data.Target {
+	case "room":
+		err := subscribeToRoom(h, data, e.userId, log)
+		if err != nil {
+			return err
+		}
+	case "channel":
+		subscribeToChannel(data, e.userId, h)
+	default:
+		return enerr.E(op, fmt.Sprintf("unknown target %s", data.Target))
+	}
+
+	// conn.MessageChan <- common.Message{
+	// 	Type: common.HUB_SUBSCRIBE,
+	// 	Ok:   true,
+	// 	Body: map[string]any{
+	// 		"Target": "room",
+	// 		"Name":   data.Name,
+	// 	},
+	// }
+	// fun, ok := h.Channels.GetChannelFunc(data.Name)
+	// if ok {
+	// 	fun(conn.MessageChan)
+	// }
+	return nil
+}
+
+func subscribeToChannel(data SubscribeRequest, userId string, h *Hub) error {
+	const op enerr.Op = "hub.handlers/subscribeToChannel"
+	usr, ok := h.Users.Get(userId)
 	if !ok {
 		return enerr.E(op, "Error getting user")
 	}
 	usr.mutex.Lock()
 	defer usr.mutex.Unlock()
-
-	log.Debug("Context for Subscribe Event", "user", usr.Name, "data", data)
-
-	connID := usr.conn
-	conn, ok := h.Connections.Get(connID)
-	if !ok {
-		return enerr.E(op, "Failed getting connection of user")
-	}
-
-	switch data.Target {
-	case "room":
-		err := subscribeToRoom(h, data, usr, log, connID)
-		if err != nil {
-			return err
-		}
-	case "channel":
-		subscribeToChannel(usr, data, h, connID)
-	default:
-		return enerr.E(op, fmt.Sprintf("unknown target %s", data.Target))
-	}
-
-	conn.MessageChan <- common.Message{
-		Type: common.HUB_SUBSCRIBE,
-		Ok:   true,
-		Body: map[string]any{
-			"Target": "room",
-			"Name":   data.Name,
-		},
-	}
-	fun, ok := h.Channels.GetChannelFunc(data.Name)
-	if ok {
-		fun(conn.MessageChan)
-	}
-	return nil
-}
-
-func subscribeToChannel(usr *User, data SubscribeRequest, h *Hub, connID string) {
 	usr.channels = append(usr.channels, data.Name)
-	h.Channels.Add(data.Name, connID)
+	h.Channels.Add(data.Name, usr.conn)
+	return nil
 }
 
 func subscribeToRoom(
 	h *Hub,
 	data SubscribeRequest,
-	// conn *SockConnection,
-	usr *User, // TODO: есть опасность data race (!), блокировка происходит в вызывающей функции
+	userId string,
 	log *slog.Logger,
-	connID string,
 ) error {
 	const op enerr.Op = "hub.handlers/subscribeToRoom"
 
 	if data.Target == "" || data.Name == "" {
 		return enerr.E(op, "empty field", enerr.Validation)
 	}
+
+	usr, ok := h.Users.Get(userId)
+	if !ok {
+		return enerr.E(op, "Error getting user")
+	}
+	usr.mutex.Lock()
+	defer usr.mutex.Unlock()
 
 	room, ok := h.Rooms.get(data.Name)
 	if !ok {
@@ -170,8 +174,8 @@ func subscribeToRoom(
 
 	oldRoomID := usr.setRoom(data.Name)
 
-	h.Channels.Remove(oldRoomID, connID)
-	h.Channels.Add(data.Name, connID)
+	h.Channels.Remove(oldRoomID, usr.conn)
+	h.Channels.Add(data.Name, usr.conn)
 	return nil
 }
 

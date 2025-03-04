@@ -4,6 +4,18 @@ import (
 	"github.com/anrew1002/Tournament-ChemLoto/internal/common"
 )
 
+type Engine interface {
+	// Получить текущее состояние, например при перезагрузке страницы
+	PreHook() map[string]any
+	// Обработать событие
+	Input(Action)
+	Start()
+	GetResults() [][]string
+	AddParticipant(Participant) error
+	RemoveParticipant(name string) error
+	Exit()
+}
+
 type EngineStatus int
 
 //go:generate stringer -type=EngineStatus

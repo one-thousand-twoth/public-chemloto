@@ -26,12 +26,11 @@ var (
 func TestSubscribeToChannel(t *testing.T) {
 	channels, hub, user := getDeps(t)
 	t.Run("Subscribe User to channel", func(t *testing.T) {
-		subscribeToChannel(user, SubscribeRequest{
+		subscribeToChannel(SubscribeRequest{
 			Type:   "HUB_SUBSCRIBE",
 			Target: "room",
 			Name:   "test_room",
-		}, hub,
-			user.conn,
+		}, user.Name, hub,
 		)
 		cha, ok := channels.Get("test_room")
 		if !ok {
@@ -54,9 +53,8 @@ func TestSubscribeToRoom(t *testing.T) {
 			Target: "room",
 			Name:   "test_room",
 		},
-			user,
+			user.Name,
 			MockLogger,
-			user.conn,
 		)
 		if err != nil {
 			t.Errorf("Subsribe func return error: %s", err.Error())
@@ -97,7 +95,7 @@ func TestSubscribeToRoom(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := subscribeToRoom(hub, tt.request, user, MockLogger, user.conn)
+			err := subscribeToRoom(hub, tt.request, user.Name, MockLogger)
 			if err == nil {
 				t.Errorf("func expect error")
 			}

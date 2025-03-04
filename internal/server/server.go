@@ -2,6 +2,7 @@ package server
 
 import (
 	"context"
+	"database/sql"
 	"flag"
 	"log/slog"
 	"net"
@@ -14,6 +15,7 @@ import (
 
 	"github.com/anrew1002/Tournament-ChemLoto/internal/hub"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/sl"
+	"github.com/anrew1002/Tournament-ChemLoto/internal/sqlite"
 	"github.com/go-chi/chi/v5"
 	"github.com/golang-cz/devslog"
 	"github.com/gorilla/websocket"
@@ -22,6 +24,7 @@ import (
 
 type Server struct {
 	mux  *chi.Mux
+	db   *sql.DB
 	code string
 	hub  *hub.Hub
 	log  *slog.Logger
@@ -127,10 +130,14 @@ func NewServer() *Server {
 	Hub.Run()
 	// NOTE: for development
 	Hub.FillRooms()
+
+	db := sqlite.MustInitDB()
+
 	server := &Server{
 		hub: Hub,
 		log: log,
-		mux: mux}
+		mux: mux,
+		db:  db}
 	server.configureRoutes()
 
 	return server
