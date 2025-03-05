@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	"math"
 	"time"
 
 	"github.com/anrew1002/Tournament-ChemLoto/internal/common"
@@ -175,16 +174,13 @@ func (s *ObtainState) Update() (stateInt, error) {
 	return st, nil
 }
 func (s *ObtainState) incrementalTime() time.Duration {
-	if s.step <= 10 {
-		// Для первых 10 ходов вычисляем значение как логарифм по основанию 2
-		// Добавляем 1 чтобы избежать логарифма от 0
-		dur := time.Duration(math.Log2(float64(s.step)+1)+1) * time.Second
-		// fmt.Println(dur.Seconds())
+	timeSteps := [...]int{1, 1, 4, 4, 5, 5, 6, 7, 8, 9}
+	if s.step < len(timeSteps) {
+
+		dur := time.Duration(timeSteps[s.step]) * time.Second
+
 		if dur < time.Duration(s.maxDur) {
-			if dur < time.Second {
-				dur = time.Second
-			}
-			return (dur).Round(time.Second)
+			return dur
 		}
 	}
 	// Для всех остальных ходов возвращаем заданное время
