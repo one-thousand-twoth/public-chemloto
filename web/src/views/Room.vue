@@ -81,7 +81,7 @@ watch(() => GameStore.gameState.Bag.LastElements, () => { audio.play() })
                 <div class=" h-auto w-full max-w-[50lvh] gap-2 flex flex-wrap items-center justify-center">
                     <ElementImage class="grow-[2] center" :elname="GameStore.currElement" />
                     <div class="flex flex-col flex-wrap gap-1 items-center" id="lastElementsContainer">
-                        <ElementImage v-for="el in GameStore.LastElements" :elname="el" />
+                        <ElementImage v-for="el in GameStore.LastElements.slice(1)" :elname="el" />
                     </div>
                 </div>
 

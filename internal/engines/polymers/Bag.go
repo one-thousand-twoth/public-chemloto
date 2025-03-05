@@ -96,8 +96,8 @@ func pickRandom(from map[string]int, rand *rand.Rand) (string, error) {
 }
 
 func (b *GameBag) LastElements() []string {
-	if len(b.PushedValues) < 5 {
+	if len(b.PushedValues) < 6 {
 		return b.PushedValues
 	}
-	return b.PushedValues[len(b.PushedValues)-5:]
+	return b.PushedValues[len(b.PushedValues)-6:]
 }

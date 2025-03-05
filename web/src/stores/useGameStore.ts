@@ -164,7 +164,7 @@ export const useGameStore = defineStore('game', () => {
         const elems: Array<string> = Object.assign([], gameState.value.Bag.LastElements);
         return elems.
             reverse().
-            concat(Array.from({ length: 5 - elems.length }, () => "UNDEFINED"));
+            concat(Array.from({ length: 6 - elems.length }, () => "UNDEFINED"));
     })
 
     const currElement = computed(() => {
