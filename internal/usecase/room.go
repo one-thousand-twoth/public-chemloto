@@ -3,9 +3,11 @@ package usecase
 import (
 	"context"
 	"database/sql"
+	"log/slog"
 
 	"github.com/anrew1002/Tournament-ChemLoto/internal/common/enerr"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/database"
+	"github.com/anrew1002/Tournament-ChemLoto/internal/engines"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/entities"
 
 	"modernc.org/sqlite"
@@ -13,21 +15,25 @@ import (
 )
 
 type CreateRoomRequest struct {
-	Name     string `json:"name" validate:"required,min=1,safeinput"`
-	EngineID string
+	Name         string `json:"name" validate:"required,min=1,safeinput"`
+	Type         string `json:"type"`
+	EngineConfig map[string]any
 }
+
 type Response struct {
 	Rooms any      `json:"rooms"`
 	Error []string `json:"error"`
 }
 
-func CreateRoom(req CreateRoomRequest, db *sql.DB) (*entities.Room, error) {
+func CreateRoom(req CreateRoomRequest, log *slog.Logger, db *sql.DB) (*entities.Room, error) {
 
 	const op = "server.handlers.CreateRoom"
 
+	engines.NewEngine(req.Type, req.Name, log, req.EngineConfig)
+
 	params := database.InsertRoomParams{
 		Name:   req.Name,
-		Engine: req.EngineID,
+		Engine: req.Name,
 	}
 	row, err := database.New(db).InsertRoom(context.TODO(), params)
 	if err != nil {

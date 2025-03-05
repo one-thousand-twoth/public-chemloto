@@ -27,6 +27,7 @@ type LoginResponse struct {
 
 func Login(log *slog.Logger, req LoginRequest, db *sql.DB, code string) (*LoginResponse, error) {
 	const op enerr.Op = "usecase.user/Login"
+	// TODO: add validation
 	// validate := appvalidation.Ins
 	// if err := validate.Struct(req); err != nil {
 	// 	validateErr := err.(validator.ValidationErrors)

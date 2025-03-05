@@ -39,10 +39,7 @@ func TestLogin(t *testing.T) {
 		{
 			name: "Create Player",
 			args: args{
-				req: LoginRequest{
-					Name: "Player",
-					Code: "",
-				},
+				req: LoginRequest{"Player", ""},
 			},
 			want: &LoginResponse{
 				Token: "",
