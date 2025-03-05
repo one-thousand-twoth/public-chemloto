@@ -128,6 +128,7 @@ func (eng *PolymersEngine) NewObtainState(timer time.Duration, isAuto bool) (sta
 	}
 	state.Add("GetElement", GetElement(eng), true)
 	state.Add("RaiseHand", RaiseHand(eng, isAuto), false)
+	state.Add("AddScore", AddScore(eng), true)
 	state.ticker.RegisterTo(state)
 	return
 }
@@ -218,6 +219,7 @@ func (eng *PolymersEngine) NewTradeState(timer time.Duration) (state *TradeState
 	state.Add("RemoveTradeRequest", state.removeTradeRequest(), false)
 	state.Add("TradeAck", state.addTradeAck(), false)
 	state.Add("Continue", func(a models.Action) (stateInt, error) { return OBTAIN, nil }, true)
+	state.Add("AddScore", AddScore(eng), true)
 	state.ticker.RegisterTo(state)
 	return
 

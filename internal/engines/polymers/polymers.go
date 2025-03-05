@@ -44,7 +44,8 @@ func New(log *slog.Logger, cfg PolymersEngineConfig) *PolymersEngine {
 	if cfg.TimerInt == 0 {
 		obtainState = NewState().
 			Add("GetElement", GetElement(eng), true).
-			Add("RaiseHand", RaiseHand(eng, cfg.IsAutoCheck), false)
+			Add("RaiseHand", RaiseHand(eng, cfg.IsAutoCheck), false).
+			Add("AddScore", AddScore(eng), true)
 	}
 	// Конфигурация FSM и его обработчиков событий.
 	eng.stateMachine = stateMachine{
@@ -53,7 +54,8 @@ func New(log *slog.Logger, cfg PolymersEngineConfig) *PolymersEngine {
 			OBTAIN: obtainState,
 			HAND: NewState().
 				Add("RaiseHand", RaiseHand(eng, cfg.IsAutoCheck), false).
-				Add("Check", Check(eng), true),
+				Add("Check", Check(eng), true).
+				Add("AddScore", AddScore(eng), true),
 			// TRADE: NewState().
 			// 	Add("Trade", eng.Trade(), true).
 			// 	Add("Continue", func(a models.Action) stateInt { return OBTAIN }, true),

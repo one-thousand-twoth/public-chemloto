@@ -141,6 +141,28 @@ func Check(engine *PolymersEngine) HandlerFunc {
 		return UPDATE_CURRENT, nil
 	}
 }
+
+func AddScore(engine *PolymersEngine) HandlerFunc {
+	type Data struct {
+		Type   string
+		Action string
+		Score  int
+		Player string
+	}
+	return func(e models.Action) (stateInt, error) {
+		data, err := dataFromAction[Data](e)
+		if err != nil {
+			return NO_TRANSITION, err
+		}
+		target, err := engine.getParticipant(data.Player)
+		if err != nil {
+			return NO_TRANSITION, err
+		}
+		target.setScore(data.Score)
+		return UPDATE_CURRENT, nil
+	}
+}
+
 func GetElement(engine *PolymersEngine) HandlerFunc {
 	return func(_ models.Action) (stateInt, error) {
 		const op enerr.Op = "polymers/PolymersEngine.GetElement"

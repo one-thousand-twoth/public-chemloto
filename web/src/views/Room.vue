@@ -35,13 +35,23 @@ function EXITGame() {
         }
     )
 }
-
+function AddScore(score: number, player: string) {
+    ws.Send(
+        {
+            "Type": "ENGINE_ACTION",
+            "Action": "AddScore",
+            "Score": score,
+            "Player": player,
+        }
+    )
+}
 
 const currPlayer = computed(() => {
     return GameStore.gameState.Players.find(player => player.Name === curInfoPlayer.value)
 })
 
 const curInfoPlayer = ref('')
+const score = ref(0)
 const curCheckPlayer = ref<Hand>()
 const AdditionallyButton = ref(false)
 let audio = new Audio(obtain);
@@ -63,7 +73,7 @@ watch(() => GameStore.gameState.Bag.LastElements, () => { audio.play() })
             <!-- #endregion LEFT -->
             <!-- #region CENTER -->
             <div class="flex flex-col items-center  h-lvh max-w-[900px] gap-2 p-5 pb-60 grow-[3]">
-                <div  v-if="GameStore.gameState.Status == 'STATUS_COMPLETED'" class="text-lg">
+                <div v-if="GameStore.gameState.Status == 'STATUS_COMPLETED'" class="text-lg">
                     Игра завершена
                 </div>
                 <Timer v-else />
@@ -76,14 +86,14 @@ watch(() => GameStore.gameState.Bag.LastElements, () => { audio.play() })
                 </div>
 
                 <FieldsTable />
-                <template v-if="GameStore.gameState.Status !=='STATUS_COMPLETED'">
-                <ButtonPanelAdmin v-if="userStore.UserInfo.role != Role.Player" />
-                <ButtonPanelPlayer v-else />
-            </template>
+                <template v-if="GameStore.gameState.Status !== 'STATUS_COMPLETED'">
+                    <ButtonPanelAdmin v-if="userStore.UserInfo.role != Role.Player" />
+                    <ButtonPanelPlayer v-else />
+                </template>
             </div>
             <!-- #endregion CENTER -->
             <!-- #region RIGHT -->
-        <div class='relative flex flex-col m-3 w-[20%] gap-2'>
+            <div class='relative flex flex-col m-3 w-[20%] gap-2'>
                 <div class="bars p-3 min-w-[8.5rem]  grow-[1] bg-gray-50">
                     <h2 class="text-clip overflow-hidden ">Поднятые руки</h2>
                     <ul class="list-none p-0 font-bold m-0">
@@ -96,30 +106,38 @@ watch(() => GameStore.gameState.Bag.LastElements, () => { audio.play() })
                             {{ pl.Field }}
                         </li>
                     </ul>
-                    
+
                 </div>
-                <div v-if="AdditionallyButton" class="relative z-[2]  top-[14px] border-solid border-2 text-sm border-blue-400 rounded-lg rounded-b-none p-3 ">
+                <div v-if="AdditionallyButton"
+                    class="relative z-[2]  top-[14px] border-solid border-2 text-sm border-blue-400 rounded-lg rounded-b-none p-3 ">
                     <div @click="EXITGame()" class="underline hover:text-blue-500">Закрыть игру</div>
                 </div>
                 <IconButtonBackground v-if="userStore.UserInfo.role != Role.Player"
-                        class="w-full z-[3] bg-blue-500 text-white  rounded-lg" :icon="EllipsisVerticalIcon"
-                        @click="AdditionallyButton = !AdditionallyButton">Дополнительно</IconButtonBackground>
-        </div>
+                    class="w-full z-[3] bg-blue-500 text-white  rounded-lg" :icon="EllipsisVerticalIcon"
+                    @click="AdditionallyButton = !AdditionallyButton">Дополнительно</IconButtonBackground>
+            </div>
             <!-- #endregion RIGHT -->
-       
+
         </div>
 
 
         <div class=" h-96"></div>
 
 
-        <Modal :show="currPlayer !== undefined" @close="curInfoPlayer = ''">
+        <Modal :show="currPlayer !== undefined" @close="curInfoPlayer = ''; score = 0">
             <template #header>
                 <h3 class="font-bold text-center">Информация о игроке {{ curInfoPlayer }}</h3>
             </template>
             <template #body>
                 <UserElements v-if="currPlayer" :player="currPlayer" />
+
+                <form class="flex flex-col gap-1" @submit.prevent="AddScore(score, curInfoPlayer)">
+                    <div class="text-lg">Добавить очки: </div>
+                    <input type="number" min="0" v-model="score" />
+                    <button type="submit">Отправить</button>
+                </form>
             </template>
+
         </Modal>
         <Modal v-if="userStore.UserInfo.role != Role.Player" :show="curCheckPlayer !== undefined"
             @close="curCheckPlayer = undefined">
