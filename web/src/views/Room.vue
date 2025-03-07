@@ -131,7 +131,8 @@ watch(() => GameStore.gameState.Bag.LastElements, () => { audio.play() })
             <template #body>
                 <UserElements v-if="currPlayer" :player="currPlayer" />
 
-                <form class="flex flex-col gap-1" @submit.prevent="AddScore(score, curInfoPlayer)">
+                <form v-if="userStore.UserInfo.role != Role.Player" class="flex flex-col gap-1"
+                    @submit.prevent="AddScore(score, curInfoPlayer)">
                     <div class="text-lg">Добавить очки: </div>
                     <input type="number" min="0" v-model="score" />
                     <button type="submit">Отправить</button>
