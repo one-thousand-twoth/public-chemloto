@@ -196,7 +196,7 @@ func GetElement(engine *PolymersEngine) HandlerFunc {
 		if elem == "TRADE" {
 			return TRADE, nil
 		}
-		return NO_TRANSITION, nil
+		return UPDATE_CURRENT, nil
 	}
 }
 func (engine *PolymersEngine) TradeHandler() HandlerFunc {

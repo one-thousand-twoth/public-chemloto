@@ -149,7 +149,9 @@ export const useGameStore = defineStore('game', () => {
     const gameState = ref<GameInfo>({
         Bag: {
             Elements: {},
-            LastElements: []
+            LastElements: [],
+            RemainingElements: {},
+            DraftedElements: {}
         },
         Players: [],
         Status: 'STATUS_WAITING',
@@ -236,7 +238,9 @@ export const updateTimer = (state: State, newTimer: number): state is State & Wi
 
 export interface Bag {
     Elements: { [id: string]: number; },
-    LastElements: Array<string>
+    LastElements: Array<string>,
+    RemainingElements: { [id: string]: number; },
+    DraftedElements: { [id: string]: number; },
 }
 export interface Player {
     Name: string,

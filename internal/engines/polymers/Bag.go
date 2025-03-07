@@ -29,13 +29,30 @@ type GameBag struct {
 
 func (b GameBag) MarshalJSON() ([]byte, error) {
 	bag := struct {
-		Elements     map[string]int
-		LastElements []string
+		Elements          map[string]int
+		LastElements      []string
+		RemainingElements map[string]int
+		DraftedElements   map[string]int
 	}{
 		b.Elements,
 		b.LastElements(),
+		b.RemainingElements(),
+		b.DraftedElements(),
 	}
 	return json.Marshal(bag)
+}
+
+func (b *GameBag) RemainingElements() map[string]int {
+
+	return b.iterElements
+}
+
+func (b *GameBag) DraftedElements() map[string]int {
+	out := make(map[string]int, len(b.Elements))
+	for k, _ := range b.Elements {
+		out[k] = b.Elements[k] - b.RemainingElements()[k]
+	}
+	return out
 }
 
 // NewGameBag initializes GameBag with elements and generate random seed.

@@ -54,6 +54,8 @@ const curInfoPlayer = ref('')
 const score = ref(0)
 const curCheckPlayer = ref<Hand>()
 const AdditionallyButton = ref(false)
+const RemainsButton = ref(false)
+
 let audio = new Audio(obtain);
 
 watch(() => GameStore.gameState.Bag.LastElements, () => { audio.play() })
@@ -78,13 +80,15 @@ watch(() => GameStore.gameState.Bag.LastElements, () => { audio.play() })
                 </div>
                 <Timer v-else />
 
-                <div class=" h-auto w-full max-w-[50lvh] gap-2 flex flex-wrap items-center justify-center">
+                <div class=" h-auto w-full mb-8 max-w-[50lvh] gap-2 flex flex-wrap items-center justify-center">
                     <ElementImage class="grow-[2] center" :elname="GameStore.currElement" />
                     <div class="flex flex-col flex-wrap gap-1 items-center" id="lastElementsContainer">
                         <ElementImage v-for="el in GameStore.LastElements.slice(1)" :elname="el" />
                     </div>
                 </div>
-
+                <IconButtonBackground class="w-full  p-2 z-[3] bg-blue-500 text-white  rounded-lg"
+                    :icon="EllipsisVerticalIcon" @click="RemainsButton = !RemainsButton">Выпавшие элементы
+                </IconButtonBackground>
                 <FieldsTable />
                 <template v-if="GameStore.gameState.Status !== 'STATUS_COMPLETED'">
                     <ButtonPanelAdmin v-if="userStore.UserInfo.role != Role.Player" />
@@ -147,6 +151,21 @@ watch(() => GameStore.gameState.Bag.LastElements, () => { audio.play() })
             </template>
             <template v-if="curCheckPlayer !== undefined" #body>
                 <CheckPlayer :player="curCheckPlayer" />
+            </template>
+        </Modal>
+
+        <Modal :show="RemainsButton !== false" @close="RemainsButton = false">
+            <template #header>
+                <h3 class="font-bold text-center"> Выпавшие элементы</h3>
+            </template>
+            <template #body>
+                <div class="flex flex-wrap  justify-start my-3 gap-3">
+                    <div v-for="key in Object.keys(GameStore.gameState.Bag.DraftedElements)"
+                        class="flex items-center mb-3 gap-1">
+                        <ElementImage class="w-8" :elname="key" />
+                        <div>{{ GameStore.gameState.Bag.DraftedElements[key] }}</div>
+                    </div>
+                </div>
             </template>
         </Modal>
 
