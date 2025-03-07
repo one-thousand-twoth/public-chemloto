@@ -230,7 +230,7 @@ func (h *Hub) HandleWS(w http.ResponseWriter, r *http.Request) {
 				}
 				log.Debug(fmt.Sprintf("got messageWS %+v", msg))
 				user.mutex.Lock()
-				h.SendEventToHub(NewEventWrap(user.Name,
+				h.SendEventToHub(NewEventWrap(user.Name, user.conn,
 					user.Room,
 					user.Role,
 					msg, msgType))

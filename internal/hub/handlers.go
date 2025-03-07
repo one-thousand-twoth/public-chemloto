@@ -11,6 +11,7 @@ import (
 	"github.com/mitchellh/mapstructure"
 )
 
+// NOTE: лучше передавать канал для сообщений пользователю
 type HandlerFunc func(*Hub, internalEventWrap)
 
 func (f HandlerFunc) HandleEvent(h *Hub, msg internalEventWrap) {
@@ -93,12 +94,10 @@ func SubscribeHandler(h *Hub, e internalEventWrap) error {
 	if err := mapstructure.Decode(e.msg, &data); err != nil {
 		return enerr.E(op, fmt.Sprintf("failed to decode event body: %s", err.Error()))
 	}
-
-	// connID := usr.conn
-	// conn, ok := h.Connections.Get(connID)
-	// if !ok {
-	// 	return enerr.E(op, "Failed getting connection of user")
-	// }
+	conn, ok := h.Connections.Get(e.connId)
+	if !ok {
+		return enerr.E(op, "Failed getting connection of user")
+	}
 
 	switch data.Target {
 	case "room":
@@ -112,18 +111,18 @@ func SubscribeHandler(h *Hub, e internalEventWrap) error {
 		return enerr.E(op, fmt.Sprintf("unknown target %s", data.Target))
 	}
 
-	// conn.MessageChan <- common.Message{
-	// 	Type: common.HUB_SUBSCRIBE,
-	// 	Ok:   true,
-	// 	Body: map[string]any{
-	// 		"Target": "room",
-	// 		"Name":   data.Name,
-	// 	},
-	// }
-	// fun, ok := h.Channels.GetChannelFunc(data.Name)
-	// if ok {
-	// 	fun(conn.MessageChan)
-	// }
+	conn.MessageChan <- common.Message{
+		Type: common.HUB_SUBSCRIBE,
+		Ok:   true,
+		Body: map[string]any{
+			"Target": "room",
+			"Name":   data.Name,
+		},
+	}
+	fun, ok := h.Channels.GetChannelFunc(data.Name)
+	if ok {
+		fun(conn.MessageChan)
+	}
 	return nil
 }
 
