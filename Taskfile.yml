@@ -21,8 +21,7 @@ tasks:
     deps: [run:go, run:vue, watch]
   run:go:
     cmds:
-      - go build -v .\\cmd\\tournament\\
-      - .\\tournament.exe
+      - go run .\\cmd\\tournament\\main.go
   run:vue:
     dir: '.\\web'
     cmds:
