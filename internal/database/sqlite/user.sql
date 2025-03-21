@@ -17,6 +17,14 @@ SELECT
 FROM
     users;
 
+-- name: GetUserByApikey :one
+SELECT
+    *
+FROM
+    users
+WHERE
+    apikey = ?;
+
 -- name: GetUserSubsribtions :many
 SELECT
     c.id,

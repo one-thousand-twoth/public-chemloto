@@ -1,9 +1,14 @@
-
--- name: InsertChannel :one
+-- name: InsertRegularChannel :one
 INSERT INTO
-    channels (name)
+    channels (name, type, room_name)
 VALUES
-    (?) RETURNING *;
+    (?, 'channel', NULL) RETURNING *;
+
+-- name: InsertRoomChannel :one
+INSERT INTO
+    channels (name, type, room_name)
+VALUES
+    (?, 'room', ?) RETURNING *;
 
 -- name: InsertChannelSubscribe :one
 INSERT INTO
@@ -11,12 +16,28 @@ INSERT INTO
 VALUES
     (?, ?) RETURNING *;
 
-
 -- name: GetChannels :many
 SELECT
     *
 FROM
     channels;
+
+-- name: GetChannel :one
+SELECT
+    *
+FROM
+    channels
+WHERE
+    type = ?
+    AND name = ?;
+
+-- name: GetChannelByID :one
+SELECT
+    *
+FROM
+    channels
+WHERE
+    id = ?;
 
 -- name: GetChannelSubscribers :many
 SELECT
@@ -31,4 +52,3 @@ FROM
     JOIN channels c ON cs.channel_id = c.id
 WHERE
     c.name = ?;
-

@@ -11,6 +11,7 @@ import (
 	"github.com/anrew1002/Tournament-ChemLoto/internal/common/enerr"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/database"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/entities"
+	"github.com/anrew1002/Tournament-ChemLoto/internal/hub/repository"
 	"modernc.org/sqlite"
 	sqlite3 "modernc.org/sqlite/lib"
 )
@@ -25,15 +26,11 @@ type LoginResponse struct {
 	Error []string    `json:"error"`
 }
 
-func Login(log *slog.Logger, req LoginRequest, db *sql.DB, code string) (*LoginResponse, error) {
+func Login(log *slog.Logger, repo *repository.UserRepository, req LoginRequest, code string) (*LoginResponse, error) {
 	const op enerr.Op = "usecase.user/Login"
 	// TODO: add validation
-	// validate := appvalidation.Ins
-	// if err := validate.Struct(req); err != nil {
-	// 	validateErr := err.(validator.ValidationErrors)
-	// 	encode(w, r, http.StatusBadRequest, Response{Error: appvalidation.ValidationError(validateErr)})
-	// 	return
-	// }
+	// Валидация
+	// Подписка на канал
 
 	var role common.Role
 	role = common.Player_Role
@@ -41,35 +38,30 @@ func Login(log *slog.Logger, req LoginRequest, db *sql.DB, code string) (*LoginR
 		if req.Code == code {
 			role = common.Admin_Role
 		} else {
-			// encode(w, r, http.StatusBadRequest, Response{Error: []string{"Неправильный код администратора"}})
 			return nil, enerr.E(op, "Неправильный код администратора", enerr.InvalidRequest)
 		}
 	}
 	token, err := GenerateRandomStringURLSafe(32)
 	if err != nil {
-		// encode(w, r, http.StatusInternalServerError, Response{Error: []string{"Ошибка сервера"}})
 		return nil, enerr.E(op, err)
 	}
+
 	channels := []string{"default"}
 	user := entities.NewUser(req.Name, token, "", role, channels)
+
 	params := database.InsertUserParams{
 		Name:   user.Name,
 		Apikey: user.Apikey,
 		Room:   sql.NullString{},
 		Role:   int64(user.Role),
 	}
-	_, err = database.New(db).InsertUser(context.TODO(), params)
+
+	_, err = repo.CreateUser(params)
+
 	if err != nil {
-		if sqliteErr, ok := err.(*sqlite.Error); ok {
-			if sqliteErr.Code() == sqlite3.SQLITE_CONSTRAINT_UNIQUE {
-				return nil, enerr.E(op, err, enerr.Exist)
-			}
-		}
-		// encode(w, r, http.StatusConflict, Response{Error: []string{"Пользователь с таким именем уже существует"}})
-		return nil, enerr.E(op, err, enerr.Internal)
+		return nil, enerr.E(op, err)
 	}
 	log.Info("user registred", "name", req.Name, "role", role)
-	// encode(w, r, http.StatusCreated, Response{Token: token, Role: role})
 	resp := &LoginResponse{
 		Token: token,
 		Role:  user.Role,
@@ -103,7 +95,7 @@ type PatchRequest struct {
 //		Error []string `json:"error"`
 //	}
 func PatchUser(req PatchRequest, db *sql.DB) (*entities.User, error) {
-	const op = "usecase.user/PatchUser"
+	const op enerr.Op = "usecase.user/PatchUser"
 	// log = log.With(slog.String("op", op))
 
 	params := database.PatchUserRoleParams{

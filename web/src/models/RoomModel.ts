@@ -1,4 +1,8 @@
-export default interface Room {
-    name: string;
-    status: string;
-  }
+export type Room = {
+  name: string,
+  type: string,
+  engine: {Status: EngineStatus},
+}
+
+export type EngineStatus = "STATUS_WAITING" | "STATUS_STARTED" | "STATUS_COMPLETED"
+

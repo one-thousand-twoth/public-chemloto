@@ -44,26 +44,30 @@ func CreateRoom(req CreateRoomRequest, log *slog.Logger, db *sql.DB) (*entities.
 		}
 		return nil, enerr.E(op, err, enerr.Internal)
 	}
-	// if err := s.hub.AddNewRoom(req.CreateRoomRequest); err != nil {
-	// 	log.Error("failed to add room", sl.Err(err))
-	// 	switch validateErr := err.(type) {
-	// 	case validator.ValidationErrors:
-	// 		encode(w, r, http.StatusBadRequest, Response{Error: appvalidation.ValidationError(validateErr)})
-	// 		return
-	// 	}
-	// 	if enerr.KindIs(enerr.Exist, err) {
-	// 		encode(w, r, http.StatusConflict, Response{Error: []string{"Комната уже существует"}})
-	// 		return
-	// 	}
-	// 	encode(w, r, http.StatusConflict, Response{Error: []string{"Сервер не смог создать комнату"}})
-	// 	return
-	// }
-	// s.log.Info("Room created", "name", req.Name, "time", req.Time)
-	// s.hub.SendMessageOverChannel("default", models.Message{Type: websocket.TextMessage, Body: []byte(req.Name)})
-	// encode(w, r, http.StatusOK, Response{Rooms: s.hub.Rooms, Error: []string{}})
+
+	// TODO: Create channel for room
+
 	room := &entities.Room{
 		Name:   row.Name,
 		Engine: entities.ExternalEngine{},
 	}
 	return room, nil
+}
+
+func GetRooms(db *sql.DB) []entities.Room {
+
+	rows, err := database.New(db).GetRooms(context.TODO())
+	if err != nil {
+		panic(err)
+	}
+
+	rooms := make([]entities.Room, 0, len(rows))
+	for _, v := range rows {
+		rooms = append(rooms, entities.Room{
+			Name:   v.Name,
+			Engine: entities.ExternalEngine{},
+		})
+	}
+
+	return rooms
 }

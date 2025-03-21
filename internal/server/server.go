@@ -125,13 +125,13 @@ func NewServer() *Server {
 	log := slog.New(devslog.NewHandler(colorable.NewColorableStdout(), opts))
 	mux := chi.NewRouter()
 
-	Hub := hub.NewHub(log, upgrader)
+	db := sqlite.MustInitDB()
+
+	Hub := hub.NewHub(log, upgrader, db)
 	Hub.SetupHandlers()
 	Hub.Run()
 	// NOTE: for development
 	Hub.FillRooms()
-
-	db := sqlite.MustInitDB()
 
 	server := &Server{
 		hub: Hub,

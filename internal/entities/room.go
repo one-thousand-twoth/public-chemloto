@@ -1,7 +1,7 @@
 package entities
 
 type Room struct {
-	Name   string         `json:"name" validate:"required,min=1,safeinput"`
+	Name   string         `json:"name"`
 	Engine ExternalEngine `json:"engine"`
 }
 

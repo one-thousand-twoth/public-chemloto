@@ -79,6 +79,21 @@ type PolymersEngineConfig struct {
 	// Проверять ли структуру игрока при поднятии руки
 	IsAutoCheck bool
 }
+
+// For test cases
+func (c PolymersEngineConfig) ToMap() map[string]any {
+	cjson, err := json.Marshal(c)
+	if err != nil {
+		panic(err)
+	}
+	cmap := make(map[string]any)
+	err = json.Unmarshal(cjson, &cmap)
+	if err != nil {
+		panic(err)
+	}
+	return cmap
+}
+
 type PolymersEngine struct {
 	log    *slog.Logger
 	status models.EngineStatus

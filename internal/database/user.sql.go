@@ -10,6 +10,28 @@ import (
 	"database/sql"
 )
 
+const getUserByApikey = `-- name: GetUserByApikey :one
+SELECT
+    id, name, apikey, room, role
+FROM
+    users
+WHERE
+    apikey = ?
+`
+
+func (q *Queries) GetUserByApikey(ctx context.Context, apikey string) (User, error) {
+	row := q.db.QueryRowContext(ctx, getUserByApikey, apikey)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Apikey,
+		&i.Room,
+		&i.Role,
+	)
+	return i, err
+}
+
 const getUserSubsribtions = `-- name: GetUserSubsribtions :many
 SELECT
     c.id,
@@ -21,15 +43,20 @@ WHERE
     cs.user_id = ?
 `
 
-func (q *Queries) GetUserSubsribtions(ctx context.Context, userID int64) ([]Channel, error) {
+type GetUserSubsribtionsRow struct {
+	ID   int64
+	Name string
+}
+
+func (q *Queries) GetUserSubsribtions(ctx context.Context, userID int64) ([]GetUserSubsribtionsRow, error) {
 	rows, err := q.db.QueryContext(ctx, getUserSubsribtions, userID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Channel
+	var items []GetUserSubsribtionsRow
 	for rows.Next() {
-		var i Channel
+		var i GetUserSubsribtionsRow
 		if err := rows.Scan(&i.ID, &i.Name); err != nil {
 			return nil, err
 		}

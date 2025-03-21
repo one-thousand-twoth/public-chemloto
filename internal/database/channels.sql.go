@@ -7,7 +7,56 @@ package database
 
 import (
 	"context"
+	"database/sql"
 )
+
+const getChannel = `-- name: GetChannel :one
+SELECT
+    id, name, type, room_name
+FROM
+    channels
+WHERE
+    type = ?
+    AND name = ?
+`
+
+type GetChannelParams struct {
+	Type string
+	Name string
+}
+
+func (q *Queries) GetChannel(ctx context.Context, arg GetChannelParams) (Channel, error) {
+	row := q.db.QueryRowContext(ctx, getChannel, arg.Type, arg.Name)
+	var i Channel
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Type,
+		&i.RoomName,
+	)
+	return i, err
+}
+
+const getChannelByID = `-- name: GetChannelByID :one
+SELECT
+    id, name, type, room_name
+FROM
+    channels
+WHERE
+    id = ?
+`
+
+func (q *Queries) GetChannelByID(ctx context.Context, id int64) (Channel, error) {
+	row := q.db.QueryRowContext(ctx, getChannelByID, id)
+	var i Channel
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Type,
+		&i.RoomName,
+	)
+	return i, err
+}
 
 const getChannelSubscribers = `-- name: GetChannelSubscribers :many
 SELECT
@@ -55,7 +104,7 @@ func (q *Queries) GetChannelSubscribers(ctx context.Context, name string) ([]Use
 
 const getChannels = `-- name: GetChannels :many
 SELECT
-    id, name
+    id, name, type, room_name
 FROM
     channels
 `
@@ -69,7 +118,12 @@ func (q *Queries) GetChannels(ctx context.Context) ([]Channel, error) {
 	var items []Channel
 	for rows.Next() {
 		var i Channel
-		if err := rows.Scan(&i.ID, &i.Name); err != nil {
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Type,
+			&i.RoomName,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -81,20 +135,6 @@ func (q *Queries) GetChannels(ctx context.Context) ([]Channel, error) {
 		return nil, err
 	}
 	return items, nil
-}
-
-const insertChannel = `-- name: InsertChannel :one
-INSERT INTO
-    channels (name)
-VALUES
-    (?) RETURNING id, name
-`
-
-func (q *Queries) InsertChannel(ctx context.Context, name string) (Channel, error) {
-	row := q.db.QueryRowContext(ctx, insertChannel, name)
-	var i Channel
-	err := row.Scan(&i.ID, &i.Name)
-	return i, err
 }
 
 const insertChannelSubscribe = `-- name: InsertChannelSubscribe :one
@@ -113,5 +153,48 @@ func (q *Queries) InsertChannelSubscribe(ctx context.Context, arg InsertChannelS
 	row := q.db.QueryRowContext(ctx, insertChannelSubscribe, arg.ChannelID, arg.UserID)
 	var i ChannelSubscriber
 	err := row.Scan(&i.ID, &i.ChannelID, &i.UserID)
+	return i, err
+}
+
+const insertRegularChannel = `-- name: InsertRegularChannel :one
+INSERT INTO
+    channels (name, type, room_name)
+VALUES
+    (?, 'channel', NULL) RETURNING id, name, type, room_name
+`
+
+func (q *Queries) InsertRegularChannel(ctx context.Context, name string) (Channel, error) {
+	row := q.db.QueryRowContext(ctx, insertRegularChannel, name)
+	var i Channel
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Type,
+		&i.RoomName,
+	)
+	return i, err
+}
+
+const insertRoomChannel = `-- name: InsertRoomChannel :one
+INSERT INTO
+    channels (name, type, room_name)
+VALUES
+    (?, 'room', ?) RETURNING id, name, type, room_name
+`
+
+type InsertRoomChannelParams struct {
+	Name     string
+	RoomName sql.NullString
+}
+
+func (q *Queries) InsertRoomChannel(ctx context.Context, arg InsertRoomChannelParams) (Channel, error) {
+	row := q.db.QueryRowContext(ctx, insertRoomChannel, arg.Name, arg.RoomName)
+	var i Channel
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Type,
+		&i.RoomName,
+	)
 	return i, err
 }

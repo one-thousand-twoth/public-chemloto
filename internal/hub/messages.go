@@ -3,18 +3,18 @@ package hub
 import "github.com/anrew1002/Tournament-ChemLoto/internal/common"
 
 type internalEventWrap struct {
-	userId  string
-	connId  string
+	userId string
+	// connId  string
 	room    string
 	role    common.Role
 	msgType common.MessageType
 	msg     map[string]interface{}
 }
 
-func NewEventWrap(userID string, connID string, room string, role common.Role, msg map[string]interface{}, msgType common.MessageType) internalEventWrap {
+func NewEventWrap(userID string, room string, role common.Role, msg map[string]interface{}, msgType common.MessageType) internalEventWrap {
 	return internalEventWrap{
-		userId:  userID,
-		connId:  connID,
+		userId: userID,
+		// connId:  connID,
 		room:    room,
 		role:    role,
 		msgType: msgType,

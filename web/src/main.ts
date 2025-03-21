@@ -1,6 +1,6 @@
 import './assets/output.css'
 
-import { createApp,  watch } from 'vue'
+import { createApp, watch } from 'vue'
 import App from './App.vue'
 
 import Hub from '@/views/Hub.vue'

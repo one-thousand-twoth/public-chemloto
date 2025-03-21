@@ -7,7 +7,7 @@ export class Client {
       this.baseUrl = baseUrl;
     }
     url(uri: string) {
-      return new URL('/api/v1'+uri, this.baseUrl);
+      return new URL('/api/v2'+uri, this.baseUrl);
     }
   
     headers() {

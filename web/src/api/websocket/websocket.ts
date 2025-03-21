@@ -1,6 +1,6 @@
+import { useGameStore } from "@/stores/useGameStore";
 import { useToasterStore } from "@/stores/useToasterStore";
 import { EngineAction, StartGame, Subscribe, UNSubscribe as UnSubscribe } from "./handlers";
-import { useGameStore } from "@/stores/useGameStore";
 
 export interface WEBSOCKET_EVENT {
     Type: string
@@ -25,7 +25,8 @@ export class WebsocketConnector {
     Run() {
         const gameStore = useGameStore()
         const toaster = useToasterStore()
-        this.connection = new WebSocket(`ws://${this.baseUrl}/api/v1/ws?token=${this.token}`)
+
+        this.connection = new WebSocket(`ws://${this.baseUrl}/api/v2/ws?token=${this.token}`)
         this.connection.onmessage = function (event) {
             const data = JSON.parse(event.data) as WEBSOCKET_EVENT
             if (!data.Ok) {

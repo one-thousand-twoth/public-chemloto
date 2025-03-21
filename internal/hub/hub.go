@@ -39,6 +39,7 @@ type Hub struct {
 
 	Rooms    *roomsState
 	Users    UserStore
+	Users2   *repository.UserRepository
 	upgrader websocket.Upgrader
 
 	Connections *connectionsState
@@ -48,12 +49,13 @@ type Hub struct {
 	eventChan     chan internalEventWrap
 }
 
-func NewHub(log *slog.Logger, upgrader websocket.Upgrader) *Hub {
+func NewHub(log *slog.Logger, upgrader websocket.Upgrader, db *sql.DB) *Hub {
 	return &Hub{
 		upgrader:      upgrader,
 		log:           log,
 		Rooms:         &roomsState{state: make(map[string]*Room)},
 		Users:         &usersState{state: make(map[string]*User)},
+		Users2:        repository.NewUserRepo(db),
 		Connections:   &connectionsState{state: make(map[string]*SockConnection)},
 		Channels:      repository.NewChannelState(),
 		eventHandlers: make(map[string]HandlerFunc),
@@ -230,7 +232,7 @@ func (h *Hub) HandleWS(w http.ResponseWriter, r *http.Request) {
 				}
 				log.Debug(fmt.Sprintf("got messageWS %+v", msg))
 				user.mutex.Lock()
-				h.SendEventToHub(NewEventWrap(user.Name, user.conn,
+				h.SendEventToHub(NewEventWrap(user.Name,
 					user.Room,
 					user.Role,
 					msg, msgType))

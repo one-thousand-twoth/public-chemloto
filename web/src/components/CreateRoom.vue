@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import ChemicalElementFormInput from '@/components/UI/ChemicalElementFormInput.vue';
-import { RoomInfo, useRoomsStore } from '@/stores/useRoomsStore';
+import { Room, useRoomsStore } from '@/stores/useRoomsStore';
 import { ref } from 'vue';
 
 const roomStore = useRoomsStore()
@@ -9,7 +9,7 @@ function onSubmit() {
     roomStore.CreateGame(room.value)
 }
 
-const room = ref<RoomInfo>({
+const room = ref<Room>({
     name: '',
     maxPlayers: 0,
     elementCounts: {

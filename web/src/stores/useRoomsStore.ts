@@ -1,5 +1,6 @@
 import { APISettings } from '@/api/config';
 import { Client } from '@/api/core/client';
+import { Room } from '@/models/RoomModel';
 import { acceptHMRUpdate, defineStore } from 'pinia';
 import { ref } from 'vue';
 import { useToasterStore } from "../stores/useToasterStore";
@@ -10,7 +11,7 @@ import { useUserStore } from "../stores/useUserStore";
 
 export const useRoomsStore = defineStore('rooms', () => {
     const fetching = ref(false)
-    const roomList = ref<Array<RoomInfo>>([])
+    const roomList = ref<Array<Room>>([])
 
     const toasterStore = useToasterStore();
     const userStore = useUserStore();
@@ -33,7 +34,7 @@ export const useRoomsStore = defineStore('rooms', () => {
         }
         fetching.value = false;
     }
-    async function CreateGame(room: RoomInfo) {
+    async function CreateGame(room: Room) {
         if (userStore.UserCreds == null) {
             return;
         }
@@ -64,15 +65,15 @@ export const useRoomsStore = defineStore('rooms', () => {
     }
 })
 
-export interface RoomInfo {
-    name: string
-    maxPlayers: number
-    engine: {Status: string}
-    elementCounts: { [id: string]: number; }
-    time: number
-    isAuto: boolean,
-    isAutoCheck: boolean,
-}
+// export interface RoomInfo {
+//     name: string
+//     maxPlayers: number
+//     engine: {Status: string}
+//     elementCounts: { [id: string]: number; }
+//     time: number
+//     isAuto: boolean,
+//     isAutoCheck: boolean,
+// }
 
 export function i18nStatus(status: string): string {
     switch (status) {

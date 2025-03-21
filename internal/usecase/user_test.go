@@ -13,6 +13,7 @@ import (
 	"github.com/anrew1002/Tournament-ChemLoto/internal/common/enerr"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/database"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/entities"
+	"github.com/anrew1002/Tournament-ChemLoto/internal/hub/repository"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/sqlite"
 	"github.com/stretchr/testify/assert"
 )
@@ -93,7 +94,7 @@ func TestLogin(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
-			got, err := Login(MockLogger, tt.args.req, db, "valid")
+			got, err := Login(MockLogger, repository.NewUserRepo(db), tt.args.req, "valid")
 			if err != nil {
 				if tt.wantErr != nil {
 					fmt.Printf("Error: %+v", err)

@@ -40,6 +40,18 @@ func (s *Server) configureRoutes() {
 		r.Get("/debug", s.Status())
 
 	})
+	s.mux.Route("/api/v2", func(r chi.Router) {
+		r.Get("/rooms", s.GetRooms2())
+		r.Post("/rooms", s.CreateRoom2())
+		// r.Get("/users", s.GetUsers())
+		// r.Post("/users/{username}", s.PatchUser())
+		// r.Delete("/users/{username}", s.DeleteUser())
+		r.Post("/users", s.Login2())
+		r.Get("/users/{token}", s.GetUser2())
+		r.Get("/ws", s.hub.HandleWS2)
+		// r.Get("/debug", s.Status())
+
+	})
 }
 
 var ErrDir = errors.New("path is dir")

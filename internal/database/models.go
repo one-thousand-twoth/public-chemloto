@@ -9,8 +9,10 @@ import (
 )
 
 type Channel struct {
-	ID   int64
-	Name string
+	ID       int64
+	Name     string
+	Type     string
+	RoomName sql.NullString
 }
 
 type ChannelSubscriber struct {
