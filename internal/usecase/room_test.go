@@ -1,19 +1,19 @@
 package usecase
 
 import (
-	"database/sql"
 	"testing"
 
 	"github.com/anrew1002/Tournament-ChemLoto/internal/common/enerr"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/engines/polymers"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/entities"
-	"github.com/anrew1002/Tournament-ChemLoto/internal/sqlite"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestCreateRoom(t *testing.T) {
 
-	var db *sql.DB = sqlite.MustInitDB()
+	// var db *sql.DB = sqlite.MustInitDB()
+
+	t.Cleanup(cleanup)
 
 	type args struct {
 		req CreateRoomRequest

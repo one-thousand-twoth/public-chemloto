@@ -4,30 +4,41 @@ import (
 	"context"
 	"database/sql"
 
+	"github.com/anrew1002/Tournament-ChemLoto/internal/common"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/database"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/entities"
 )
 
 type ChannelsRepository struct {
-	channelFunctions map[string]func()
+	channelFunctions map[string]entities.InitFunction
 
 	queries *database.Queries
 }
 
 func NewChannelsRepo(db *sql.DB) *ChannelsRepository {
 	return &ChannelsRepository{
-		channelFunctions: map[string]func(){},
-		queries:          database.New(db),
+		channelFunctions: map[string]entities.InitFunction{
+			"default": func(chan common.Message) {
+				//do not do anything at that moment
+			},
+		},
+		queries: database.New(db),
 	}
 }
 
-func (repo *ChannelsRepository) AddRegularChannel(name string, fn func()) (entities.ID, error) {
+func (repo *ChannelsRepository) AddRegularChannel(name string, fn entities.InitFunction) (*entities.Channel, error) {
 	row, err := repo.queries.InsertRegularChannel(context.TODO(), name)
 	if err != nil {
-		return -1, err
+		return nil, err
 	}
 	repo.channelFunctions[name] = fn
-	return entities.ID(row.ID), nil
+	channel := &entities.Channel{
+		ID:   entities.ID(row.ID),
+		Name: row.Name,
+		Type: row.Type,
+		Fn:   fn,
+	}
+	return channel, nil
 }
 func (repo *ChannelsRepository) GetChannelByID(id entities.ID) error {
 	_, err := repo.queries.GetChannelByID(context.TODO(), int64(id))

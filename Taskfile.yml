@@ -2,9 +2,11 @@ version: "3"
 
 tasks:
   build:
-    - task: build:vue
-    - task: build:go64
-    - task: build:go32
+    desc: build app for multiple systems
+    cmds:
+      - task: build:vue
+      - task: build:go64
+      - task: build:go32
   build:go64:
     cmds:
       - go build -o tournament_x64.exe .\\cmd\\tournament\\
@@ -21,7 +23,7 @@ tasks:
     deps: [run:go, run:vue, watch]
   run:go:
     cmds:
-      - go run .\\cmd\\tournament\\main.go
+      - go run -v ./cmd/tournament/main.go
   run:vue:
     dir: '.\\web'
     cmds:

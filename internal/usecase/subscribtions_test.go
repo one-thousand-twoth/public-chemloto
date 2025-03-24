@@ -1,19 +1,20 @@
 package usecase
 
 import (
-	"database/sql"
 	"testing"
 
 	"github.com/anrew1002/Tournament-ChemLoto/internal/entities"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/hub/repository"
-	"github.com/anrew1002/Tournament-ChemLoto/internal/sqlite"
+	"github.com/anrew1002/Tournament-ChemLoto/internal/sqlite/sqlitetest"
 )
+
+var db, cleanup = sqlitetest.GetTestDatabase()
 
 func TestAddRegularChannel(t *testing.T) {
 
-	var db *sql.DB = sqlite.MustInitDB()
-
 	var repo *repository.ChannelsRepository = repository.NewChannelsRepo(db)
+
+	t.Cleanup(cleanup)
 
 	type args struct {
 		name string
@@ -57,11 +58,15 @@ func TestAddRegularChannel(t *testing.T) {
 
 func TestGetRegularChannel(t *testing.T) {
 
-	var db *sql.DB = sqlite.MustInitDB()
+	// var db *sql.DB = sqlite.MustInitDB()
 
 	var repo *repository.ChannelsRepository = repository.NewChannelsRepo(db)
 
-	id, err := AddRegularChannel(repo, "test_channel", func() {})
+	t.Cleanup(cleanup)
+
+	results := make(chan struct{})
+
+	id, err := AddRegularChannel(repo, "test_channel", func() { results <- struct{}{} })
 	if err != nil {
 		t.Fatal("fail init add", err)
 	}
@@ -87,15 +92,20 @@ func TestGetRegularChannel(t *testing.T) {
 			if err := GetRegularChannel(repo, tt.args.id); (err != nil) != tt.wantErr {
 				t.Errorf("GetRegularChannel() error = %v, wantErr %v", err, tt.wantErr)
 			}
+			if _, ok := results; ok != true {
+
+			}
 		})
 	}
 }
 
 func TestSubscribeToChannel(t *testing.T) {
 
-	var db *sql.DB = sqlite.MustInitDB()
+	// var db *sql.DB = sqlite.MustInitDB()
 
 	var repo *repository.ChannelsRepository = repository.NewChannelsRepo(db)
+
+	t.Cleanup(cleanup)
 
 	// id, err := AddRegularChannel(repo, "test_channel", func() {})
 	// if err != nil {

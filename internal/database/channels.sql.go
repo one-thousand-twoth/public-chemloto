@@ -156,6 +156,36 @@ func (q *Queries) InsertChannelSubscribe(ctx context.Context, arg InsertChannelS
 	return i, err
 }
 
+const insertChannelSubscribeByChannelName = `-- name: InsertChannelSubscribeByChannelName :one
+INSERT INTO
+    channel_subscribers (channel_id, user_id)
+VALUES
+    (
+        (
+            SELECT
+                id
+            FROM
+                channels
+            WHERE
+                name = ?
+                AND type = 'channel'
+        ),
+        ?
+    ) RETURNING id, channel_id, user_id
+`
+
+type InsertChannelSubscribeByChannelNameParams struct {
+	Name   string
+	UserID int64
+}
+
+func (q *Queries) InsertChannelSubscribeByChannelName(ctx context.Context, arg InsertChannelSubscribeByChannelNameParams) (ChannelSubscriber, error) {
+	row := q.db.QueryRowContext(ctx, insertChannelSubscribeByChannelName, arg.Name, arg.UserID)
+	var i ChannelSubscriber
+	err := row.Scan(&i.ID, &i.ChannelID, &i.UserID)
+	return i, err
+}
+
 const insertRegularChannel = `-- name: InsertRegularChannel :one
 INSERT INTO
     channels (name, type, room_name)

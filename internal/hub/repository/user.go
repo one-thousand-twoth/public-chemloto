@@ -46,11 +46,12 @@ func (repo *UserRepository) CreateUser(params database.InsertUserParams) (*entit
 		// encode(w, r, http.StatusConflict, Response{Error: []string{"Пользователь с таким именем уже существует"}})
 		return nil, enerr.E(op, err, enerr.Internal)
 	}
-
-	_, err = queries.InsertChannelSubscribe(context.TODO(), database.InsertChannelSubscribeParams{
-		ChannelID: 0,
-		UserID:    row.ID,
-	})
+	// NOTE: ВЫЗЫВАЕТ ОШИБКУ FOREIGN KEY если нет такого канала
+	_, err = queries.InsertChannelSubscribeByChannelName(context.TODO(),
+		database.InsertChannelSubscribeByChannelNameParams{
+			Name:   "default",
+			UserID: row.ID,
+		})
 	if err != nil {
 		return nil, enerr.E(op, err, enerr.Database)
 	}

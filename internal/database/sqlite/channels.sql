@@ -16,6 +16,23 @@ INSERT INTO
 VALUES
     (?, ?) RETURNING *;
 
+-- name: InsertChannelSubscribeByChannelName :one
+INSERT INTO
+    channel_subscribers (channel_id, user_id)
+VALUES
+    (
+        (
+            SELECT
+                id
+            FROM
+                channels
+            WHERE
+                name = ?
+                AND type = 'channel'
+        ),
+        ?
+    ) RETURNING *;
+
 -- name: GetChannels :many
 SELECT
     *

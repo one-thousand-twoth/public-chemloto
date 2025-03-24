@@ -14,7 +14,6 @@ import (
 	"github.com/anrew1002/Tournament-ChemLoto/internal/database"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/entities"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/hub/repository"
-	"github.com/anrew1002/Tournament-ChemLoto/internal/sqlite"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -27,7 +26,7 @@ var MockLogger = slog.New(slog.NewTextHandler(buff, &slog.HandlerOptions{Replace
 }}))
 
 func TestLogin(t *testing.T) {
-	var db *sql.DB = sqlite.MustInitDB()
+	t.Cleanup(cleanup)
 	type args struct {
 		req LoginRequest
 	}
@@ -101,7 +100,7 @@ func TestLogin(t *testing.T) {
 					assert.Equal(t, true, enerr.KindIs(tt.wantErr.Kind, err))
 					return
 				}
-				t.Log(err)
+
 				t.Fatalf("Login() unexpected error = %v", err)
 				return
 			}
@@ -116,7 +115,10 @@ func TestLogin(t *testing.T) {
 }
 
 func TestPatchUser(t *testing.T) {
-	db := sqlite.MustInitDB()
+
+	t.Cleanup(cleanup)
+
+	// db := sqlite.MustInitDB()
 	params := database.InsertUserParams{
 		Name:   "TestUser",
 		Apikey: "",
