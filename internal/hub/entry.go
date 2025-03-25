@@ -46,20 +46,19 @@ func (h *Hub) HandleWS2(w http.ResponseWriter, r *http.Request) {
 	// (2) Указываем новое соединение пользователю
 	// user.conn = connection.ID
 
-	// for _, channel := range user.channels {
-	// 	// (3) Добавляем к необходимым каналам новое соединение
-	// 	h.Channels.Add(channel, connection.ID)
-	// 	channel := channel
-	// 	// Вызываем Init функцию для канала, если есть
-	// 	go func() {
-	// 		initChan, ok := h.Channels.GetChannelFunc(channel)
-	// 		if !ok {
-	// 			return
-	// 		}
-	// 		log.Debug(fmt.Sprintf("Running initFunction for %s", channel))
-	// 		initChan(connection.MessageChan)
-	// 	}()
-	// }
+	channels, err := h.Channels2.GetAllUserChannels(user.ID)
+	if err != nil {
+		channels = make([]*entities.Channel, 0)
+	}
+
+	for _, channel := range channels {
+		channel := channel
+		// Вызываем Init функцию для канала, если есть
+		go func() {
+			log.Debug(fmt.Sprintf("Running initFunction for %s", channel))
+			channel.Fn(connection.MessageChan)
+		}()
+	}
 
 	// log.Debug("(Re)Connected to WS user", "user current channels:", fmt.Sprintf("%+v", user.channels))
 	if x, ok := h.Channels.Get("default"); ok {
@@ -149,9 +148,12 @@ ReceiveLoop:
 			h.SendEventToHub(
 				NewEventWrap(
 					user.Name,
+					*user,
 					user.Room,
 					user.Role,
-					msg, msgType,
+					msg,
+					msgType,
+					user.MessageChan,
 				))
 			// user.mutex.Unlock()
 		// TODO: Реализовать ping на клиенте

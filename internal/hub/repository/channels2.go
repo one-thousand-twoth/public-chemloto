@@ -48,6 +48,27 @@ func (repo *ChannelsRepository) GetChannelByID(id entities.ID) error {
 	return nil
 }
 
+func (repo *ChannelsRepository) GetAllUserChannels(userID entities.ID) ([]*entities.Channel, error) {
+	rows, err := repo.queries.GetUserSubsribtions(context.TODO(), int64(userID))
+	if err != nil {
+		return nil, err
+	}
+	channels := make([]*entities.Channel, 0, len(rows))
+	for _, v := range rows {
+		fn, ok := repo.channelFunctions[v.RoomName.String]
+		if !ok {
+			fn = func(chan common.Message) {}
+		}
+		channels = append(channels, &entities.Channel{
+			ID:   entities.ID(v.ID),
+			Name: v.Name,
+			Type: v.Type,
+			Fn:   fn,
+		})
+	}
+	return channels, err
+}
+
 func (repo *ChannelsRepository) SubscribeTo(channelID int64, user entities.User) error {
 	params := database.InsertChannelSubscribeParams{
 		ChannelID: channelID,

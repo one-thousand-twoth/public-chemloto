@@ -29,7 +29,7 @@ func NewUserRepo(db *sql.DB) *UserRepository {
 }
 
 func (repo *UserRepository) CreateUser(params database.InsertUserParams) (*entities.User, error) {
-	const op enerr.Op = "usecase.user/PatchUser"
+	const op enerr.Op = "repository.user/PatchUser"
 	tx, err := repo.db.BeginTx(context.TODO(), nil)
 	if err != nil {
 		return nil, enerr.E(op, err, enerr.Internal)
@@ -58,6 +58,9 @@ func (repo *UserRepository) CreateUser(params database.InsertUserParams) (*entit
 
 	repo.messageChannels[row.Name] = make(messageChan)
 
+	if err := tx.Commit(); err != nil {
+		return nil, enerr.E(op, err, enerr.Internal)
+	}
 	user := &entities.User{
 		ID:          entities.ID(row.ID),
 		Name:        row.Name,
@@ -65,10 +68,6 @@ func (repo *UserRepository) CreateUser(params database.InsertUserParams) (*entit
 		Room:        row.Room.String,
 		Role:        common.Role(row.Role),
 		MessageChan: repo.messageChannels[row.Name],
-	}
-
-	if err := tx.Commit(); err != nil {
-		return nil, enerr.E(op, err, enerr.Internal)
 	}
 	return user, nil
 }

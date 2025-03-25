@@ -34,8 +34,11 @@ func (q *Queries) GetUserByApikey(ctx context.Context, apikey string) (User, err
 
 const getUserSubsribtions = `-- name: GetUserSubsribtions :many
 SELECT
+    cs.user_id,
     c.id,
-    c.name
+    c.name,
+    c.type,
+    c.room_name
 FROM
     channels c
     JOIN channel_subscribers cs ON c.id = cs.channel_id
@@ -44,8 +47,11 @@ WHERE
 `
 
 type GetUserSubsribtionsRow struct {
-	ID   int64
-	Name string
+	UserID   int64
+	ID       int64
+	Name     string
+	Type     string
+	RoomName sql.NullString
 }
 
 func (q *Queries) GetUserSubsribtions(ctx context.Context, userID int64) ([]GetUserSubsribtionsRow, error) {
@@ -57,7 +63,13 @@ func (q *Queries) GetUserSubsribtions(ctx context.Context, userID int64) ([]GetU
 	var items []GetUserSubsribtionsRow
 	for rows.Next() {
 		var i GetUserSubsribtionsRow
-		if err := rows.Scan(&i.ID, &i.Name); err != nil {
+		if err := rows.Scan(
+			&i.UserID,
+			&i.ID,
+			&i.Name,
+			&i.Type,
+			&i.RoomName,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

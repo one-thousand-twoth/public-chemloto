@@ -39,6 +39,7 @@ CREATE TABLE
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         channel_id INTEGER NOT NULL,
         user_id INTEGER NOT NULL,
+        UNIQUE (channel_id, user_id),
         FOREIGN KEY (channel_id) REFERENCES channels (id) ON DELETE CASCADE,
         FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
     );

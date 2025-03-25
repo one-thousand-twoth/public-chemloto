@@ -9,6 +9,22 @@ import (
 	"context"
 )
 
+const getRoom = `-- name: GetRoom :one
+SELECT
+    name, engine
+FROM
+    rooms
+WHERE
+    name = ?
+`
+
+func (q *Queries) GetRoom(ctx context.Context, name string) (Room, error) {
+	row := q.db.QueryRowContext(ctx, getRoom, name)
+	var i Room
+	err := row.Scan(&i.Name, &i.Engine)
+	return i, err
+}
+
 const getRooms = `-- name: GetRooms :many
 SELECT
     name, engine
@@ -53,22 +69,6 @@ type InsertRoomParams struct {
 
 func (q *Queries) InsertRoom(ctx context.Context, arg InsertRoomParams) (Room, error) {
 	row := q.db.QueryRowContext(ctx, insertRoom, arg.Name, arg.Engine)
-	var i Room
-	err := row.Scan(&i.Name, &i.Engine)
-	return i, err
-}
-
-const getRoom = `-- name: getRoom :one
-SELECT
-    name, engine
-FROM
-    rooms
-WHERE
-    name = ?
-`
-
-func (q *Queries) getRoom(ctx context.Context, name string) (Room, error) {
-	row := q.db.QueryRowContext(ctx, getRoom, name)
 	var i Room
 	err := row.Scan(&i.Name, &i.Engine)
 	return i, err

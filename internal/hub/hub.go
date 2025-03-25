@@ -38,12 +38,14 @@ type Hub struct {
 	db  *sql.DB
 
 	Rooms    *roomsState
+	Rooms2   *repository.RoomRepository
 	Users    UserStore
 	Users2   *repository.UserRepository
 	upgrader websocket.Upgrader
 
 	Connections *connectionsState
 	Channels    ChannelRepository
+	Channels2   *repository.ChannelsRepository
 
 	eventHandlers map[string]HandlerFunc
 	eventChan     chan internalEventWrap
@@ -56,8 +58,10 @@ func NewHub(log *slog.Logger, upgrader websocket.Upgrader, db *sql.DB) *Hub {
 		Rooms:         &roomsState{state: make(map[string]*Room)},
 		Users:         &usersState{state: make(map[string]*User)},
 		Users2:        repository.NewUserRepo(db),
+		Rooms2:        repository.NewRoomRepo(db),
 		Connections:   &connectionsState{state: make(map[string]*SockConnection)},
 		Channels:      repository.NewChannelState(),
+		Channels2:     repository.NewChannelsRepo(db),
 		eventHandlers: make(map[string]HandlerFunc),
 		eventChan:     make(chan internalEventWrap, 10),
 	}
@@ -232,10 +236,10 @@ func (h *Hub) HandleWS(w http.ResponseWriter, r *http.Request) {
 				}
 				log.Debug(fmt.Sprintf("got messageWS %+v", msg))
 				user.mutex.Lock()
-				h.SendEventToHub(NewEventWrap(user.Name,
-					user.Room,
-					user.Role,
-					msg, msgType))
+				// h.SendEventToHub(NewEventWrap(user.Name,
+				// 	user.Room,
+				// 	user.Role,
+				// 	msg, msgType))
 				user.mutex.Unlock()
 			// TODO: Реализовать ping на клиенте
 			// Handling receiving ping/pong

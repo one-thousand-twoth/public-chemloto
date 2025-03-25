@@ -1,0 +1,167 @@
+package repository
+
+import (
+	"context"
+	"database/sql"
+	"sync"
+
+	"github.com/anrew1002/Tournament-ChemLoto/internal/common/enerr"
+	"github.com/anrew1002/Tournament-ChemLoto/internal/database"
+	"github.com/anrew1002/Tournament-ChemLoto/internal/engines/models"
+	"github.com/anrew1002/Tournament-ChemLoto/internal/entities"
+	"modernc.org/sqlite"
+	sqlite3 "modernc.org/sqlite/lib"
+)
+
+type EnginesStore struct {
+	engines map[string]models.Engine
+	mu      *sync.Mutex
+}
+
+func (store *EnginesStore) Add(name string, engine models.Engine) {
+	store.mu.Lock()
+	defer store.mu.Unlock()
+
+	store.engines[name] = engine
+}
+
+func (store *EnginesStore) Get(name string, engine models.Engine) models.Engine {
+	store.mu.Lock()
+	defer store.mu.Unlock()
+
+	return store.engines[name]
+}
+
+type RoomRepository struct {
+	engines map[string]models.Engine
+	db      *sql.DB
+	queries *database.Queries
+	mu      *sync.Mutex
+}
+
+func NewRoomRepo(db *sql.DB) *RoomRepository {
+	return &RoomRepository{
+		db:      db,
+		queries: database.New(db),
+		engines: make(map[string]models.Engine),
+		mu:      &sync.Mutex{},
+	}
+}
+
+func (repo *RoomRepository) AddRoom(name string, engine models.Engine) (*entities.Room, error) {
+	const op enerr.Op = "repository.room/AddRoom"
+	tx, err := repo.db.BeginTx(context.TODO(), nil)
+	if err != nil {
+		return nil, enerr.E(op, err, enerr.Internal)
+	}
+	defer tx.Rollback()
+	queries := repo.queries.WithTx(tx)
+
+	rowRoom, err := queries.InsertRoom(context.TODO(), database.InsertRoomParams{
+		Name:   name,
+		Engine: name,
+	})
+	if err != nil {
+		if sqliteErr, ok := err.(*sqlite.Error); ok {
+			if sqliteErr.Code() == sqlite3.SQLITE_CONSTRAINT_UNIQUE {
+				return nil, enerr.E(op, err, enerr.Exist)
+			}
+		}
+		return nil, enerr.E(op, err, enerr.Internal)
+	}
+
+	_, err = queries.InsertRoomChannel(context.TODO(), database.InsertRoomChannelParams{
+		Name:     name,
+		RoomName: sql.NullString{String: name, Valid: true},
+	})
+	if err != nil {
+		if sqliteErr, ok := err.(*sqlite.Error); ok {
+			if sqliteErr.Code() == sqlite3.SQLITE_CONSTRAINT_UNIQUE {
+				// This shouldn't have happened.
+				return nil, enerr.E(op, err, enerr.Internal)
+			}
+		}
+		return nil, enerr.E(op, err, enerr.Internal)
+	}
+
+	repo.engines[name] = engine
+
+	if err := tx.Commit(); err != nil {
+		return nil, enerr.E(op, err, enerr.Internal)
+	}
+
+	room := &entities.Room{
+		Name:   rowRoom.Name,
+		Engine: engine,
+	}
+	return room, nil
+}
+
+func (repo *RoomRepository) GetRooms() ([]*entities.Room, error) {
+	const op enerr.Op = "repository.room/GetRooms"
+	rows, err := repo.queries.GetRooms(context.TODO())
+	if err != nil {
+		return nil, enerr.E(op, err, enerr.Internal)
+	}
+
+	rooms := make([]*entities.Room, 0, len(rows))
+	for _, v := range rows {
+		rooms = append(rooms, &entities.Room{
+			Name:   v.Name,
+			Engine: repo.engines[v.Name],
+		})
+	}
+	return rooms, nil
+}
+
+func (repo *RoomRepository) GetRoom(name string) (*entities.Room, error) {
+	const op enerr.Op = "repository.room/GetRooms"
+	row, err := repo.queries.GetRoom(context.TODO(), name)
+	if err != nil {
+		return nil, enerr.E(op, err, enerr.Internal)
+	}
+
+	room := &entities.Room{
+		Name:   row.Name,
+		Engine: repo.engines[row.Name],
+	}
+	return room, nil
+}
+func (repo *RoomRepository) SubscribeToRoom(name string, user *entities.User) error {
+	const op enerr.Op = "repository.room/SubscribeToRoom"
+	tx, err := repo.db.BeginTx(context.TODO(), nil)
+	defer tx.Rollback()
+	if err != nil {
+		return enerr.E(op, err, enerr.Database)
+	}
+	queries := repo.queries.WithTx(tx)
+
+	room, err := queries.GetRoom(context.TODO(), name)
+	if err != nil {
+		return enerr.E(op, err, enerr.Database)
+	}
+
+	_, err = queries.InsertRoomSubscriberByRoomName(context.TODO(), database.InsertRoomSubscriberByRoomNameParams{
+		RoomName: sql.NullString{String: name, Valid: true},
+		UserID:   int64(user.ID),
+	})
+	if err != nil {
+		return enerr.E(op, err)
+	}
+
+	repo.mu.Lock()
+	defer repo.mu.Unlock()
+	err = repo.engines[room.Name].AddParticipant(models.Participant{
+		Name: user.Name,
+		Role: user.Role,
+	})
+	if err != nil {
+		return enerr.E(op, err)
+	}
+
+	if err := tx.Commit(); err != nil {
+		return enerr.E(op, err, enerr.Internal)
+	}
+
+	return nil
+}

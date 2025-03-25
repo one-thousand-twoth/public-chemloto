@@ -94,10 +94,10 @@ func SubscribeHandler(h *Hub, e internalEventWrap) error {
 	if err := mapstructure.Decode(e.msg, &data); err != nil {
 		return enerr.E(op, fmt.Sprintf("failed to decode event body: %s", err.Error()))
 	}
-	conn, ok := h.Connections.Get(e.connId)
-	if !ok {
-		return enerr.E(op, "Failed getting connection of user")
-	}
+	// conn, ok := h.Connections.Get(e.connId)
+	// if !ok {
+	// 	return enerr.E(op, "Failed getting connection of user")
+	// }
 
 	switch data.Target {
 	case "room":
@@ -111,7 +111,7 @@ func SubscribeHandler(h *Hub, e internalEventWrap) error {
 		return enerr.E(op, fmt.Sprintf("unknown target %s", data.Target))
 	}
 
-	conn.MessageChan <- common.Message{
+	e.MessageChannel <- common.Message{
 		Type: common.HUB_SUBSCRIBE,
 		Ok:   true,
 		Body: map[string]any{
@@ -121,7 +121,7 @@ func SubscribeHandler(h *Hub, e internalEventWrap) error {
 	}
 	fun, ok := h.Channels.GetChannelFunc(data.Name)
 	if ok {
-		fun(conn.MessageChan)
+		fun(e.MessageChannel)
 	}
 	return nil
 }
@@ -179,7 +179,7 @@ func subscribeToRoom(
 }
 
 func Subscribe(h *Hub, e internalEventWrap) {
-	err := SubscribeHandler(h, e)
+	err := SubscribeHandler2(h, e)
 	if err != nil {
 		h.log.Error("wip: error not propely handled", sl.Err(err))
 	}

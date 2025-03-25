@@ -108,7 +108,7 @@ func (s *Server) CreateRoom2() http.HandlerFunc {
 		// 	IsAutoCheck bool           `json:isAutoCheck`
 		// }
 
-		_, err = usecase.CreateRoom(createRoomRequest, s.log, s.db)
+		_, err = usecase.CreateRoom(s.hub.Rooms2, createRoomRequest, s.log)
 		if err != nil {
 			log.Error("failed to add room", sl.Err(err))
 			switch validateErr := err.(type) {
@@ -132,9 +132,12 @@ func (s *Server) CreateRoom2() http.HandlerFunc {
 func (s *Server) GetRooms2() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
-		rooms := usecase.GetRooms(s.db)
-
-		roomMap := make(map[string]entities.Room, len(rooms))
+		rooms, err := usecase.GetRooms(s.hub.Rooms2)
+		if err != nil {
+			encode(w, r, http.StatusInternalServerError, struct{}{})
+			return
+		}
+		roomMap := make(map[string]*entities.Room, len(rooms))
 		for _, v := range rooms {
 			roomMap[v.Name] = v
 		}

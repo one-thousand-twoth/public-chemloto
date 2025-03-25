@@ -27,8 +27,11 @@ WHERE
 
 -- name: GetUserSubsribtions :many
 SELECT
+    cs.user_id,
     c.id,
-    c.name
+    c.name,
+    c.type,
+    c.room_name
 FROM
     channels c
     JOIN channel_subscribers cs ON c.id = cs.channel_id

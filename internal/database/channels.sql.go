@@ -228,3 +228,33 @@ func (q *Queries) InsertRoomChannel(ctx context.Context, arg InsertRoomChannelPa
 	)
 	return i, err
 }
+
+const insertRoomSubscriberByRoomName = `-- name: InsertRoomSubscriberByRoomName :one
+INSERT INTO
+    channel_subscribers (channel_id, user_id)
+VALUES
+    (
+        (
+            SELECT
+                id
+            FROM
+                channels
+            WHERE
+                room_name = ?
+                AND type = 'room'
+        ),
+        ?
+    ) RETURNING id, channel_id, user_id
+`
+
+type InsertRoomSubscriberByRoomNameParams struct {
+	RoomName sql.NullString
+	UserID   int64
+}
+
+func (q *Queries) InsertRoomSubscriberByRoomName(ctx context.Context, arg InsertRoomSubscriberByRoomNameParams) (ChannelSubscriber, error) {
+	row := q.db.QueryRowContext(ctx, insertRoomSubscriberByRoomName, arg.RoomName, arg.UserID)
+	var i ChannelSubscriber
+	err := row.Scan(&i.ID, &i.ChannelID, &i.UserID)
+	return i, err
+}

@@ -1,23 +1,37 @@
 package hub
 
-import "github.com/anrew1002/Tournament-ChemLoto/internal/common"
+import (
+	"github.com/anrew1002/Tournament-ChemLoto/internal/common"
+	"github.com/anrew1002/Tournament-ChemLoto/internal/entities"
+)
 
 type internalEventWrap struct {
 	userId string
 	// connId  string
-	room    string
-	role    common.Role
-	msgType common.MessageType
-	msg     map[string]interface{}
+	user           entities.User
+	room           string
+	role           common.Role
+	msgType        common.MessageType
+	MessageChannel chan common.Message
+	msg            map[string]interface{}
 }
 
-func NewEventWrap(userID string, room string, role common.Role, msg map[string]interface{}, msgType common.MessageType) internalEventWrap {
+func NewEventWrap(
+	userID string,
+	user entities.User,
+	room string,
+	role common.Role,
+	msg map[string]interface{},
+	msgType common.MessageType,
+	msgChan chan common.Message,
+) internalEventWrap {
 	return internalEventWrap{
-		userId: userID,
-		// connId:  connID,
-		room:    room,
-		role:    role,
-		msgType: msgType,
-		msg:     msg,
+		userId:         userID,
+		user:           user,
+		MessageChannel: msgChan,
+		room:           room,
+		role:           role,
+		msgType:        msgType,
+		msg:            msg,
 	}
 }

@@ -6,13 +6,14 @@ import (
 	"github.com/anrew1002/Tournament-ChemLoto/internal/common/enerr"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/engines/polymers"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/entities"
+	"github.com/anrew1002/Tournament-ChemLoto/internal/hub/repository"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestCreateRoom(t *testing.T) {
 
 	// var db *sql.DB = sqlite.MustInitDB()
-
+	repo := repository.NewRoomRepo(db)
 	t.Cleanup(cleanup)
 
 	type args struct {
@@ -61,7 +62,7 @@ func TestCreateRoom(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := CreateRoom(tt.args.req, MockLogger, db)
+			got, err := CreateRoom(repo, tt.args.req, MockLogger)
 			if err != nil {
 				if tt.wantErr != 0 {
 					t.Logf("Error: %+v", err)
@@ -72,6 +73,8 @@ func TestCreateRoom(t *testing.T) {
 				t.Fatalf("Login() unexpected error = %v", err)
 				return
 			}
+			// do not assert engine
+			got.Engine = nil
 			assert.Equal(t, tt.want, got)
 		})
 	}

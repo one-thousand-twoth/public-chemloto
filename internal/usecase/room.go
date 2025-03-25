@@ -1,17 +1,12 @@
 package usecase
 
 import (
-	"context"
-	"database/sql"
 	"log/slog"
 
 	"github.com/anrew1002/Tournament-ChemLoto/internal/common/enerr"
-	"github.com/anrew1002/Tournament-ChemLoto/internal/database"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/engines"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/entities"
-
-	"modernc.org/sqlite"
-	sqlite3 "modernc.org/sqlite/lib"
+	"github.com/anrew1002/Tournament-ChemLoto/internal/hub/repository"
 )
 
 type CreateRoomRequest struct {
@@ -25,49 +20,30 @@ type Response struct {
 	Error []string `json:"error"`
 }
 
-func CreateRoom(req CreateRoomRequest, log *slog.Logger, db *sql.DB) (*entities.Room, error) {
+func CreateRoom(repo *repository.RoomRepository, req CreateRoomRequest, log *slog.Logger) (*entities.Room, error) {
 
 	const op = "server.handlers.CreateRoom"
 
-	engines.NewEngine(req.Type, req.Name, log, req.EngineConfig)
-
-	params := database.InsertRoomParams{
-		Name:   req.Name,
-		Engine: req.Name,
-	}
-	row, err := database.New(db).InsertRoom(context.TODO(), params)
+	eng, err := engines.NewEngine(req.Type, req.Name, log, req.EngineConfig)
 	if err != nil {
-		if sqliteErr, ok := err.(*sqlite.Error); ok {
-			if sqliteErr.Code() == sqlite3.SQLITE_CONSTRAINT_UNIQUE {
-				return nil, enerr.E(op, err, enerr.Exist)
-			}
-		}
-		return nil, enerr.E(op, err, enerr.Internal)
+		return nil, enerr.E(op, err)
 	}
 
-	// TODO: Create channel for room
-
-	room := &entities.Room{
-		Name:   row.Name,
-		Engine: entities.ExternalEngine{},
+	room, err := repo.AddRoom(req.Name, eng)
+	if err != nil {
+		return nil, enerr.E(op, err)
 	}
+
 	return room, nil
 }
 
-func GetRooms(db *sql.DB) []entities.Room {
+func GetRooms(repo *repository.RoomRepository) ([]*entities.Room, error) {
+	const op = "server.handlers.CreateRoom"
 
-	rows, err := database.New(db).GetRooms(context.TODO())
+	rooms, err := repo.GetRooms()
 	if err != nil {
-		panic(err)
+		return nil, enerr.E(op, err)
 	}
 
-	rooms := make([]entities.Room, 0, len(rows))
-	for _, v := range rows {
-		rooms = append(rooms, entities.Room{
-			Name:   v.Name,
-			Engine: entities.ExternalEngine{},
-		})
-	}
-
-	return rooms
+	return rooms, nil
 }

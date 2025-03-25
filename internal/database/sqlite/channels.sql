@@ -33,6 +33,23 @@ VALUES
         ?
     ) RETURNING *;
 
+-- name: InsertRoomSubscriberByRoomName :one
+INSERT INTO
+    channel_subscribers (channel_id, user_id)
+VALUES
+    (
+        (
+            SELECT
+                id
+            FROM
+                channels
+            WHERE
+                room_name = ?
+                AND type = 'room'
+        ),
+        ?
+    ) RETURNING *;
+
 -- name: GetChannels :many
 SELECT
     *

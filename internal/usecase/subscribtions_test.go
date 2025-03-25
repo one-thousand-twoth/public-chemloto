@@ -1,8 +1,12 @@
 package usecase
 
 import (
+	"database/sql"
 	"testing"
 
+	"github.com/anrew1002/Tournament-ChemLoto/internal/common"
+	"github.com/anrew1002/Tournament-ChemLoto/internal/database"
+	"github.com/anrew1002/Tournament-ChemLoto/internal/engines/polymers"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/entities"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/hub/repository"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/sqlite/sqlitetest"
@@ -18,7 +22,7 @@ func TestAddRegularChannel(t *testing.T) {
 
 	type args struct {
 		name string
-		fn   func()
+		fn   func(chan common.Message)
 	}
 	tests := []struct {
 		name    string
@@ -29,7 +33,7 @@ func TestAddRegularChannel(t *testing.T) {
 			name: "Create Channel",
 			args: args{
 				name: "test_channel",
-				fn: func() {
+				fn: func(chan common.Message) {
 					panic("TODO")
 				},
 			},
@@ -39,7 +43,7 @@ func TestAddRegularChannel(t *testing.T) {
 			name: "Create Channel duplicate should error",
 			args: args{
 				name: "test_channel",
-				fn: func() {
+				fn: func(chan common.Message) {
 					panic("TODO")
 				},
 			},
@@ -66,7 +70,7 @@ func TestGetRegularChannel(t *testing.T) {
 
 	results := make(chan struct{})
 
-	id, err := AddRegularChannel(repo, "test_channel", func() { results <- struct{}{} })
+	channel, err := AddRegularChannel(repo, "test_channel", func(chan common.Message) { results <- struct{}{} })
 	if err != nil {
 		t.Fatal("fail init add", err)
 	}
@@ -82,7 +86,7 @@ func TestGetRegularChannel(t *testing.T) {
 		{
 			name: "Get",
 			args: args{
-				id: id,
+				id: channel.ID,
 			},
 			wantErr: false,
 		},
@@ -91,9 +95,6 @@ func TestGetRegularChannel(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if err := GetRegularChannel(repo, tt.args.id); (err != nil) != tt.wantErr {
 				t.Errorf("GetRegularChannel() error = %v, wantErr %v", err, tt.wantErr)
-			}
-			if _, ok := results; ok != true {
-
 			}
 		})
 	}
@@ -136,6 +137,71 @@ func TestSubscribeToChannel(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			if err := SubscribeToChannel(repo, tt.args.id, tt.args.user); (err != nil) != tt.wantErr {
 				t.Errorf("SubscribeToChannel() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestSubscribeToRoom(t *testing.T) {
+	t.Cleanup(cleanup)
+	var channelsRepo *repository.ChannelsRepository = repository.NewChannelsRepo(db)
+	var roomRepo *repository.RoomRepository = repository.NewRoomRepo(db)
+	var userRepo *repository.UserRepository = repository.NewUserRepo(db)
+	var user = &entities.User{ID: 1, Name: "test_user"}
+
+	_, err := userRepo.CreateUser(database.InsertUserParams{
+		Name:   user.Name,
+		Apikey: "api",
+		Room:   sql.NullString{},
+		Role:   int64(common.Player_Role),
+	})
+	if err != nil {
+		t.Fatal("Failed init")
+	}
+	_, err = CreateRoom(roomRepo, CreateRoomRequest{
+		Name: "test_room",
+		Type: "polymers",
+		EngineConfig: map[string]any{
+			"Elements":    map[string]int{},
+			"Checks":      polymers.Checks{},
+			"TimerInt":    0,
+			"Unicast":     nil,
+			"Broadcast":   nil,
+			"MaxPlayers":  0,
+			"IsAutoCheck": false,
+		},
+	}, MockLogger)
+	if err != nil {
+		t.Fatal("Failed init")
+	}
+
+	t.Cleanup(cleanup)
+
+	tests := []struct {
+		name     string
+		roomName string
+		user     *entities.User
+		wantErr  bool
+	}{
+		{
+			name:     "Subscribe to new room",
+			roomName: "test_room",
+			user:     user,
+			wantErr:  false,
+		},
+		{
+			name:     "Subscribe to the same room again",
+			roomName: "test_room",
+			user:     user,
+			wantErr:  true, // предполагаем, что повторная подписка вызывает ошибку
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := SubscribeToRoom(channelsRepo, roomRepo, tt.roomName, tt.user)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("SubscribeToRoom() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}

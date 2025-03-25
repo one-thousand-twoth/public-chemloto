@@ -10,7 +10,7 @@ SELECT
 FROM
     rooms;
 
--- name: getRoom :one
+-- name: GetRoom :one
 SELECT
     *
 FROM
