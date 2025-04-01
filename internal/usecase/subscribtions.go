@@ -9,25 +9,25 @@ import (
 	"github.com/anrew1002/Tournament-ChemLoto/internal/hub/repository"
 )
 
-func AddRegularChannel(repo *repository.ChannelsRepository, name string, fn entities.InitFunction) (*entities.Channel, error) {
+func AddRegularChannel(repo *repository.GroupsRepository, name string, fn entities.InitFunction) (*entities.Group, error) {
 	if fn == nil {
 		return nil, enerr.E(errors.New("nil function"))
 	}
-	row, err := repo.AddRegularChannel(name, fn)
+	row, err := repo.AddRegularGroup(name, fn)
 
 	return row, err
 
 }
 
-func GetRegularChannel(repo *repository.ChannelsRepository, id entities.ID) error {
-	err := repo.GetChannelByID(id)
+func GetRegularChannel(repo *repository.GroupsRepository, id entities.ID) error {
+	err := repo.GetGroupByID(id)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func SubscribeToChannel(repo *repository.ChannelsRepository, id entities.ID, user entities.User) error {
+func SubscribeToChannel(repo *repository.GroupsRepository, id entities.ID, user entities.User) error {
 
 	err := repo.SubscribeTo(int64(id), user)
 	if err != nil {
@@ -46,7 +46,7 @@ type ChannelRepository interface {
 }
 
 func SubscribeToRoom(
-	channelsRepo *repository.ChannelsRepository,
+	channelsRepo *repository.GroupsRepository,
 	roomRepo *repository.RoomRepository,
 	roomName string,
 	user *entities.User,

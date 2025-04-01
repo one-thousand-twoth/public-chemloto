@@ -46,9 +46,9 @@ func (h *Hub) HandleWS2(w http.ResponseWriter, r *http.Request) {
 	// (2) Указываем новое соединение пользователю
 	// user.conn = connection.ID
 
-	channels, err := h.Channels2.GetAllUserChannels(user.ID)
+	channels, err := h.Channels2.GetAllUserGroups(user.ID)
 	if err != nil {
-		channels = make([]*entities.Channel, 0)
+		channels = make([]*entities.Group, 0)
 	}
 
 	for _, channel := range channels {

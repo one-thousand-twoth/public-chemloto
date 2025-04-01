@@ -9,15 +9,15 @@ import (
 	"github.com/anrew1002/Tournament-ChemLoto/internal/entities"
 )
 
-type ChannelsRepository struct {
-	channelFunctions map[string]entities.InitFunction
+type GroupsRepository struct {
+	groupFunctions map[string]entities.InitFunction
 
 	queries *database.Queries
 }
 
-func NewChannelsRepo(db *sql.DB) *ChannelsRepository {
-	return &ChannelsRepository{
-		channelFunctions: map[string]entities.InitFunction{
+func NewGroupsRepo(db *sql.DB) *GroupsRepository {
+	return &GroupsRepository{
+		groupFunctions: map[string]entities.InitFunction{
 			"default": func(chan common.Message) {
 				//do not do anything at that moment
 			},
@@ -26,13 +26,13 @@ func NewChannelsRepo(db *sql.DB) *ChannelsRepository {
 	}
 }
 
-func (repo *ChannelsRepository) AddRegularChannel(name string, fn entities.InitFunction) (*entities.Channel, error) {
+func (repo *GroupsRepository) AddRegularGroup(name string, fn entities.InitFunction) (*entities.Group, error) {
 	row, err := repo.queries.InsertRegularChannel(context.TODO(), name)
 	if err != nil {
 		return nil, err
 	}
-	repo.channelFunctions[name] = fn
-	channel := &entities.Channel{
+	repo.groupFunctions[name] = fn
+	channel := &entities.Group{
 		ID:   entities.ID(row.ID),
 		Name: row.Name,
 		Type: row.Type,
@@ -40,7 +40,7 @@ func (repo *ChannelsRepository) AddRegularChannel(name string, fn entities.InitF
 	}
 	return channel, nil
 }
-func (repo *ChannelsRepository) GetChannelByID(id entities.ID) error {
+func (repo *GroupsRepository) GetGroupByID(id entities.ID) error {
 	_, err := repo.queries.GetChannelByID(context.TODO(), int64(id))
 	if err != nil {
 		return err
@@ -48,18 +48,18 @@ func (repo *ChannelsRepository) GetChannelByID(id entities.ID) error {
 	return nil
 }
 
-func (repo *ChannelsRepository) GetAllUserChannels(userID entities.ID) ([]*entities.Channel, error) {
+func (repo *GroupsRepository) GetAllUserGroups(userID entities.ID) ([]*entities.Group, error) {
 	rows, err := repo.queries.GetUserSubsribtions(context.TODO(), int64(userID))
 	if err != nil {
 		return nil, err
 	}
-	channels := make([]*entities.Channel, 0, len(rows))
+	channels := make([]*entities.Group, 0, len(rows))
 	for _, v := range rows {
-		fn, ok := repo.channelFunctions[v.RoomName.String]
+		fn, ok := repo.groupFunctions[v.RoomName.String]
 		if !ok {
 			fn = func(chan common.Message) {}
 		}
-		channels = append(channels, &entities.Channel{
+		channels = append(channels, &entities.Group{
 			ID:   entities.ID(v.ID),
 			Name: v.Name,
 			Type: v.Type,
@@ -69,7 +69,7 @@ func (repo *ChannelsRepository) GetAllUserChannels(userID entities.ID) ([]*entit
 	return channels, err
 }
 
-func (repo *ChannelsRepository) SubscribeTo(channelID int64, user entities.User) error {
+func (repo *GroupsRepository) SubscribeTo(channelID int64, user entities.User) error {
 	params := database.InsertChannelSubscribeParams{
 		ChannelID: channelID,
 		UserID:    int64(user.ID),

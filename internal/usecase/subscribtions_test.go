@@ -16,7 +16,7 @@ var db, cleanup = sqlitetest.GetTestDatabase()
 
 func TestAddRegularChannel(t *testing.T) {
 
-	var repo *repository.ChannelsRepository = repository.NewChannelsRepo(db)
+	var repo *repository.GroupsRepository = repository.NewGroupsRepo(db)
 
 	t.Cleanup(cleanup)
 
@@ -64,7 +64,7 @@ func TestGetRegularChannel(t *testing.T) {
 
 	// var db *sql.DB = sqlite.MustInitDB()
 
-	var repo *repository.ChannelsRepository = repository.NewChannelsRepo(db)
+	var repo *repository.GroupsRepository = repository.NewGroupsRepo(db)
 
 	t.Cleanup(cleanup)
 
@@ -104,7 +104,7 @@ func TestSubscribeToChannel(t *testing.T) {
 
 	// var db *sql.DB = sqlite.MustInitDB()
 
-	var repo *repository.ChannelsRepository = repository.NewChannelsRepo(db)
+	var repo *repository.GroupsRepository = repository.NewGroupsRepo(db)
 
 	t.Cleanup(cleanup)
 
@@ -144,7 +144,7 @@ func TestSubscribeToChannel(t *testing.T) {
 
 func TestSubscribeToRoom(t *testing.T) {
 	t.Cleanup(cleanup)
-	var channelsRepo *repository.ChannelsRepository = repository.NewChannelsRepo(db)
+	var channelsRepo *repository.GroupsRepository = repository.NewGroupsRepo(db)
 	var roomRepo *repository.RoomRepository = repository.NewRoomRepo(db)
 	var userRepo *repository.UserRepository = repository.NewUserRepo(db)
 	var user = &entities.User{ID: 1, Name: "test_user"}

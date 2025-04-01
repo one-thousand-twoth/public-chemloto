@@ -45,7 +45,7 @@ type Hub struct {
 
 	Connections *connectionsState
 	Channels    ChannelRepository
-	Channels2   *repository.ChannelsRepository
+	Channels2   *repository.GroupsRepository
 
 	eventHandlers map[string]HandlerFunc
 	eventChan     chan internalEventWrap
@@ -61,7 +61,7 @@ func NewHub(log *slog.Logger, upgrader websocket.Upgrader, db *sql.DB) *Hub {
 		Rooms2:        repository.NewRoomRepo(db),
 		Connections:   &connectionsState{state: make(map[string]*SockConnection)},
 		Channels:      repository.NewChannelState(),
-		Channels2:     repository.NewChannelsRepo(db),
+		Channels2:     repository.NewGroupsRepo(db),
 		eventHandlers: make(map[string]HandlerFunc),
 		eventChan:     make(chan internalEventWrap, 10),
 	}
