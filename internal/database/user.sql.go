@@ -10,6 +10,17 @@ import (
 	"database/sql"
 )
 
+const deleteUser = `-- name: DeleteUser :exec
+DELETE FROM users
+WHERE
+    id = ?
+`
+
+func (q *Queries) DeleteUser(ctx context.Context, id int64) error {
+	_, err := q.db.ExecContext(ctx, deleteUser, id)
+	return err
+}
+
 const getUserByApikey = `-- name: GetUserByApikey :one
 SELECT
     id, name, apikey, room, role
@@ -32,55 +43,48 @@ func (q *Queries) GetUserByApikey(ctx context.Context, apikey string) (User, err
 	return i, err
 }
 
-const getUserSubsribtions = `-- name: GetUserSubsribtions :many
+const getUserByID = `-- name: GetUserByID :one
 SELECT
-    cs.user_id,
-    c.id,
-    c.name,
-    c.type,
-    c.room_name
+    id, name, apikey, room, role
 FROM
-    channels c
-    JOIN channel_subscribers cs ON c.id = cs.channel_id
+    users
 WHERE
-    cs.user_id = ?
+    id = ?
 `
 
-type GetUserSubsribtionsRow struct {
-	UserID   int64
-	ID       int64
-	Name     string
-	Type     string
-	RoomName sql.NullString
+func (q *Queries) GetUserByID(ctx context.Context, id int64) (User, error) {
+	row := q.db.QueryRowContext(ctx, getUserByID, id)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Apikey,
+		&i.Room,
+		&i.Role,
+	)
+	return i, err
 }
 
-func (q *Queries) GetUserSubsribtions(ctx context.Context, userID int64) ([]GetUserSubsribtionsRow, error) {
-	rows, err := q.db.QueryContext(ctx, getUserSubsribtions, userID)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []GetUserSubsribtionsRow
-	for rows.Next() {
-		var i GetUserSubsribtionsRow
-		if err := rows.Scan(
-			&i.UserID,
-			&i.ID,
-			&i.Name,
-			&i.Type,
-			&i.RoomName,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
+const getUserByName = `-- name: GetUserByName :one
+SELECT
+    id, name, apikey, room, role
+FROM
+    users
+WHERE
+    name = ?
+`
+
+func (q *Queries) GetUserByName(ctx context.Context, name string) (User, error) {
+	row := q.db.QueryRowContext(ctx, getUserByName, name)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Apikey,
+		&i.Room,
+		&i.Role,
+	)
+	return i, err
 }
 
 const getUsers = `-- name: GetUsers :many
@@ -175,4 +179,22 @@ func (q *Queries) PatchUserRole(ctx context.Context, arg PatchUserRoleParams) (U
 		&i.Role,
 	)
 	return i, err
+}
+
+const updateUserRoom = `-- name: UpdateUserRoom :exec
+UPDATE users
+SET
+    room = ?
+WHERE
+    id = ?
+`
+
+type UpdateUserRoomParams struct {
+	Room sql.NullString
+	ID   int64
+}
+
+func (q *Queries) UpdateUserRoom(ctx context.Context, arg UpdateUserRoomParams) error {
+	_, err := q.db.ExecContext(ctx, updateUserRoom, arg.Room, arg.ID)
+	return err
 }

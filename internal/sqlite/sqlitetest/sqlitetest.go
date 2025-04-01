@@ -19,7 +19,7 @@ func GetTestDatabase() (*sql.DB, func()) {
 		DELETE FROM channels;
 		DELETE FROM channel_subscribers;
 		`)
-		if _, err := database.New(db).InsertRegularChannel(context.TODO(), "default"); err != nil {
+		if _, err := database.New(db).InsertGroup(context.TODO(), "default"); err != nil {
 			panic("ERROR WHILE INSERT DEFAULT CHANNEL")
 		}
 	}

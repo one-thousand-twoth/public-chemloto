@@ -44,24 +44,3 @@ type ChannelRepository interface {
 	GetChannelFunc(channel string) (func(chan common.Message), bool)
 	SetChannelFunc(channel string, fun func(chan common.Message))
 }
-
-func SubscribeToRoom(
-	channelsRepo *repository.GroupsRepository,
-	roomRepo *repository.RoomRepository,
-	roomName string,
-	user *entities.User,
-) error {
-	const op enerr.Op = "usecase.subscribtions/SubscribeToRoom"
-
-	// if data.Target == "" || data.Name == "" {
-	// 	return enerr.E(op, "empty field", enerr.Validation)
-	// }
-
-	err := roomRepo.SubscribeToRoom(roomName, user)
-	if err != nil {
-		return err
-	}
-
-	return nil
-
-}

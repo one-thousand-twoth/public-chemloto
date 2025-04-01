@@ -4,6 +4,34 @@ INSERT INTO
 VALUES
     (?, ?, ?, ?) RETURNING *;
 
+-- name: GetUserByID :one
+SELECT
+    *
+FROM
+    users
+WHERE
+    id = ?;
+
+-- name: GetUserByName :one
+SELECT
+    *
+FROM
+    users
+WHERE
+    name = ?;
+
+-- name: UpdateUserRoom :exec
+UPDATE users
+SET
+    room = ?
+WHERE
+    id = ?;
+
+-- name: DeleteUser :exec
+DELETE FROM users
+WHERE
+    id = ?;
+
 -- name: PatchUserRole :one
 UPDATE users
 SET
@@ -24,16 +52,3 @@ FROM
     users
 WHERE
     apikey = ?;
-
--- name: GetUserSubsribtions :many
-SELECT
-    cs.user_id,
-    c.id,
-    c.name,
-    c.type,
-    c.room_name
-FROM
-    channels c
-    JOIN channel_subscribers cs ON c.id = cs.channel_id
-WHERE
-    cs.user_id = ?;

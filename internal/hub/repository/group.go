@@ -27,7 +27,7 @@ func NewGroupsRepo(db *sql.DB) *GroupsRepository {
 }
 
 func (repo *GroupsRepository) AddRegularGroup(name string, fn entities.InitFunction) (*entities.Group, error) {
-	row, err := repo.queries.InsertRegularChannel(context.TODO(), name)
+	row, err := repo.queries.InsertGroup(context.TODO(), name)
 	if err != nil {
 		return nil, err
 	}
@@ -35,13 +35,12 @@ func (repo *GroupsRepository) AddRegularGroup(name string, fn entities.InitFunct
 	channel := &entities.Group{
 		ID:   entities.ID(row.ID),
 		Name: row.Name,
-		Type: row.Type,
 		Fn:   fn,
 	}
 	return channel, nil
 }
 func (repo *GroupsRepository) GetGroupByID(id entities.ID) error {
-	_, err := repo.queries.GetChannelByID(context.TODO(), int64(id))
+	_, err := repo.queries.GetGroupByID(context.TODO(), int64(id))
 	if err != nil {
 		return err
 	}
@@ -49,32 +48,32 @@ func (repo *GroupsRepository) GetGroupByID(id entities.ID) error {
 }
 
 func (repo *GroupsRepository) GetAllUserGroups(userID entities.ID) ([]*entities.Group, error) {
-	rows, err := repo.queries.GetUserSubsribtions(context.TODO(), int64(userID))
+	rows, err := repo.queries.GetGroupByUserID(context.TODO(), int64(userID))
 	if err != nil {
 		return nil, err
 	}
 	channels := make([]*entities.Group, 0, len(rows))
-	for _, v := range rows {
-		fn, ok := repo.groupFunctions[v.RoomName.String]
-		if !ok {
-			fn = func(chan common.Message) {}
-		}
-		channels = append(channels, &entities.Group{
-			ID:   entities.ID(v.ID),
-			Name: v.Name,
-			Type: v.Type,
-			Fn:   fn,
-		})
-	}
+	// for _, v := range rows {
+	// 	fn, ok := repo.groupFunctions[v.RoomName.String]
+	// 	if !ok {
+	// 		fn = func(chan common.Message) {}
+	// 	}
+	// 	channels = append(channels, &entities.Group{
+	// 		ID:   entities.ID(v.ID),
+	// 		Name: v.Name,
+	// 		Type: v.Type,
+	// 		Fn:   fn,
+	// 	})
+	// }
 	return channels, err
 }
 
 func (repo *GroupsRepository) SubscribeTo(channelID int64, user entities.User) error {
-	params := database.InsertChannelSubscribeParams{
+	params := database.SubscribeToGroupParams{
 		ChannelID: channelID,
 		UserID:    int64(user.ID),
 	}
-	_, err := repo.queries.InsertChannelSubscribe(context.TODO(), params)
+	err := repo.queries.SubscribeToGroup(context.TODO(), params)
 	if err != nil {
 		return err
 	}

@@ -4,16 +4,21 @@ INSERT INTO
 VALUES
     (?, ?) RETURNING *;
 
--- name: GetRooms :many
-SELECT
-    *
-FROM
-    rooms;
-
--- name: GetRoom :one
+-- name: GetRoomByName :one
 SELECT
     *
 FROM
     rooms
 WHERE
     name = ?;
+
+-- name: DeleteRoom :exec
+DELETE FROM rooms
+WHERE
+    name = ?;
+
+-- name: GetRooms :many
+SELECT
+    *
+FROM
+    rooms;

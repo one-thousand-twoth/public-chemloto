@@ -17,21 +17,7 @@ CREATE TABLE
 CREATE TABLE
     channels (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL UNIQUE,
-        type TEXT NOT NULL CHECK (type IN ('channel', 'room')),
-        room_name TEXT,
-        FOREIGN KEY (room_name) REFERENCES rooms (name) ON DELETE CASCADE,
-        -- Add a check constraint to ensure room_name is NOT NULL only when type is 'room'
-        CHECK (
-            (
-                type = 'room'
-                AND room_name IS NOT NULL
-            )
-            OR (
-                type = 'channel'
-                AND room_name IS NULL
-            )
-        )
+        name TEXT NOT NULL UNIQUE
     );
 
 CREATE TABLE

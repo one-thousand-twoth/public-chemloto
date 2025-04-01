@@ -14,6 +14,8 @@ import (
 	"time"
 
 	"github.com/anrew1002/Tournament-ChemLoto/internal/common"
+	"github.com/anrew1002/Tournament-ChemLoto/internal/engines/models"
+	"github.com/anrew1002/Tournament-ChemLoto/internal/entities"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/hub/repository"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/sl"
 	"github.com/gorilla/websocket"
@@ -33,12 +35,19 @@ type ChannelRepository interface {
 	SetChannelFunc(channel string, fun func(chan common.Message))
 }
 
+type RoomRepository interface {
+	AddRoom(name string, engine models.Engine) (*entities.Room, error)
+	GetRooms() ([]*entities.Room, error)
+	GetRoom(name string) (*entities.Room, error)
+	SubscribeToRoom(name string, user *entities.User) error
+}
+
 type Hub struct {
 	log *slog.Logger
 	db  *sql.DB
 
 	Rooms    *roomsState
-	Rooms2   *repository.RoomRepository
+	Rooms2   RoomRepository
 	Users    UserStore
 	Users2   *repository.UserRepository
 	upgrader websocket.Upgrader

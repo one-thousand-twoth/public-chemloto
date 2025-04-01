@@ -7,74 +7,80 @@ package database
 
 import (
 	"context"
-	"database/sql"
 )
 
-const getChannel = `-- name: GetChannel :one
-SELECT
-    id, name, type, room_name
-FROM
-    channels
+const deleteGroup = `-- name: DeleteGroup :exec
+DELETE FROM channels
 WHERE
-    type = ?
-    AND name = ?
+    id = ?
 `
 
-type GetChannelParams struct {
-	Type string
-	Name string
+func (q *Queries) DeleteGroup(ctx context.Context, id int64) error {
+	_, err := q.db.ExecContext(ctx, deleteGroup, id)
+	return err
 }
 
-func (q *Queries) GetChannel(ctx context.Context, arg GetChannelParams) (Channel, error) {
-	row := q.db.QueryRowContext(ctx, getChannel, arg.Type, arg.Name)
-	var i Channel
-	err := row.Scan(
-		&i.ID,
-		&i.Name,
-		&i.Type,
-		&i.RoomName,
-	)
-	return i, err
-}
-
-const getChannelByID = `-- name: GetChannelByID :one
+const getGroupByID = `-- name: GetGroupByID :one
 SELECT
-    id, name, type, room_name
+    id, name
 FROM
     channels
 WHERE
     id = ?
 `
 
-func (q *Queries) GetChannelByID(ctx context.Context, id int64) (Channel, error) {
-	row := q.db.QueryRowContext(ctx, getChannelByID, id)
+func (q *Queries) GetGroupByID(ctx context.Context, id int64) (Channel, error) {
+	row := q.db.QueryRowContext(ctx, getGroupByID, id)
 	var i Channel
-	err := row.Scan(
-		&i.ID,
-		&i.Name,
-		&i.Type,
-		&i.RoomName,
-	)
+	err := row.Scan(&i.ID, &i.Name)
 	return i, err
 }
 
-const getChannelSubscribers = `-- name: GetChannelSubscribers :many
+const getGroupByUserID = `-- name: GetGroupByUserID :many
 SELECT
-    u.id,
-    u.name,
-    u.apikey,
-    u.room,
-    u.role
+    channels.id, channels.name
 FROM
-    users u
-    JOIN channel_subscribers cs ON u.id = cs.user_id
-    JOIN channels c ON cs.channel_id = c.id
+    channels
+    JOIN channel_subscribers ON channels.id = channel_subscribers.channel_id
 WHERE
-    c.name = ?
+    channel_subscribers.user_id = ?
 `
 
-func (q *Queries) GetChannelSubscribers(ctx context.Context, name string) ([]User, error) {
-	rows, err := q.db.QueryContext(ctx, getChannelSubscribers, name)
+func (q *Queries) GetGroupByUserID(ctx context.Context, userID int64) ([]Channel, error) {
+	rows, err := q.db.QueryContext(ctx, getGroupByUserID, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Channel
+	for rows.Next() {
+		var i Channel
+		if err := rows.Scan(&i.ID, &i.Name); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getSubscribersByGroupID = `-- name: GetSubscribersByGroupID :many
+SELECT
+    users.id, users.name, users.apikey, users.room, users.role
+FROM
+    users
+    JOIN channel_subscribers ON users.id = channel_subscribers.user_id
+WHERE
+    channel_subscribers.channel_id = ?
+`
+
+func (q *Queries) GetSubscribersByGroupID(ctx context.Context, channelID int64) ([]User, error) {
+	rows, err := q.db.QueryContext(ctx, getSubscribersByGroupID, channelID)
 	if err != nil {
 		return nil, err
 	}
@@ -102,159 +108,50 @@ func (q *Queries) GetChannelSubscribers(ctx context.Context, name string) ([]Use
 	return items, nil
 }
 
-const getChannels = `-- name: GetChannels :many
-SELECT
-    id, name, type, room_name
-FROM
-    channels
+const insertGroup = `-- name: InsertGroup :one
+INSERT INTO
+    channels (name)
+VALUES
+    (?) RETURNING id, name
 `
 
-func (q *Queries) GetChannels(ctx context.Context) ([]Channel, error) {
-	rows, err := q.db.QueryContext(ctx, getChannels)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
-	var items []Channel
-	for rows.Next() {
-		var i Channel
-		if err := rows.Scan(
-			&i.ID,
-			&i.Name,
-			&i.Type,
-			&i.RoomName,
-		); err != nil {
-			return nil, err
-		}
-		items = append(items, i)
-	}
-	if err := rows.Close(); err != nil {
-		return nil, err
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
-	}
-	return items, nil
+func (q *Queries) InsertGroup(ctx context.Context, name string) (Channel, error) {
+	row := q.db.QueryRowContext(ctx, insertGroup, name)
+	var i Channel
+	err := row.Scan(&i.ID, &i.Name)
+	return i, err
 }
 
-const insertChannelSubscribe = `-- name: InsertChannelSubscribe :one
+const subscribeToGroup = `-- name: SubscribeToGroup :exec
 INSERT INTO
     channel_subscribers (channel_id, user_id)
 VALUES
-    (?, ?) RETURNING id, channel_id, user_id
+    (?, ?) ON CONFLICT DO NOTHING
 `
 
-type InsertChannelSubscribeParams struct {
+type SubscribeToGroupParams struct {
 	ChannelID int64
 	UserID    int64
 }
 
-func (q *Queries) InsertChannelSubscribe(ctx context.Context, arg InsertChannelSubscribeParams) (ChannelSubscriber, error) {
-	row := q.db.QueryRowContext(ctx, insertChannelSubscribe, arg.ChannelID, arg.UserID)
-	var i ChannelSubscriber
-	err := row.Scan(&i.ID, &i.ChannelID, &i.UserID)
-	return i, err
+func (q *Queries) SubscribeToGroup(ctx context.Context, arg SubscribeToGroupParams) error {
+	_, err := q.db.ExecContext(ctx, subscribeToGroup, arg.ChannelID, arg.UserID)
+	return err
 }
 
-const insertChannelSubscribeByChannelName = `-- name: InsertChannelSubscribeByChannelName :one
-INSERT INTO
-    channel_subscribers (channel_id, user_id)
-VALUES
-    (
-        (
-            SELECT
-                id
-            FROM
-                channels
-            WHERE
-                name = ?
-                AND type = 'channel'
-        ),
-        ?
-    ) RETURNING id, channel_id, user_id
+const unsubscribeFromGroup = `-- name: UnsubscribeFromGroup :exec
+DELETE FROM channel_subscribers
+WHERE
+    channel_id = ?
+    AND user_id = ?
 `
 
-type InsertChannelSubscribeByChannelNameParams struct {
-	Name   string
-	UserID int64
+type UnsubscribeFromGroupParams struct {
+	ChannelID int64
+	UserID    int64
 }
 
-func (q *Queries) InsertChannelSubscribeByChannelName(ctx context.Context, arg InsertChannelSubscribeByChannelNameParams) (ChannelSubscriber, error) {
-	row := q.db.QueryRowContext(ctx, insertChannelSubscribeByChannelName, arg.Name, arg.UserID)
-	var i ChannelSubscriber
-	err := row.Scan(&i.ID, &i.ChannelID, &i.UserID)
-	return i, err
-}
-
-const insertRegularChannel = `-- name: InsertRegularChannel :one
-INSERT INTO
-    channels (name, type, room_name)
-VALUES
-    (?, 'channel', NULL) RETURNING id, name, type, room_name
-`
-
-func (q *Queries) InsertRegularChannel(ctx context.Context, name string) (Channel, error) {
-	row := q.db.QueryRowContext(ctx, insertRegularChannel, name)
-	var i Channel
-	err := row.Scan(
-		&i.ID,
-		&i.Name,
-		&i.Type,
-		&i.RoomName,
-	)
-	return i, err
-}
-
-const insertRoomChannel = `-- name: InsertRoomChannel :one
-INSERT INTO
-    channels (name, type, room_name)
-VALUES
-    (?, 'room', ?) RETURNING id, name, type, room_name
-`
-
-type InsertRoomChannelParams struct {
-	Name     string
-	RoomName sql.NullString
-}
-
-func (q *Queries) InsertRoomChannel(ctx context.Context, arg InsertRoomChannelParams) (Channel, error) {
-	row := q.db.QueryRowContext(ctx, insertRoomChannel, arg.Name, arg.RoomName)
-	var i Channel
-	err := row.Scan(
-		&i.ID,
-		&i.Name,
-		&i.Type,
-		&i.RoomName,
-	)
-	return i, err
-}
-
-const insertRoomSubscriberByRoomName = `-- name: InsertRoomSubscriberByRoomName :one
-INSERT INTO
-    channel_subscribers (channel_id, user_id)
-VALUES
-    (
-        (
-            SELECT
-                id
-            FROM
-                channels
-            WHERE
-                room_name = ?
-                AND type = 'room'
-        ),
-        ?
-    ) RETURNING id, channel_id, user_id
-`
-
-type InsertRoomSubscriberByRoomNameParams struct {
-	RoomName sql.NullString
-	UserID   int64
-}
-
-func (q *Queries) InsertRoomSubscriberByRoomName(ctx context.Context, arg InsertRoomSubscriberByRoomNameParams) (ChannelSubscriber, error) {
-	row := q.db.QueryRowContext(ctx, insertRoomSubscriberByRoomName, arg.RoomName, arg.UserID)
-	var i ChannelSubscriber
-	err := row.Scan(&i.ID, &i.ChannelID, &i.UserID)
-	return i, err
+func (q *Queries) UnsubscribeFromGroup(ctx context.Context, arg UnsubscribeFromGroupParams) error {
+	_, err := q.db.ExecContext(ctx, unsubscribeFromGroup, arg.ChannelID, arg.UserID)
+	return err
 }

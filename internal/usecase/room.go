@@ -5,8 +5,8 @@ import (
 
 	"github.com/anrew1002/Tournament-ChemLoto/internal/common/enerr"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/engines"
+	"github.com/anrew1002/Tournament-ChemLoto/internal/engines/models"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/entities"
-	"github.com/anrew1002/Tournament-ChemLoto/internal/hub/repository"
 )
 
 type CreateRoomRequest struct {
@@ -20,7 +20,14 @@ type Response struct {
 	Error []string `json:"error"`
 }
 
-func CreateRoom(repo *repository.RoomRepository, req CreateRoomRequest, log *slog.Logger) (*entities.Room, error) {
+type RoomRepository interface {
+	AddRoom(name string, engine models.Engine) (*entities.Room, error)
+	GetRooms() ([]*entities.Room, error)
+	GetRoom(name string) (*entities.Room, error)
+	SubscribeToRoom(name string, user *entities.User) error
+}
+
+func CreateRoom(repo RoomRepository, req CreateRoomRequest, log *slog.Logger) (*entities.Room, error) {
 
 	const op = "server.handlers.CreateRoom"
 
@@ -37,7 +44,7 @@ func CreateRoom(repo *repository.RoomRepository, req CreateRoomRequest, log *slo
 	return room, nil
 }
 
-func GetRooms(repo *repository.RoomRepository) ([]*entities.Room, error) {
+func GetRooms(repo RoomRepository) ([]*entities.Room, error) {
 	const op = "server.handlers.CreateRoom"
 
 	rooms, err := repo.GetRooms()
@@ -46,4 +53,24 @@ func GetRooms(repo *repository.RoomRepository) ([]*entities.Room, error) {
 	}
 
 	return rooms, nil
+}
+
+func SubscribeToRoom(
+	roomRepo RoomRepository,
+	roomName string,
+	user *entities.User,
+) error {
+	const op enerr.Op = "usecase.subscribtions/SubscribeToRoom"
+
+	// if data.Target == "" || data.Name == "" {
+	// 	return enerr.E(op, "empty field", enerr.Validation)
+	// }
+
+	err := roomRepo.SubscribeToRoom(roomName, user)
+	if err != nil {
+		return err
+	}
+
+	return nil
+
 }

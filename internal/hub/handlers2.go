@@ -28,7 +28,7 @@ func SubscribeHandler2(h *Hub, e internalEventWrap) error {
 
 	switch data.Target {
 	case "room":
-		err := usecase.SubscribeToRoom(h.Channels2, h.Rooms2, data.Name, &e.user)
+		err := usecase.SubscribeToRoom(h.Rooms2, data.Name, &e.user)
 		if err != nil {
 			return err
 		}

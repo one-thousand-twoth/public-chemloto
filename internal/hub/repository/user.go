@@ -47,14 +47,14 @@ func (repo *UserRepository) CreateUser(params database.InsertUserParams) (*entit
 		return nil, enerr.E(op, err, enerr.Internal)
 	}
 	// NOTE: ВЫЗЫВАЕТ ОШИБКУ FOREIGN KEY если нет такого канала
-	_, err = queries.InsertChannelSubscribeByChannelName(context.TODO(),
-		database.InsertChannelSubscribeByChannelNameParams{
-			Name:   "default",
-			UserID: row.ID,
-		})
-	if err != nil {
-		return nil, enerr.E(op, err, enerr.Database)
-	}
+	// _, err = queries.SubscribeToGroup(context.TODO(),
+	// 	database.SubscribeToGroupParams{
+	// 		ChannelID: 1,
+	// 		UserID:    0,
+	// 	})
+	// if err != nil {
+	// 	return nil, enerr.E(op, err, enerr.Database)
+	// }
 
 	repo.messageChannels[row.Name] = make(messageChan)
 

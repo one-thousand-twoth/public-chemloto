@@ -70,19 +70,19 @@ func (repo *RoomRepository) AddRoom(name string, engine models.Engine) (*entitie
 		return nil, enerr.E(op, err, enerr.Internal)
 	}
 
-	_, err = queries.InsertRoomChannel(context.TODO(), database.InsertRoomChannelParams{
-		Name:     name,
-		RoomName: sql.NullString{String: name, Valid: true},
-	})
-	if err != nil {
-		if sqliteErr, ok := err.(*sqlite.Error); ok {
-			if sqliteErr.Code() == sqlite3.SQLITE_CONSTRAINT_UNIQUE {
-				// This shouldn't have happened.
-				return nil, enerr.E(op, err, enerr.Internal)
-			}
-		}
-		return nil, enerr.E(op, err, enerr.Internal)
-	}
+	// _, err = queries.Get(context.TODO(), database.InsertRoomChannelParams{
+	// 	Name:     name,
+	// 	RoomName: sql.NullString{String: name, Valid: true},
+	// })
+	// if err != nil {
+	// 	if sqliteErr, ok := err.(*sqlite.Error); ok {
+	// 		if sqliteErr.Code() == sqlite3.SQLITE_CONSTRAINT_UNIQUE {
+	// 			// This shouldn't have happened.
+	// 			return nil, enerr.E(op, err, enerr.Internal)
+	// 		}
+	// 	}
+	// 	return nil, enerr.E(op, err, enerr.Internal)
+	// }
 
 	repo.engines[name] = engine
 
@@ -116,7 +116,7 @@ func (repo *RoomRepository) GetRooms() ([]*entities.Room, error) {
 
 func (repo *RoomRepository) GetRoom(name string) (*entities.Room, error) {
 	const op enerr.Op = "repository.room/GetRooms"
-	row, err := repo.queries.GetRoom(context.TODO(), name)
+	row, err := repo.queries.GetRoomByName(context.TODO(), name)
 	if err != nil {
 		return nil, enerr.E(op, err, enerr.Internal)
 	}
@@ -136,14 +136,14 @@ func (repo *RoomRepository) SubscribeToRoom(name string, user *entities.User) er
 	}
 	queries := repo.queries.WithTx(tx)
 
-	room, err := queries.GetRoom(context.TODO(), name)
+	room, err := queries.GetRoomByName(context.TODO(), name)
 	if err != nil {
 		return enerr.E(op, err, enerr.Database)
 	}
 
-	_, err = queries.InsertRoomSubscriberByRoomName(context.TODO(), database.InsertRoomSubscriberByRoomNameParams{
-		RoomName: sql.NullString{String: name, Valid: true},
-		UserID:   int64(user.ID),
+	err = queries.UpdateUserRoom(context.TODO(), database.UpdateUserRoomParams{
+		Room: sql.NullString{String: name, Valid: true},
+		ID:   int64(user.ID),
 	})
 	if err != nil {
 		return enerr.E(op, err)

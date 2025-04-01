@@ -1,71 +1,10 @@
--- name: InsertRegularChannel :one
+-- name: InsertGroup :one
 INSERT INTO
-    channels (name, type, room_name)
+    channels (name)
 VALUES
-    (?, 'channel', NULL) RETURNING *;
+    (?) RETURNING *;
 
--- name: InsertRoomChannel :one
-INSERT INTO
-    channels (name, type, room_name)
-VALUES
-    (?, 'room', ?) RETURNING *;
-
--- name: InsertChannelSubscribe :one
-INSERT INTO
-    channel_subscribers (channel_id, user_id)
-VALUES
-    (?, ?) RETURNING *;
-
--- name: InsertChannelSubscribeByChannelName :one
-INSERT INTO
-    channel_subscribers (channel_id, user_id)
-VALUES
-    (
-        (
-            SELECT
-                id
-            FROM
-                channels
-            WHERE
-                name = ?
-                AND type = 'channel'
-        ),
-        ?
-    ) RETURNING *;
-
--- name: InsertRoomSubscriberByRoomName :one
-INSERT INTO
-    channel_subscribers (channel_id, user_id)
-VALUES
-    (
-        (
-            SELECT
-                id
-            FROM
-                channels
-            WHERE
-                room_name = ?
-                AND type = 'room'
-        ),
-        ?
-    ) RETURNING *;
-
--- name: GetChannels :many
-SELECT
-    *
-FROM
-    channels;
-
--- name: GetChannel :one
-SELECT
-    *
-FROM
-    channels
-WHERE
-    type = ?
-    AND name = ?;
-
--- name: GetChannelByID :one
+-- name: GetGroupByID :one
 SELECT
     *
 FROM
@@ -73,16 +12,37 @@ FROM
 WHERE
     id = ?;
 
--- name: GetChannelSubscribers :many
-SELECT
-    u.id,
-    u.name,
-    u.apikey,
-    u.room,
-    u.role
-FROM
-    users u
-    JOIN channel_subscribers cs ON u.id = cs.user_id
-    JOIN channels c ON cs.channel_id = c.id
+-- name: DeleteGroup :exec
+DELETE FROM channels
 WHERE
-    c.name = ?;
+    id = ?;
+
+-- name: SubscribeToGroup :exec
+INSERT INTO
+    channel_subscribers (channel_id, user_id)
+VALUES
+    (?, ?) ON CONFLICT DO NOTHING;
+
+-- name: GetSubscribersByGroupID :many
+SELECT
+    users.*
+FROM
+    users
+    JOIN channel_subscribers ON users.id = channel_subscribers.user_id
+WHERE
+    channel_subscribers.channel_id = ?;
+
+-- name: UnsubscribeFromGroup :exec
+DELETE FROM channel_subscribers
+WHERE
+    channel_id = ?
+    AND user_id = ?;
+
+-- name: GetGroupByUserID :many
+SELECT
+    channels.*
+FROM
+    channels
+    JOIN channel_subscribers ON channels.id = channel_subscribers.channel_id
+WHERE
+    channel_subscribers.user_id = ?;

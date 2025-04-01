@@ -9,7 +9,18 @@ import (
 	"context"
 )
 
-const getRoom = `-- name: GetRoom :one
+const deleteRoom = `-- name: DeleteRoom :exec
+DELETE FROM rooms
+WHERE
+    name = ?
+`
+
+func (q *Queries) DeleteRoom(ctx context.Context, name string) error {
+	_, err := q.db.ExecContext(ctx, deleteRoom, name)
+	return err
+}
+
+const getRoomByName = `-- name: GetRoomByName :one
 SELECT
     name, engine
 FROM
@@ -18,8 +29,8 @@ WHERE
     name = ?
 `
 
-func (q *Queries) GetRoom(ctx context.Context, name string) (Room, error) {
-	row := q.db.QueryRowContext(ctx, getRoom, name)
+func (q *Queries) GetRoomByName(ctx context.Context, name string) (Room, error) {
+	row := q.db.QueryRowContext(ctx, getRoomByName, name)
 	var i Room
 	err := row.Scan(&i.Name, &i.Engine)
 	return i, err

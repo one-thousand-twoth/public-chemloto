@@ -20,7 +20,7 @@ func MustInitDB() *sql.DB {
 		panic(err)
 	}
 	// initFunction for "default" handled in repo.
-	database.New(db).InsertRegularChannel(context.TODO(), "default")
+	database.New(db).InsertGroup(context.TODO(), "default")
 
 	return db
 }
