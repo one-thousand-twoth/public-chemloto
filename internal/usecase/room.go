@@ -7,6 +7,7 @@ import (
 	"github.com/anrew1002/Tournament-ChemLoto/internal/engines"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/engines/models"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/entities"
+	"github.com/anrew1002/Tournament-ChemLoto/internal/hub/repository"
 )
 
 type CreateRoomRequest struct {
@@ -74,3 +75,49 @@ func SubscribeToRoom(
 	return nil
 
 }
+
+func StartGame(
+	roomRepo RoomRepository,
+	userRepo *repository.UserRepository,
+	roomName string,
+	userID entities.ID,
+) error {
+	const op enerr.Op = "usecase.subscribtions/StartGame"
+
+	// if data.Target == "" || data.Name == "" {
+	// 	return enerr.E(op, "empty field", enerr.Validation)
+	// }
+
+	user, err := userRepo.GetUserByID(userID)
+	if err != nil {
+		return enerr.E(op, err)
+	}
+
+	err = roomRepo.SubscribeToRoom(user.Room, user)
+	if err != nil {
+		return err
+	}
+
+	return nil
+
+}
+
+// func UnSubscribeToRoom(
+// 	roomRepo RoomRepository,
+// 	roomName string,
+// 	user *entities.User,
+// ) error {
+// 	const op enerr.Op = "usecase.subscribtions/UnsubscribeToRoom"
+
+// 	// if data.Target == "" || data.Name == "" {
+// 	// 	return enerr.E(op, "empty field", enerr.Validation)
+// 	// }
+
+// 	err := roomRepo.Un(roomName, user)
+// 	if err != nil {
+// 		return err
+// 	}
+
+// 	return nil
+
+// }

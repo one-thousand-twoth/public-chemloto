@@ -148,9 +148,6 @@ ReceiveLoop:
 			h.SendEventToHub(
 				NewEventWrap(
 					user.Name,
-					*user,
-					user.Room,
-					user.Role,
 					msg,
 					msgType,
 					user.MessageChan,

@@ -128,7 +128,7 @@ func NewServer() *Server {
 	db := sqlite.MustInitDB()
 
 	Hub := hub.NewHub(log, upgrader, db)
-	Hub.SetupHandlers()
+	// Hub.SetupHandlers()
 	Hub.Run()
 	// NOTE: for development
 	Hub.FillRooms()

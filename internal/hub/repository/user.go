@@ -89,3 +89,21 @@ func (repo *UserRepository) GetUserByApikey(apikey string) (*entities.User, erro
 
 	return &user, nil
 }
+
+func (repo *UserRepository) GetUserByID(id entities.ID) (*entities.User, error) {
+	row, err := repo.queries.GetUserByID(context.TODO(), int64(id))
+	if err != nil {
+		return nil, err
+	}
+
+	user := entities.User{
+		ID:          entities.ID(row.ID),
+		Name:        row.Name,
+		Apikey:      row.Apikey,
+		Room:        row.Room.String,
+		Role:        common.Role(row.Role),
+		MessageChan: make(chan common.Message),
+	}
+
+	return &user, nil
+}

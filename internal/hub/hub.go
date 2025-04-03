@@ -56,23 +56,28 @@ type Hub struct {
 	Channels    ChannelRepository
 	Channels2   *repository.GroupsRepository
 
-	eventHandlers map[string]HandlerFunc
-	eventChan     chan internalEventWrap
+	// eventHandlers     map[string]HandlerFunc
+	WebsocketHandlers *WebsocketHandlers
+	eventChan         chan internalEventWrap
 }
 
 func NewHub(log *slog.Logger, upgrader websocket.Upgrader, db *sql.DB) *Hub {
+	roomRepo := repository.NewRoomRepo(db)
+	groupRepo := repository.NewGroupsRepo(db)
+	wh := NewWebsocketHandlers(roomRepo, groupRepo, log.With("origin: websocketHandlers"))
 	return &Hub{
-		upgrader:      upgrader,
-		log:           log,
-		Rooms:         &roomsState{state: make(map[string]*Room)},
-		Users:         &usersState{state: make(map[string]*User)},
-		Users2:        repository.NewUserRepo(db),
-		Rooms2:        repository.NewRoomRepo(db),
-		Connections:   &connectionsState{state: make(map[string]*SockConnection)},
-		Channels:      repository.NewChannelState(),
-		Channels2:     repository.NewGroupsRepo(db),
-		eventHandlers: make(map[string]HandlerFunc),
-		eventChan:     make(chan internalEventWrap, 10),
+		upgrader:          upgrader,
+		log:               log,
+		Rooms:             &roomsState{state: make(map[string]*Room)},
+		Users:             &usersState{state: make(map[string]*User)},
+		Users2:            repository.NewUserRepo(db),
+		Rooms2:            roomRepo,
+		Connections:       &connectionsState{state: make(map[string]*SockConnection)},
+		Channels:          repository.NewChannelState(),
+		Channels2:         groupRepo,
+		WebsocketHandlers: wh,
+		// eventHandlers:     make(map[string]HandlerFunc),
+		eventChan: make(chan internalEventWrap, 10),
 	}
 }
 
@@ -81,13 +86,20 @@ func (h *Hub) Run() {
 	eventLoop:
 		for event := range h.eventChan {
 			h.log.Debug("finding handler...")
-			handler, ok := h.eventHandlers[event.msgType.String()]
-			if !ok {
+			// handler, ok := h.eventHandlers[event.msgType.String()]
+			// if !ok {
+			// 	h.log.Error("error find event handler ", "message type", event.msgType.String())
+			// 	continue eventLoop
+			// }
+			// h.log.Debug("start handle event in Hub.Run", "event", event.msgType.String())
+			// go handler.HandleEvent(h, event)
+
+			err := h.WebsocketHandlers.Handle(event)
+			if err != nil {
 				h.log.Error("error find event handler ", "message type", event.msgType.String())
 				continue eventLoop
 			}
-			h.log.Debug("start handle event in Hub.Run", "event", event.msgType.String())
-			go handler.HandleEvent(h, event)
+
 			h.log.Debug("exit handler")
 		}
 	}()

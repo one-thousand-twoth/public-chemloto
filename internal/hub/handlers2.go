@@ -2,15 +2,87 @@ package hub
 
 import (
 	"fmt"
+	"log/slog"
 
 	"github.com/anrew1002/Tournament-ChemLoto/internal/common"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/common/enerr"
+	enmodels "github.com/anrew1002/Tournament-ChemLoto/internal/engines/models"
+	"github.com/anrew1002/Tournament-ChemLoto/internal/hub/repository"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/usecase"
 	"github.com/mitchellh/mapstructure"
 )
 
+// NOTE: лучше передавать канал для сообщений пользователю
+type HandlerFunc2 func(internalEventWrap) error
+
+type WebsocketHandlers struct {
+	eventHandlers map[string]HandlerFunc2
+
+	roomRepo    RoomRepository
+	channelRepo *repository.GroupsRepository
+
+	log *slog.Logger
+}
+
+func NewWebsocketHandlers(
+	roomRepo RoomRepository,
+	channelRepo *repository.GroupsRepository,
+	log *slog.Logger,
+) *WebsocketHandlers {
+
+	wh := &WebsocketHandlers{
+		eventHandlers: map[string]HandlerFunc2{},
+		roomRepo:      roomRepo,
+		channelRepo:   channelRepo,
+		log:           log,
+	}
+	wh.SetupHandlers()
+	return wh
+
+}
+func (wh *WebsocketHandlers) Handle(e internalEventWrap) error {
+	handler, ok := wh.eventHandlers[e.msgType.String()]
+	if !ok {
+		// h.log.Error("error find event handler ", "message type", event.msgType.String())
+		return enerr.E("Cannot find handler")
+	}
+
+	go func() {
+		err := handler(e)
+		if err != nil {
+			wh.log.Error("Unhandled error", "err", err)
+		}
+	}()
+
+	return nil
+}
+
+// func (f HandlerFunc) HandleEvent(h *Hub, msg internalEventWrap) {
+// 	f(h, msg)
+// }
+
+// use handler f for messages t
+func (h *WebsocketHandlers) UseHandler(t common.MessageType, f HandlerFunc2) {
+	h.eventHandlers[t.String()] = f
+}
+
+func (h *WebsocketHandlers) SetupHandlers() {
+	h.UseHandler(common.HUB_SUBSCRIBE, h.SubscribeHandler2)
+	// h.UseHandler(common.HUB_UNSUBSCRIBE, UnSubscribe)
+	h.UseHandler(common.ENGINE_ACTION, h.EngineAction2)
+	h.UseHandler(common.HUB_STARTGAME, h.StartGame2)
+	// h.UseHandler(common.HUB_EXITGAME, StopGame)
+
+}
+
+type SubscribeRequest struct {
+	Type   string
+	Target string
+	Name   string
+}
+
 // Subscribe обрабатывает логику добавления user`a в подписчики канала
-func SubscribeHandler2(h *Hub, e internalEventWrap) error {
+func (h *WebsocketHandlers) SubscribeHandler2(e internalEventWrap) error {
 
 	const op enerr.Op = "Subscribe handler"
 	log := h.log.With("op", op)
@@ -21,14 +93,10 @@ func SubscribeHandler2(h *Hub, e internalEventWrap) error {
 	if err := mapstructure.Decode(e.msg, &data); err != nil {
 		return enerr.E(op, fmt.Sprintf("failed to decode event body: %s", err.Error()))
 	}
-	// conn, ok := h.Connections.Get(e.connId)
-	// if !ok {
-	// 	return enerr.E(op, "Failed getting connection of user")
-	// }
 
 	switch data.Target {
 	case "room":
-		err := usecase.SubscribeToRoom(h.Rooms2, data.Name, &e.user)
+		err := usecase.SubscribeToRoom(h.roomRepo, data.Name, &e.user)
 		if err != nil {
 			return err
 		}
@@ -47,9 +115,87 @@ func SubscribeHandler2(h *Hub, e internalEventWrap) error {
 			"Name":   data.Name,
 		},
 	}
-	fun, ok := h.Channels.GetChannelFunc(data.Name)
-	if ok {
-		fun(e.MessageChannel)
+	// fun, ok := h.channelRepo.GetGroupByID()(data.Name)
+	// if ok {
+	// 	fun(e.MessageChannel)
+	// }
+	return nil
+}
+
+// Subscribe обрабатывает логику добавления user`a в подписчики канала
+func (h *WebsocketHandlers) UnSubscribeHandler2(e internalEventWrap) error {
+	type dataT struct {
+		Type   string
+		Target string
+		Name   string
 	}
+	const op enerr.Op = "UnSubscribe handler"
+	log := h.log.With("op", op)
+
+	log.Debug("Start Handle Event", "usr", e.userId, "data", fmt.Sprintf("%v", e.msg))
+
+	var data dataT
+	if err := mapstructure.Decode(e.msg, &data); err != nil {
+		return enerr.E(op, fmt.Sprintf("failed to decode event body: %s", err.Error()))
+	}
+
+	switch data.Target {
+	case "room":
+		// err := usecase.(h.roomRepo, data.Name, &e.user)
+		// if err != nil {
+		// 	return err
+		// }
+	case "channel":
+		// err := usecase.SubscribeToChannel(h.Channels, data.Name, e.user)
+		panic("TODO")
+	default:
+		return enerr.E(op, fmt.Sprintf("unknown target %s", data.Target))
+	}
+
+	e.MessageChannel <- common.Message{
+		Type: common.HUB_SUBSCRIBE,
+		Ok:   true,
+		Body: map[string]any{
+			"Target": "room",
+			"Name":   data.Name,
+		},
+	}
+
+	return nil
+}
+
+func (h *WebsocketHandlers) EngineAction2(e internalEventWrap) error {
+	room, err := h.roomRepo.GetRoom(e.room)
+	if err != nil {
+		h.log.Error("Cannot find room for EngineEvent", "room", e.room)
+		return err
+	}
+	go room.Engine.Input(enmodels.Action{
+		Player:   e.userId,
+		Envelope: e.msg,
+	})
+	return nil
+}
+
+func (h *WebsocketHandlers) StartGame2(e internalEventWrap) error {
+	type dataT struct {
+		Type string
+		Name string
+	}
+	op := "StartGame handler"
+	log := h.log.With("op", op)
+	log.Debug("Start Handle Event", "usr", e.userId, "data", fmt.Sprintf("%v", e.msg))
+
+	// if e.role < common.Judge_Role {
+	// 	log.Error("No permission")
+	// 	return enerr.E("No permission")
+	// }
+
+	room, err := h.roomRepo.GetRoom(e.room)
+	if err != nil {
+		log.Error("Failed getting room", "roomname", e.room)
+		return err
+	}
+	room.Engine.Start()
 	return nil
 }
