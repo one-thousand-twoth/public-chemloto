@@ -1,6 +1,7 @@
 package usecase
 
 import (
+	"context"
 	"database/sql"
 	"testing"
 
@@ -15,9 +16,8 @@ import (
 
 func TestCreateRoom(t *testing.T) {
 
-	// var db *sql.DB = sqlite.MustInitDB()
-	repo := repository.NewRoomRepo(db)
 	t.Cleanup(cleanup)
+	uc := NewUsecase(db)
 
 	type args struct {
 		req CreateRoomRequest
@@ -65,7 +65,7 @@ func TestCreateRoom(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := CreateRoom(repo, tt.args.req, MockLogger)
+			got, err := uc.CreateRoom(tt.args.req, MockLogger)
 			if err != nil {
 				if tt.wantErr != 0 {
 					t.Logf("Error: %+v", err)
@@ -85,8 +85,7 @@ func TestCreateRoom(t *testing.T) {
 
 func TestSubscribeToRoom(t *testing.T) {
 	t.Cleanup(cleanup)
-	// var channelsRepo *repository.GroupsRepository = repository.NewGroupsRepo(db)
-	var roomRepo *repository.RoomRepository = repository.NewRoomRepo(db)
+
 	var userRepo *repository.UserRepository = repository.NewUserRepo(db)
 	var user = &entities.User{ID: 1, Apikey: "api", Name: "test_user"}
 
@@ -96,10 +95,13 @@ func TestSubscribeToRoom(t *testing.T) {
 		Room:   sql.NullString{},
 		Role:   int64(common.Player_Role),
 	})
+
+	uc := NewUsecase(db)
+
 	if err != nil {
 		t.Fatal("Failed init")
 	}
-	_, err = CreateRoom(roomRepo, CreateRoomRequest{
+	_, err = uc.CreateRoom(CreateRoomRequest{
 		Name: "test_room",
 		Type: "polymers",
 		EngineConfig: map[string]any{
@@ -108,7 +110,7 @@ func TestSubscribeToRoom(t *testing.T) {
 			"TimerInt":    0,
 			"Unicast":     nil,
 			"Broadcast":   nil,
-			"MaxPlayers":  0,
+			"MaxPlayers":  2,
 			"IsAutoCheck": false,
 		},
 	}, MockLogger)
@@ -140,7 +142,7 @@ func TestSubscribeToRoom(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := SubscribeToRoom(roomRepo, tt.roomName, tt.user)
+			err := uc.SubscribeToRoom(context.TODO(), tt.roomName, tt.user.ID)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("SubscribeToRoom() error = %v, wantErr %v", err, tt.wantErr)
 			}

@@ -13,7 +13,6 @@ import (
 	"github.com/anrew1002/Tournament-ChemLoto/internal/common/enerr"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/database"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/entities"
-	"github.com/anrew1002/Tournament-ChemLoto/internal/hub/repository"
 	"github.com/stretchr/testify/assert"
 )
 
@@ -27,6 +26,9 @@ var MockLogger = slog.New(slog.NewTextHandler(buff, &slog.HandlerOptions{Replace
 
 func TestLogin(t *testing.T) {
 	t.Cleanup(cleanup)
+
+	uc := NewUsecase(db)
+
 	type args struct {
 		req LoginRequest
 	}
@@ -93,7 +95,7 @@ func TestLogin(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
-			got, err := Login(MockLogger, repository.NewUserRepo(db), tt.args.req, "valid")
+			got, err := uc.Login(MockLogger, tt.args.req, "valid")
 			if err != nil {
 				if tt.wantErr != nil {
 					fmt.Printf("Error: %+v", err)
@@ -129,6 +131,9 @@ func TestPatchUser(t *testing.T) {
 	if err != nil {
 		panic(fmt.Sprintf("init failed: %s", err))
 	}
+
+	uc := NewUsecase(db)
+
 	type args struct {
 		req PatchRequest
 	}
@@ -173,7 +178,7 @@ func TestPatchUser(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := PatchUser(tt.args.req, db)
+			got, err := uc.PatchUserRole(context.TODO(), tt.args.req)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("PatchUser() error = %v, wantErr %v", err, tt.wantErr)
 				return

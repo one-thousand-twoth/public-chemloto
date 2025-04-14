@@ -20,6 +20,16 @@ FROM
 WHERE
     name = ?;
 
+
+-- name: UpdateUserByID :exec
+UPDATE users
+SET
+    name = ?,
+    apikey = ?,
+    room = ?,
+    role = ?
+WHERE id = ?;
+
 -- name: UpdateUserRoom :exec
 UPDATE users
 SET

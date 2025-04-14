@@ -6,7 +6,6 @@ import (
 	"io"
 	"log/slog"
 
-	"github.com/anrew1002/Tournament-ChemLoto/internal/common"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/common/enerr"
 	enmodels "github.com/anrew1002/Tournament-ChemLoto/internal/engines/models"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/engines/polymers"
@@ -22,6 +21,8 @@ func NewEngine(
 	name string,
 	log *slog.Logger,
 	config map[string]interface{},
+	unicast enmodels.UnicastFunction,
+	broadcast enmodels.BroadcastFunction,
 ) (enmodels.Engine, error) {
 	const op enerr.Op = "engines.factory/GetEngine"
 	log = log.With(slog.String("room", name))
@@ -31,7 +32,7 @@ func NewEngine(
 		if err := mapstructure.Decode(config, &data); err != nil {
 			return nil, enerr.E(op, err, enerr.InvalidRequest)
 		}
-		return createPolymerEngine(log, data), nil
+		return createPolymerEngine(log, data, unicast, broadcast), nil
 	}
 
 	return nil, enerr.E("No such engine declared")
@@ -68,7 +69,12 @@ func parseEngineJson() polymers.Checks {
 	return checks
 }
 
-func createPolymerEngine(log *slog.Logger, config PolymersConfig) *polymers.PolymersEngine {
+func createPolymerEngine(
+	log *slog.Logger,
+	config PolymersConfig,
+	unicast enmodels.UnicastFunction,
+	broadcast enmodels.BroadcastFunction,
+) *polymers.PolymersEngine {
 	checks := parseEngineJson()
 	return polymers.New(
 		log,
@@ -77,29 +83,8 @@ func createPolymerEngine(log *slog.Logger, config PolymersConfig) *polymers.Poly
 			Checks:     checks,
 			TimerInt:   config.Time,
 			MaxPlayers: config.MaxPlayers,
-			Unicast: func(userID string, msg common.Message) {
-				go func() {
-					log.Debug("Unicast message")
-					log.Error("Unimplemented")
-					// usr, ok := h.Users.Get(userID)
-					// if !ok {
-					// 	log.Error("failed to get user while Unicast message from engine")
-					// 	return
-					// }
-					// connID := usr.GetConnection()
-					// conn, ok := h.Connections.Get(connID)
-					// if !ok {
-					// 	h.log.Error("failed to get user connection while Unicast message from engine")
-					// 	return
-					// }
-					// conn.MessageChan <- msg
-				}()
-			},
-			Broadcast: func(msg common.Message) {
-				log.Debug("Broadcast message")
-				log.Error("Unimplemented")
-				// go h.SendMessageOverChannel(config.Name, msg)
-			},
+			Unicast:    unicast,
+			Broadcast:  broadcast,
 		},
 	)
 }

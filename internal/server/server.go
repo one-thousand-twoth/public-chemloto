@@ -9,13 +9,13 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
-	"path/filepath"
 	"syscall"
 	"time"
 
 	"github.com/anrew1002/Tournament-ChemLoto/internal/hub"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/sl"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/sqlite"
+	"github.com/anrew1002/Tournament-ChemLoto/internal/usecase"
 	"github.com/go-chi/chi/v5"
 	"github.com/golang-cz/devslog"
 	"github.com/gorilla/websocket"
@@ -23,11 +23,12 @@ import (
 )
 
 type Server struct {
-	mux  *chi.Mux
-	db   *sql.DB
-	code string
-	hub  *hub.Hub
-	log  *slog.Logger
+	mux      *chi.Mux
+	db       *sql.DB
+	code     string
+	hub      *hub.Hub
+	usecases *usecase.Usecases
+	log      *slog.Logger
 }
 
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
@@ -65,23 +66,24 @@ func (s *Server) Run(port string) {
 	doneChan := make(chan struct{})
 	go func() {
 		s.log.Info("Сохранение результатов игр...")
-		results := s.hub.SaveGamesStats()
-		for roomName, result := range results {
-			filePath := filepath.Join("chemloto results", roomName+".csv")
-			file, err := os.Create(filePath)
-			if err != nil {
-				s.log.Error("Failed to create result file", sl.Err(err))
-				return
-			}
-			defer file.Close()
+		s.log.Error("Unimplemented")
+		// results := s.hub.SaveGamesStats()
+		// for roomName, result := range results {
+		// 	filePath := filepath.Join("chemloto results", roomName+".csv")
+		// 	file, err := os.Create(filePath)
+		// 	if err != nil {
+		// 		s.log.Error("Failed to create result file", sl.Err(err))
+		// 		return
+		// 	}
+		// 	defer file.Close()
 
-			_, err = result.WriteTo(file)
-			if err != nil {
-				s.log.Error("Failed to write in result file", sl.Err(err))
-				return
-			}
-			s.log.Info("Saved results for room", "room", roomName)
-		}
+		// 	_, err = result.WriteTo(file)
+		// 	if err != nil {
+		// 		s.log.Error("Failed to write in result file", sl.Err(err))
+		// 		return
+		// 	}
+		// 	s.log.Info("Saved results for room", "room", roomName)
+		// }
 		doneChan <- struct{}{}
 	}()
 
@@ -130,14 +132,16 @@ func NewServer() *Server {
 	Hub := hub.NewHub(log, upgrader, db)
 	// Hub.SetupHandlers()
 	Hub.Run()
-	// NOTE: for development
-	Hub.FillRooms()
+
+	uc := usecase.NewUsecase(db)
 
 	server := &Server{
-		hub: Hub,
-		log: log,
-		mux: mux,
-		db:  db}
+		hub:      Hub,
+		log:      log,
+		mux:      mux,
+		db:       db,
+		usecases: uc,
+	}
 	server.configureRoutes()
 
 	return server

@@ -1,6 +1,7 @@
 package hub
 
 import (
+	"context"
 	"fmt"
 	"log/slog"
 
@@ -20,6 +21,9 @@ type WebsocketHandlers struct {
 
 	roomRepo    RoomRepository
 	channelRepo *repository.GroupsRepository
+	userRepo    *repository.UserRepository
+
+	usecases usecase.Usecases
 
 	log *slog.Logger
 }
@@ -27,6 +31,7 @@ type WebsocketHandlers struct {
 func NewWebsocketHandlers(
 	roomRepo RoomRepository,
 	channelRepo *repository.GroupsRepository,
+	userRepo *repository.UserRepository,
 	log *slog.Logger,
 ) *WebsocketHandlers {
 
@@ -34,6 +39,7 @@ func NewWebsocketHandlers(
 		eventHandlers: map[string]HandlerFunc2{},
 		roomRepo:      roomRepo,
 		channelRepo:   channelRepo,
+		userRepo:      userRepo,
 		log:           log,
 	}
 	wh.SetupHandlers()
@@ -87,7 +93,7 @@ func (h *WebsocketHandlers) SubscribeHandler2(e internalEventWrap) error {
 	const op enerr.Op = "Subscribe handler"
 	log := h.log.With("op", op)
 
-	log.Debug("Start Handle Event", "usr", e.userId, "room", e.room, "data", fmt.Sprintf("%v", e.msg))
+	log.Debug("Start Handle Event", "usr", e.userId, "data", fmt.Sprintf("%v", e.msg))
 
 	var data SubscribeRequest
 	if err := mapstructure.Decode(e.msg, &data); err != nil {
@@ -96,7 +102,7 @@ func (h *WebsocketHandlers) SubscribeHandler2(e internalEventWrap) error {
 
 	switch data.Target {
 	case "room":
-		err := usecase.SubscribeToRoom(h.roomRepo, data.Name, &e.user)
+		err := h.usecases.SubscribeToRoom(context.TODO(), data.Name, e.userId)
 		if err != nil {
 			return err
 		}
@@ -165,13 +171,18 @@ func (h *WebsocketHandlers) UnSubscribeHandler2(e internalEventWrap) error {
 }
 
 func (h *WebsocketHandlers) EngineAction2(e internalEventWrap) error {
-	room, err := h.roomRepo.GetRoom(e.room)
+	const op enerr.Op = "EngineAction2 handler"
+	user, err := h.userRepo.GetUserByID(e.userId)
 	if err != nil {
-		h.log.Error("Cannot find room for EngineEvent", "room", e.room)
+		return enerr.E(err)
+	}
+	room, err := h.roomRepo.GetRoom(user.Room)
+	if err != nil {
+		h.log.Error("Cannot find room for EngineEvent", "room", user.Room)
 		return err
 	}
 	go room.Engine.Input(enmodels.Action{
-		Player:   e.userId,
+		Player:   user.Name,
 		Envelope: e.msg,
 	})
 	return nil
@@ -186,16 +197,7 @@ func (h *WebsocketHandlers) StartGame2(e internalEventWrap) error {
 	log := h.log.With("op", op)
 	log.Debug("Start Handle Event", "usr", e.userId, "data", fmt.Sprintf("%v", e.msg))
 
-	// if e.role < common.Judge_Role {
-	// 	log.Error("No permission")
-	// 	return enerr.E("No permission")
-	// }
+	h.usecases.StartGame(e.userId)
 
-	room, err := h.roomRepo.GetRoom(e.room)
-	if err != nil {
-		log.Error("Failed getting room", "roomname", e.room)
-		return err
-	}
-	room.Engine.Start()
 	return nil
 }

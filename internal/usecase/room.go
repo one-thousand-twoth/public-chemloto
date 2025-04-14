@@ -1,13 +1,15 @@
 package usecase
 
 import (
+	"context"
+	"database/sql"
 	"log/slog"
 
+	"github.com/anrew1002/Tournament-ChemLoto/internal/common"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/common/enerr"
+	"github.com/anrew1002/Tournament-ChemLoto/internal/database"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/engines"
-	"github.com/anrew1002/Tournament-ChemLoto/internal/engines/models"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/entities"
-	"github.com/anrew1002/Tournament-ChemLoto/internal/hub/repository"
 )
 
 type CreateRoomRequest struct {
@@ -21,23 +23,42 @@ type Response struct {
 	Error []string `json:"error"`
 }
 
-type RoomRepository interface {
-	AddRoom(name string, engine models.Engine) (*entities.Room, error)
-	GetRooms() ([]*entities.Room, error)
-	GetRoom(name string) (*entities.Room, error)
-	SubscribeToRoom(name string, user *entities.User) error
-}
-
-func CreateRoom(repo RoomRepository, req CreateRoomRequest, log *slog.Logger) (*entities.Room, error) {
+func (uc *Usecases) CreateRoom(req CreateRoomRequest, log *slog.Logger) (*entities.Room, error) {
 
 	const op = "server.handlers.CreateRoom"
 
-	eng, err := engines.NewEngine(req.Type, req.Name, log, req.EngineConfig)
+	eng, err := engines.NewEngine(
+		req.Type,
+		req.Name,
+		log,
+		req.EngineConfig,
+		func(userID string, msg common.Message) {
+			go func() {
+				user, err := uc.userRepo.GetUserByID(entities.ID(32))
+				if err != nil {
+					log.Error("Error getting user while unicast")
+					return
+				}
+				user.MessageChan <- msg
+			}()
+		},
+		func(msg common.Message) {
+			go func() {
+				user, err := uc.userRepo.GetUserByID(entities.ID(32))
+				if err != nil {
+					log.Error("Error getting user while unicast")
+					return
+				}
+				user.MessageChan <- msg
+			}()
+		},
+	)
+
 	if err != nil {
 		return nil, enerr.E(op, err)
 	}
 
-	room, err := repo.AddRoom(req.Name, eng)
+	room, err := uc.roomRepo.AddRoom(req.Name, eng)
 	if err != nil {
 		return nil, enerr.E(op, err)
 	}
@@ -45,58 +66,86 @@ func CreateRoom(repo RoomRepository, req CreateRoomRequest, log *slog.Logger) (*
 	return room, nil
 }
 
-func GetRooms(repo RoomRepository) ([]*entities.Room, error) {
-	const op = "server.handlers.CreateRoom"
+func (uc *Usecases) GetRooms(ctx context.Context) ([]*entities.Room, error) {
+	rows, err := uc.roomRepo.GetRooms()
 
-	rooms, err := repo.GetRooms()
 	if err != nil {
-		return nil, enerr.E(op, err)
+		return nil, err
 	}
 
-	return rooms, nil
+	rooms := make([]*entities.Room, 0, len(rows))
+	for _, v := range rows {
+		rooms = append(rooms, &entities.Room{
+			Name:   v.Name,
+			Engine: v.Engine,
+		})
+	}
+
+	return rooms, err
+
 }
 
-func SubscribeToRoom(
-	roomRepo RoomRepository,
-	roomName string,
-	user *entities.User,
-) error {
-	const op enerr.Op = "usecase.subscribtions/SubscribeToRoom"
+func (uc *Usecases) SubscribeToRoom(ctx context.Context, roomName string, userID entities.ID) error {
+	const op enerr.Op = "usecase.room/SubscribeToRoom"
 
-	// if data.Target == "" || data.Name == "" {
-	// 	return enerr.E(op, "empty field", enerr.Validation)
-	// }
-
-	err := roomRepo.SubscribeToRoom(roomName, user)
+	tx, err := uc.db.BeginTx(ctx, nil)
+	defer tx.Rollback()
 	if err != nil {
 		return err
 	}
 
-	return nil
+	queries := uc.queries.WithTx(tx)
 
-}
-
-func StartGame(
-	roomRepo RoomRepository,
-	userRepo *repository.UserRepository,
-	roomName string,
-	userID entities.ID,
-) error {
-	const op enerr.Op = "usecase.subscribtions/StartGame"
-
-	// if data.Target == "" || data.Name == "" {
-	// 	return enerr.E(op, "empty field", enerr.Validation)
-	// }
-
-	user, err := userRepo.GetUserByID(userID)
+	rowUser, err := queries.GetUserByID(ctx, int64(userID))
 	if err != nil {
 		return enerr.E(op, err)
 	}
 
-	err = roomRepo.SubscribeToRoom(user.Room, user)
+	user := entities.ToUserModel(rowUser)
+
+	err = user.SubscribeToRoom(roomName)
+	if err != nil {
+		return enerr.E(op, err)
+	}
+
+	err = queries.UpdateUserRoom(ctx, database.UpdateUserRoomParams{
+		Room: sql.NullString{
+			String: user.Room,
+			Valid:  true,
+		},
+		ID: int64(user.ID),
+	})
 	if err != nil {
 		return err
 	}
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+	return nil
+
+}
+
+func (uc *Usecases) StartGame(
+	userID entities.ID,
+) error {
+	const op enerr.Op = "usecase.room/StartGame"
+
+	user, err := uc.userRepo.GetUserByID(userID)
+	if err != nil {
+		return enerr.E(op, err)
+	}
+
+	if !user.HasPermision() {
+		return enerr.E("No permission to start game")
+	}
+
+	room, err := uc.roomRepo.GetRoom(user.Room)
+	if err != nil {
+		return err
+	}
+
+	room.Engine.Start()
 
 	return nil
 

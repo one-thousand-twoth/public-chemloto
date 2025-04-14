@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"log/slog"
 	"net/http"
 
@@ -8,7 +9,6 @@ import (
 	"github.com/anrew1002/Tournament-ChemLoto/internal/common"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/common/enerr"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/entities"
-	"github.com/anrew1002/Tournament-ChemLoto/internal/hub"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/sl"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/usecase"
 	"github.com/go-chi/chi/v5"
@@ -44,7 +44,7 @@ func (s *Server) Login2() http.HandlerFunc {
 			Name: req.Name,
 			Code: req.Code,
 		}
-		user, err := usecase.Login(s.log, s.hub.Users2, request, s.code)
+		user, err := s.usecases.Login(s.log, request, s.code)
 		if err != nil {
 			if enerr.KindIs(enerr.Exist, err) {
 				encode(w, r, http.StatusConflict, Response{Error: []string{"Пользователь с таким именем уже существует"}})
@@ -67,9 +67,50 @@ func (s *Server) Login2() http.HandlerFunc {
 	}
 }
 
+func (s *Server) PatchUser() http.HandlerFunc {
+	type Request struct {
+		Role common.Role
+	}
+	type Response struct {
+		Error []string `json:"error"`
+	}
+	return func(w http.ResponseWriter, r *http.Request) {
+		const op = "server.handlers.PatchUser"
+		log := s.log.With(slog.String("op", op))
+		username := chi.URLParam(r, "username")
+		if username == "" {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		var req Request
+		err := render.DecodeJSON(r.Body, &req)
+		if err != nil {
+			log.Error("failed to decode body", sl.Err(err))
+			encode(w, r, http.StatusBadRequest, Response{Error: []string{"Неправильный формат запроса"}})
+			return
+		}
+		_, err = s.usecases.PatchUserRole(context.TODO(), usecase.PatchRequest{
+			Name: username,
+			Role: req.Role,
+		})
+		if err != nil {
+			log.Error("failed to PatchUserRole", sl.Err(err))
+			encode(w, r, http.StatusBadRequest, Response{Error: []string{"Неправильный формат запроса"}})
+		}
+
+		encode(w, r, http.StatusOK, struct{}{})
+	}
+}
+
 func (s *Server) CreateRoom2() http.HandlerFunc {
 	type Request struct {
-		hub.CreateRoomRequest
+		Name        string         `json:"name" validate:"required,min=1,safeinput"`
+		MaxPlayers  int            `json:"maxPlayers" validate:"required,gt=1,lt=100"`
+		Elements    map[string]int `json:"elementCounts" validate:"required"`
+		Time        int            `validate:"excluded_if=isAuto false,gte=0"`
+		IsAuto      bool           `json:"isAuto"`
+		IsAutoCheck bool           `json:isAutoCheck`
 	}
 	type Response struct {
 		Rooms any      `json:"rooms"`
@@ -108,7 +149,7 @@ func (s *Server) CreateRoom2() http.HandlerFunc {
 		// 	IsAutoCheck bool           `json:isAutoCheck`
 		// }
 
-		_, err = usecase.CreateRoom(s.hub.Rooms2, createRoomRequest, s.log)
+		_, err = s.usecases.CreateRoom(createRoomRequest, s.log)
 		if err != nil {
 			log.Error("failed to add room", sl.Err(err))
 			switch validateErr := err.(type) {
@@ -125,14 +166,14 @@ func (s *Server) CreateRoom2() http.HandlerFunc {
 		}
 		// s.log.Info("Room created", "name", req.Name, "time", req.Time)
 		// s.hub.SendMessageOverChannel("default", models.Message{Type: websocket.TextMessage, Body: []byte(req.Name)})
-		encode(w, r, http.StatusOK, Response{Rooms: s.hub.Rooms, Error: []string{}})
+		encode(w, r, http.StatusOK, Response{Rooms: nil, Error: []string{}})
 	}
 }
 
 func (s *Server) GetRooms2() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
-		rooms, err := usecase.GetRooms(s.hub.Rooms2)
+		rooms, err := s.usecases.GetRooms(context.TODO())
 		if err != nil {
 			encode(w, r, http.StatusInternalServerError, struct{}{})
 			return

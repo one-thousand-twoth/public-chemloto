@@ -70,20 +70,6 @@ func (repo *RoomRepository) AddRoom(name string, engine models.Engine) (*entitie
 		return nil, enerr.E(op, err, enerr.Internal)
 	}
 
-	// _, err = queries.Get(context.TODO(), database.InsertRoomChannelParams{
-	// 	Name:     name,
-	// 	RoomName: sql.NullString{String: name, Valid: true},
-	// })
-	// if err != nil {
-	// 	if sqliteErr, ok := err.(*sqlite.Error); ok {
-	// 		if sqliteErr.Code() == sqlite3.SQLITE_CONSTRAINT_UNIQUE {
-	// 			// This shouldn't have happened.
-	// 			return nil, enerr.E(op, err, enerr.Internal)
-	// 		}
-	// 	}
-	// 	return nil, enerr.E(op, err, enerr.Internal)
-	// }
-
 	repo.engines[name] = engine
 
 	if err := tx.Commit(); err != nil {

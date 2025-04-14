@@ -2,31 +2,19 @@
 package hub
 
 import (
-	"bytes"
 	"database/sql"
-	"encoding/csv"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
-	"net/http"
-	"sync"
-	"time"
 
 	"github.com/anrew1002/Tournament-ChemLoto/internal/common"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/engines/models"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/entities"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/hub/repository"
-	"github.com/anrew1002/Tournament-ChemLoto/internal/sl"
 	"github.com/gorilla/websocket"
 )
 
-type UserStore interface {
-	Get(name string) (*User, bool)
-	GetByToken(token string) (*User, bool)
-	Add(user *User) error
-	Remove(username string)
-}
 type ChannelRepository interface {
 	Get(channel string) ([]string, bool)
 	Add(channel string, connection string)
@@ -46,9 +34,8 @@ type Hub struct {
 	log *slog.Logger
 	db  *sql.DB
 
-	Rooms    *roomsState
+	// Rooms    *roomsState
 	Rooms2   RoomRepository
-	Users    UserStore
 	Users2   *repository.UserRepository
 	upgrader websocket.Upgrader
 
@@ -64,13 +51,12 @@ type Hub struct {
 func NewHub(log *slog.Logger, upgrader websocket.Upgrader, db *sql.DB) *Hub {
 	roomRepo := repository.NewRoomRepo(db)
 	groupRepo := repository.NewGroupsRepo(db)
-	wh := NewWebsocketHandlers(roomRepo, groupRepo, log.With("origin: websocketHandlers"))
+	userRepo := repository.NewUserRepo(db)
+	wh := NewWebsocketHandlers(roomRepo, groupRepo, userRepo, log.With("origin: websocketHandlers"))
 	return &Hub{
 		upgrader:          upgrader,
 		log:               log,
-		Rooms:             &roomsState{state: make(map[string]*Room)},
-		Users:             &usersState{state: make(map[string]*User)},
-		Users2:            repository.NewUserRepo(db),
+		Users2:            userRepo,
 		Rooms2:            roomRepo,
 		Connections:       &connectionsState{state: make(map[string]*SockConnection)},
 		Channels:          repository.NewChannelState(),
@@ -109,31 +95,33 @@ func (h *Hub) SendEventToHub(e internalEventWrap) {
 	h.eventChan <- e
 }
 
-func (h *Hub) SaveGamesStats() map[string]*bytes.Buffer {
-	h.Rooms.mutex.Lock()
-	defer h.Rooms.mutex.Unlock()
+// TODO:
+// func (h *Hub) SaveGamesStats() map[string]*bytes.Buffer {
+// 	h.Rooms.mutex.Lock()
+// 	defer h.Rooms.mutex.Unlock()
 
-	results := make(map[string]*bytes.Buffer)
-	for k, v := range h.Rooms.state {
-		// Инициализация нового bytes.Buffer
-		buffer := new(bytes.Buffer)
+// 	results := make(map[string]*bytes.Buffer)
+// 	for k, v := range h.Rooms.state {
+// 		// Инициализация нового bytes.Buffer
+// 		buffer := new(bytes.Buffer)
 
-		// Создание нового csv.Writer
-		writer := csv.NewWriter(buffer)
+// 		// Создание нового csv.Writer
+// 		writer := csv.NewWriter(buffer)
 
-		// Запись данных в CSV
-		err := writer.WriteAll(v.Engine.GetResults())
-		if err != nil {
-			h.log.Error("Error writing to buffer:", slog.String("room", k), sl.Err(err))
-			continue
-		}
+// 		// Запись данных в CSV
+// 		err := writer.WriteAll(v.Engine.GetResults())
+// 		if err != nil {
+// 			h.log.Error("Error writing to buffer:", slog.String("room", k), sl.Err(err))
+// 			continue
+// 		}
 
-		// Сохранение буфера в результаты
-		results[v.Name] = buffer
-	}
+// 		// Сохранение буфера в результаты
+// 		results[v.Name] = buffer
+// 	}
 
-	return results
-}
+//		return results
+//	}
+
 func (h *Hub) SendMessageOverChannel(channel string, message common.Message) error {
 	op := "SendMessageOverChannel"
 	log := h.log.With("op", op)
@@ -169,149 +157,4 @@ func GetMessageType(msg []byte) (payload map[string]interface{}, msgType common.
 		return
 	}
 	return payload, msgType, err
-}
-
-func (h *Hub) CheckToken(token string) (*User, error) {
-	if token == "" {
-		return nil, fmt.Errorf("bad token")
-	}
-	clnt, ok := h.Users.GetByToken(token)
-	if !ok {
-		return nil, fmt.Errorf("bad token")
-	}
-	return clnt, nil
-}
-
-func (h *Hub) HandleWS(w http.ResponseWriter, r *http.Request) {
-	op := "handlers.handleWS"
-	log := h.log.With("op", op)
-	reqToken := r.URL.Query().Get("token")
-	if reqToken == "" {
-		http.Error(w, "Incorrect token", http.StatusBadRequest)
-		return
-	}
-	user, err := h.CheckToken(reqToken)
-	if err != nil {
-		log.Error(op, sl.Err(err))
-		http.Error(w, "Bad Token", http.StatusUnauthorized)
-		return
-	}
-	user.mutex.Lock()
-	defer user.mutex.Unlock()
-	username := user.Name
-	log = log.With("userWS", user.Name)
-	conn, err := h.upgrader.Upgrade(w, r, nil)
-	if err != nil {
-		log.Error("Failed to upgrade connection", sl.Err(err))
-		return
-	}
-
-	connection := NewConnection(conn, user.Room)
-	// (1) Добавляем соединение в общий список
-	h.Connections.Add(connection)
-	// h.Users.Add(client)]
-	// TODO: действительно ли оно надо?
-	// (2) Указываем новое соединение пользователю
-	user.conn = connection.ID
-
-	for _, channel := range user.channels {
-		// (3) Добавляем к необходимым каналам новое соединение
-		h.Channels.Add(channel, connection.ID)
-		channel := channel
-		// Вызываем Init функцию для канала, если есть
-		go func() {
-			initChan, ok := h.Channels.GetChannelFunc(channel)
-			if !ok {
-				return
-			}
-			log.Debug(fmt.Sprintf("Running initFunction for %s", channel))
-			initChan(connection.MessageChan)
-		}()
-	}
-	log.Debug("(Re)Connected to WS user", "user current channels:", fmt.Sprintf("%+v", user.channels))
-	if x, ok := h.Channels.Get("default"); ok {
-		log.Debug("hub current channels", "hub channels:", fmt.Sprintf("%+#v", x))
-	}
-	go func() {
-	ReceiveLoop:
-		for {
-			messageType, msg, err := connection.Conn.ReadMessage()
-			if err != nil {
-				// Disconnect on error
-				if connection.CloseChannel != nil {
-					connection.CloseChannel <- struct{}{}
-				}
-				break
-			}
-
-			switch messageType {
-			case websocket.CloseMessage:
-				if connection.CloseChannel != nil {
-					connection.CloseChannel <- struct{}{}
-				}
-				break ReceiveLoop
-			case websocket.TextMessage:
-				msg, msgType, err := GetMessageType(msg)
-				if err != nil {
-					log.Error("failed to get message type", "type", msgType)
-				}
-				log.Debug(fmt.Sprintf("got messageWS %+v", msg))
-				user.mutex.Lock()
-				// h.SendEventToHub(NewEventWrap(user.Name,
-				// 	user.Room,
-				// 	user.Role,
-				// 	msg, msgType))
-				user.mutex.Unlock()
-			// TODO: Реализовать ping на клиенте
-			// Handling receiving ping/pong
-			case websocket.PingMessage:
-				fallthrough
-			case websocket.PongMessage:
-				// connection.lock.Lock()
-				// connection.lastPing = time.Now()
-				// connection.lock.Unlock()
-			}
-		}
-	}()
-
-	sendMutex := sync.Mutex{}
-	go func() {
-	SendLoop:
-		for {
-			select {
-			case message := <-connection.MessageChan:
-				envelope, err := json.Marshal(message)
-				if err != nil {
-					log.Error("Marshaling data", slog.Any("data", message))
-				}
-				log.Debug("envelope", "env", string(envelope))
-				sendMutex.Lock()
-				_ = conn.WriteMessage(websocket.TextMessage, envelope)
-				sendMutex.Unlock()
-			case <-connection.CloseChannel:
-				log.Debug("Disconnecting client", "client", username)
-
-				//Сигнализируем что соединение было закрыто
-				connection.CloseChannel = nil
-
-				sendMutex.Lock()
-
-				// Send close message with 1000
-				_ = conn.WriteMessage(websocket.CloseMessage, websocket.FormatCloseMessage(websocket.CloseNormalClosure, ""))
-				// Sleep a tiny bit to allow message to be sent before closing connection
-				time.Sleep(time.Millisecond)
-				_ = conn.Close()
-				// (1) Удаляем соединение из общего списка
-				h.Connections.Remove(connection.ID)
-				// (2) Удаляем соединение у пользователя
-				user.SetConnection("")
-				// (3) Удаляем из подписок каналов соединие
-				for _, channel := range user.GetChannels() {
-					h.Channels.Remove(channel, connection.ID)
-				}
-
-				break SendLoop
-			}
-		}
-	}()
 }

@@ -1,8 +1,11 @@
 package entities
 
 import (
+	"encoding/json"
+
 	"github.com/anrew1002/Tournament-ChemLoto/internal/common"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/common/enerr"
+	"github.com/anrew1002/Tournament-ChemLoto/internal/database"
 )
 
 type ID int64
@@ -15,6 +18,34 @@ type User struct {
 	Role        common.Role         `json:"role"`
 	MessageChan chan common.Message `json:"-"`
 	// channels    []string            `json:"channels"`
+}
+
+func ToUserModel(u database.User) User {
+
+	return User{
+		ID:     ID(u.ID),
+		Name:   u.Name,
+		Apikey: u.Apikey,
+		Room:   u.Room.String,
+		Role:   common.Role(u.Role),
+		// MessageChan: nil,
+	}
+}
+
+func (r *User) MarshalJSON() ([]byte, error) {
+	user := struct {
+		Name string `json:"username"`
+		Room string `json:"room"`
+		Role string `json:"role"`
+	}{r.Name, r.Room, r.Role.String()}
+	return json.Marshal(user)
+}
+
+func (u *User) HasPermision() bool {
+	if u.Role < common.Judge_Role {
+		return false
+	}
+	return true
 }
 
 func (u *User) SubscribeToRoom(roomName string) error {

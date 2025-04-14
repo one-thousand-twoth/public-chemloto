@@ -181,6 +181,35 @@ func (q *Queries) PatchUserRole(ctx context.Context, arg PatchUserRoleParams) (U
 	return i, err
 }
 
+const updateUserByID = `-- name: UpdateUserByID :exec
+UPDATE users
+SET
+    name = ?,
+    apikey = ?,
+    room = ?,
+    role = ?
+WHERE id = ?
+`
+
+type UpdateUserByIDParams struct {
+	Name   string
+	Apikey string
+	Room   sql.NullString
+	Role   int64
+	ID     int64
+}
+
+func (q *Queries) UpdateUserByID(ctx context.Context, arg UpdateUserByIDParams) error {
+	_, err := q.db.ExecContext(ctx, updateUserByID,
+		arg.Name,
+		arg.Apikey,
+		arg.Room,
+		arg.Role,
+		arg.ID,
+	)
+	return err
+}
+
 const updateUserRoom = `-- name: UpdateUserRoom :exec
 UPDATE users
 SET

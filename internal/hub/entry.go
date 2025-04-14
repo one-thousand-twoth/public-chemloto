@@ -147,7 +147,7 @@ ReceiveLoop:
 			// user.mutex.Lock()
 			h.SendEventToHub(
 				NewEventWrap(
-					user.Name,
+					user.ID,
 					msg,
 					msgType,
 					user.MessageChan,

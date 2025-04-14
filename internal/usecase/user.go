@@ -6,12 +6,13 @@ import (
 	"database/sql"
 	"encoding/base64"
 	"log/slog"
+	"regexp"
 
 	"github.com/anrew1002/Tournament-ChemLoto/internal/common"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/common/enerr"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/database"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/entities"
-	"github.com/anrew1002/Tournament-ChemLoto/internal/hub/repository"
+	"github.com/invopop/validation"
 	"modernc.org/sqlite"
 	sqlite3 "modernc.org/sqlite/lib"
 )
@@ -26,11 +27,25 @@ type LoginResponse struct {
 	Error []string    `json:"error"`
 }
 
-func Login(log *slog.Logger, repo *repository.UserRepository, req LoginRequest, code string) (*LoginResponse, error) {
+func (r LoginRequest) Validate() error {
+	return validation.ValidateStruct(&r,
+		validation.Field(&r.Name,
+			validation.Required,
+			validation.Length(1, 25),
+			validation.Match(regexp.MustCompile(`^[^\s][a-zA-Zа-яА-Я0-9- ]*[^\s]*$`)),
+		))
+}
+
+func (uc *Usecases) Login(log *slog.Logger, req LoginRequest, code string) (*LoginResponse, error) {
 	const op enerr.Op = "usecase.user/Login"
 	// TODO: add validation
 	// Валидация
 	// Подписка на канал
+
+	err := req.Validate()
+	if err != nil {
+		return nil, err
+	}
 
 	var role common.Role
 	role = common.Player_Role
@@ -56,7 +71,7 @@ func Login(log *slog.Logger, repo *repository.UserRepository, req LoginRequest, 
 		Role:   int64(user.Role),
 	}
 
-	_, err = repo.CreateUser(params)
+	_, err = uc.userRepo.CreateUser(params)
 
 	if err != nil {
 		return nil, enerr.E(op, err)
@@ -94,7 +109,7 @@ type PatchRequest struct {
 //	type Response struct {
 //		Error []string `json:"error"`
 //	}
-func PatchUser(req PatchRequest, db *sql.DB) (*entities.User, error) {
+func (uc *Usecases) PatchUserRole(ctx context.Context, req PatchRequest) (*entities.User, error) {
 	const op enerr.Op = "usecase.user/PatchUser"
 	// log = log.With(slog.String("op", op))
 
@@ -102,7 +117,7 @@ func PatchUser(req PatchRequest, db *sql.DB) (*entities.User, error) {
 		Role: int64(req.Role),
 		Name: req.Name,
 	}
-	row, err := database.New(db).PatchUserRole(context.TODO(), params)
+	row, err := uc.queries.PatchUserRole(context.TODO(), params)
 	if err != nil {
 		if sqliteErr, ok := err.(*sqlite.Error); ok {
 			if sqliteErr.Code() == sqlite3.SQLITE_CONSTRAINT_UNIQUE {
