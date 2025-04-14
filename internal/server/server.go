@@ -129,11 +129,11 @@ func NewServer() *Server {
 
 	db := sqlite.MustInitDB()
 
-	Hub := hub.NewHub(log, upgrader, db)
+	uc := usecase.NewUsecase(db)
+
+	Hub := hub.NewHub(log, uc, upgrader, db)
 	// Hub.SetupHandlers()
 	Hub.Run()
-
-	uc := usecase.NewUsecase(db)
 
 	server := &Server{
 		hub:      Hub,

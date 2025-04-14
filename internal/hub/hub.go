@@ -12,6 +12,7 @@ import (
 	"github.com/anrew1002/Tournament-ChemLoto/internal/engines/models"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/entities"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/hub/repository"
+	"github.com/anrew1002/Tournament-ChemLoto/internal/usecase"
 	"github.com/gorilla/websocket"
 )
 
@@ -48,11 +49,11 @@ type Hub struct {
 	eventChan         chan internalEventWrap
 }
 
-func NewHub(log *slog.Logger, upgrader websocket.Upgrader, db *sql.DB) *Hub {
+func NewHub(log *slog.Logger, uc *usecase.Usecases, upgrader websocket.Upgrader, db *sql.DB) *Hub {
 	roomRepo := repository.NewRoomRepo(db)
 	groupRepo := repository.NewGroupsRepo(db)
 	userRepo := repository.NewUserRepo(db)
-	wh := NewWebsocketHandlers(roomRepo, groupRepo, userRepo, log.With("origin: websocketHandlers"))
+	wh := NewWebsocketHandlers(uc, log.With("origin: websocketHandlers"))
 	return &Hub{
 		upgrader:          upgrader,
 		log:               log,

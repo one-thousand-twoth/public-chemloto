@@ -11,6 +11,7 @@ import (
 	"github.com/anrew1002/Tournament-ChemLoto/internal/common"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/common/enerr"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/database"
+	enmodels "github.com/anrew1002/Tournament-ChemLoto/internal/engines/models"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/entities"
 	"github.com/invopop/validation"
 	"modernc.org/sqlite"
@@ -133,5 +134,23 @@ func (uc *Usecases) PatchUserRole(ctx context.Context, req PatchRequest) (*entit
 		Role:   common.Role(row.Role),
 	}
 	return user, nil
+
+}
+func (uc *Usecases) RouteActionToUserRoom(ctx context.Context, userID entities.ID, msg map[string]any) error {
+	const op enerr.Op = "usecase.user/RouteActionToUserRoom"
+	user, err := uc.userRepo.GetUserByID(userID)
+	if err != nil {
+		return enerr.E(err)
+	}
+	room, err := uc.roomRepo.GetRoom(user.Room)
+	if err != nil {
+		return err
+	}
+	go room.Engine.Input(enmodels.Action{
+		Player:   user.Name,
+		Envelope: msg,
+	})
+
+	return nil
 
 }

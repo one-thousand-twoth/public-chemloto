@@ -7,8 +7,6 @@ import (
 
 	"github.com/anrew1002/Tournament-ChemLoto/internal/common"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/common/enerr"
-	enmodels "github.com/anrew1002/Tournament-ChemLoto/internal/engines/models"
-	"github.com/anrew1002/Tournament-ChemLoto/internal/hub/repository"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/usecase"
 	"github.com/mitchellh/mapstructure"
 )
@@ -19,28 +17,26 @@ type HandlerFunc2 func(internalEventWrap) error
 type WebsocketHandlers struct {
 	eventHandlers map[string]HandlerFunc2
 
-	roomRepo    RoomRepository
-	channelRepo *repository.GroupsRepository
-	userRepo    *repository.UserRepository
+	// roomRepo    RoomRepository
+	// channelRepo *repository.GroupsRepository
+	// userRepo    *repository.UserRepository
 
-	usecases usecase.Usecases
+	usecases *usecase.Usecases
 
 	log *slog.Logger
 }
 
 func NewWebsocketHandlers(
-	roomRepo RoomRepository,
-	channelRepo *repository.GroupsRepository,
-	userRepo *repository.UserRepository,
+
+	usecases *usecase.Usecases,
+
 	log *slog.Logger,
 ) *WebsocketHandlers {
 
 	wh := &WebsocketHandlers{
 		eventHandlers: map[string]HandlerFunc2{},
-		roomRepo:      roomRepo,
-		channelRepo:   channelRepo,
-		userRepo:      userRepo,
 		log:           log,
+		usecases:      usecases,
 	}
 	wh.SetupHandlers()
 	return wh
@@ -172,19 +168,12 @@ func (h *WebsocketHandlers) UnSubscribeHandler2(e internalEventWrap) error {
 
 func (h *WebsocketHandlers) EngineAction2(e internalEventWrap) error {
 	const op enerr.Op = "EngineAction2 handler"
-	user, err := h.userRepo.GetUserByID(e.userId)
+
+	err := h.usecases.RouteActionToUserRoom(context.TODO(), e.userId, e.msg)
 	if err != nil {
-		return enerr.E(err)
-	}
-	room, err := h.roomRepo.GetRoom(user.Room)
-	if err != nil {
-		h.log.Error("Cannot find room for EngineEvent", "room", user.Room)
 		return err
 	}
-	go room.Engine.Input(enmodels.Action{
-		Player:   user.Name,
-		Envelope: e.msg,
-	})
+
 	return nil
 }
 
