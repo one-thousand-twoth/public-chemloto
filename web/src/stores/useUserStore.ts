@@ -25,6 +25,7 @@ export const useUserStore = defineStore('users', {
     getUser() {
       return { ...this.UserCreds, ...this.UserInfo }
     },
+
     async PatchUser(usr: User) {
       const toasterStore = useToasterStore();
       const client = new Client(APISettings.protocol + APISettings.baseURL, "");
@@ -41,6 +42,7 @@ export const useUserStore = defineStore('users', {
           Role: role
         })
       });
+      
       const json = await resp.json();
       if (!resp.ok) {
         console.error("Failed to login with user");
@@ -49,6 +51,7 @@ export const useUserStore = defineStore('users', {
         return;
       }
     },
+    
     async Remove(usr: string) {
       const toasterStore = useToasterStore();
       const client = new Client(APISettings.protocol + APISettings.baseURL, "");

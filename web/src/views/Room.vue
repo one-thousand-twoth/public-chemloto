@@ -3,8 +3,9 @@ import { WebsocketConnector } from '@/api/websocket/websocket';
 import obtain from "@/assets/sounds/notification.mp3";
 import { ButtonPanelAdmin, ButtonPanelPlayer, CheckPlayer, LeaderBoard, UserElements } from '@/components/game';
 import { ElementImage, IconButtonBackground, Modal, Timer, UserInfo } from '@/components/UI/';
+import { Hand } from '@/models/Game';
 import { Role } from '@/models/User';
-import { Hand, useGameStore } from '@/stores/useGameStore';
+import { useGameStore } from '@/stores/useGameStore';
 import { useUserStore } from '@/stores/useUserStore';
 import {
     ArrowLeftStartOnRectangleIcon,

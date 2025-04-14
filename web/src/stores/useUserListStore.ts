@@ -16,7 +16,7 @@ export const useUsersListStore = defineStore('usersList', {
   actions:
   {
     async fetchUsers() {
-      console.log("Fetching users")
+      console.debug("Fetching users")
       const toasterStore = useToasterStore();
       const userStore = useUserStore();
       this.fetching = true

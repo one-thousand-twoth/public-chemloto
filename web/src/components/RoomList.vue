@@ -2,13 +2,14 @@
 import { WebsocketConnector } from "@/api/websocket/websocket";
 import CreateRoom from "@/components/CreateRoom.vue";
 import Modal from "@/components/UI/Modal.vue";
+import { i18nStatus } from "@/models/RoomModel";
 import { Role } from "@/models/User";
 import { useUserStore } from "@/stores/useUserStore";
 import {
   ArrowPathIcon
 } from "@heroicons/vue/24/outline";
 import { computed, defineComponent, inject, ref } from "vue";
-import { i18nStatus, useRoomsStore } from '../stores/useRoomsStore';
+import { useRoomsStore } from '../stores/useRoomsStore';
 import { IconButton } from './UI/index';
 export default defineComponent({
   components: { IconButton, Modal, CreateRoom },
