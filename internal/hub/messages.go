@@ -8,7 +8,7 @@ import (
 type internalEventWrap struct {
 	userId         entities.ID
 	msgType        common.MessageType
-	MessageChannel chan common.Message
+	MessageChannel chan<- common.Message
 	msg            map[string]interface{}
 }
 

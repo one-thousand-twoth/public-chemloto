@@ -17,19 +17,13 @@ type HandlerFunc2 func(internalEventWrap) error
 type WebsocketHandlers struct {
 	eventHandlers map[string]HandlerFunc2
 
-	// roomRepo    RoomRepository
-	// channelRepo *repository.GroupsRepository
-	// userRepo    *repository.UserRepository
-
 	usecases *usecase.Usecases
 
 	log *slog.Logger
 }
 
 func NewWebsocketHandlers(
-
 	usecases *usecase.Usecases,
-
 	log *slog.Logger,
 ) *WebsocketHandlers {
 

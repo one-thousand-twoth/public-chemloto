@@ -25,9 +25,9 @@ type DBInterface interface {
 }
 
 type Usecases struct {
-	roomRepo    RoomRepository
-	userRepo    *repository.UserRepository
-	channelrepo *repository.GroupsRepository
+	RoomRepo  RoomRepository
+	UserRepo  *repository.UserRepository
+	GroupRepo *repository.GroupsRepository
 
 	db      *sql.DB
 	queries database.Queries
@@ -36,11 +36,11 @@ type Usecases struct {
 func NewUsecase(db *sql.DB) *Usecases {
 
 	return &Usecases{
-		roomRepo:    repository.NewRoomRepo(db),
-		userRepo:    repository.NewUserRepo(db),
-		channelrepo: repository.NewGroupsRepo(db),
-		db:          db,
-		queries:     *database.New(db),
+		RoomRepo:  repository.NewRoomRepo(db),
+		UserRepo:  repository.NewUserRepo(db),
+		GroupRepo: repository.NewGroupsRepo(db),
+		db:        db,
+		queries:   *database.New(db),
 	}
 
 }

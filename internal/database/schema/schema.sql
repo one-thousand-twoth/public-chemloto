@@ -11,7 +11,7 @@ CREATE TABLE
 CREATE TABLE
     rooms (
         name TEXT PRIMARY KEY,
-        engine TEXT NOT NULL UNIQUE
+        engine TEXT NOT NULL
     );
 
 CREATE TABLE

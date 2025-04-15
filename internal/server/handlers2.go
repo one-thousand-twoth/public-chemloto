@@ -193,7 +193,7 @@ func (s *Server) GetUser2() http.HandlerFunc {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
-		clnt, err := s.hub.Users2.GetUserByApikey(token)
+		clnt, err := s.usecases.UserRepo.GetUserByApikey(token)
 		if err != nil {
 			encode(w, r, http.StatusNotFound, clnt)
 			return

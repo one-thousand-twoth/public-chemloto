@@ -25,10 +25,13 @@ func (h *Hub) HandleWS2(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := h.Users2.GetUserByApikey(reqToken)
+	user, err := h.usecases.UserRepo.GetUserByApikey(reqToken)
 	if err != nil {
 		http.Error(w, "StatusUnauthorized", http.StatusUnauthorized)
 		return
+	}
+	if user.MessageChan == nil {
+		panic("NIL CHANNEL!")
 	}
 
 	conn, err := h.upgrader.Upgrade(w, r, nil)
@@ -39,14 +42,8 @@ func (h *Hub) HandleWS2(w http.ResponseWriter, r *http.Request) {
 	}
 
 	connection := NewConnection(conn, user.Room)
-	// (1) Добавляем соединение в общий список
-	// h.Connections.Add(connection)
-	// h.Users.Add(client)]
-	// TODO: действительно ли оно надо?
-	// (2) Указываем новое соединение пользователю
-	// user.conn = connection.ID
 
-	channels, err := h.Channels2.GetAllUserGroups(user.ID)
+	channels, err := h.usecases.GroupRepo.GetAllUserGroups(user.ID)
 	if err != nil {
 		channels = make([]*entities.Group, 0)
 	}
@@ -56,14 +53,10 @@ func (h *Hub) HandleWS2(w http.ResponseWriter, r *http.Request) {
 		// Вызываем Init функцию для канала, если есть
 		go func() {
 			log.Debug(fmt.Sprintf("Running initFunction for %s", channel))
-			channel.Fn(connection.MessageChan)
+			channel.Fn(user.MessageChan)
 		}()
 	}
 
-	// log.Debug("(Re)Connected to WS user", "user current channels:", fmt.Sprintf("%+v", user.channels))
-	if x, ok := h.Channels.Get("default"); ok {
-		log.Debug("hub current channels", "hub channels:", fmt.Sprintf("%+#v", x))
-	}
 	go func() {
 		recieve(connection, log, user, h)
 	}()
@@ -71,17 +64,34 @@ func (h *Hub) HandleWS2(w http.ResponseWriter, r *http.Request) {
 	go func() {
 		send(connection, log, conn, user)
 	}()
+	go func() {
+		for {
+			log.Debug("SENDing PING MESSAGE")
+			log.Debug("user", slog.Any("msgchan", user.MessageChan))
+			user.MessageChan <- common.Message{
+				Type:   common.ENGINE_ACTION,
+				Ok:     true,
+				Errors: []string{},
+				Body:   map[string]any{"message": "ping"},
+			}
+			log.Debug("SENDED PING MESSAGE")
+			time.Sleep(1 * time.Second)
+		}
 
+	}()
+	log.Debug("Get message", "msg", <-user.MessageChan)
 	user.MessageChan <- common.Message{
 		Type:   common.ENGINE_ACTION,
 		Ok:     true,
 		Errors: []string{},
 		Body:   map[string]any{"message": "hello"},
 	}
+	log.Debug("User connected to websocket", "user", user)
 }
 
 func send(connection *SockConnection, log *slog.Logger, conn *websocket.Conn, user *entities.User) {
 	sendMutex := sync.Mutex{}
+	log.Debug("Start send loop in ws ")
 SendLoop:
 	for {
 		select {
@@ -107,17 +117,11 @@ SendLoop:
 			// Sleep a tiny bit to allow message to be sent before closing connection
 			time.Sleep(time.Millisecond)
 			_ = conn.Close()
-			// // (1) Удаляем соединение из общего списка
-			// h.Connections.Remove(connection.ID)
-
-			// (3) Удаляем из подписок каналов соединие
-			// for _, channel := range user.GetChannels() {
-			// 	h.Channels.Remove(channel, connection.ID)
-			// }
 
 			break SendLoop
 		}
 	}
+	log.Debug("Break send loop in ws ")
 }
 
 func recieve(connection *SockConnection, log *slog.Logger, user *entities.User, h *Hub) {

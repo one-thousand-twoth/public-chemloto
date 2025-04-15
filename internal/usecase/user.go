@@ -72,7 +72,7 @@ func (uc *Usecases) Login(log *slog.Logger, req LoginRequest, code string) (*Log
 		Role:   int64(user.Role),
 	}
 
-	_, err = uc.userRepo.CreateUser(params)
+	_, err = uc.UserRepo.CreateUser(params)
 
 	if err != nil {
 		return nil, enerr.E(op, err)
@@ -138,11 +138,11 @@ func (uc *Usecases) PatchUserRole(ctx context.Context, req PatchRequest) (*entit
 }
 func (uc *Usecases) RouteActionToUserRoom(ctx context.Context, userID entities.ID, msg map[string]any) error {
 	const op enerr.Op = "usecase.user/RouteActionToUserRoom"
-	user, err := uc.userRepo.GetUserByID(userID)
+	user, err := uc.UserRepo.GetUserByID(userID)
 	if err != nil {
 		return enerr.E(err)
 	}
-	room, err := uc.roomRepo.GetRoom(user.Room)
+	room, err := uc.RoomRepo.GetRoom(user.Room)
 	if err != nil {
 		return err
 	}

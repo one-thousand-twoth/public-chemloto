@@ -35,14 +35,14 @@ type Hub struct {
 	log *slog.Logger
 	db  *sql.DB
 
-	// Rooms    *roomsState
-	Rooms2   RoomRepository
-	Users2   *repository.UserRepository
-	upgrader websocket.Upgrader
-
+	// // Rooms    *roomsState
+	// Rooms2   RoomRepository
+	// Users2   *repository.UserRepository
+	upgrader    websocket.Upgrader
+	usecases    *usecase.Usecases
 	Connections *connectionsState
 	Channels    ChannelRepository
-	Channels2   *repository.GroupsRepository
+	// Channels2   *repository.GroupsRepository
 
 	// eventHandlers     map[string]HandlerFunc
 	WebsocketHandlers *WebsocketHandlers
@@ -50,18 +50,19 @@ type Hub struct {
 }
 
 func NewHub(log *slog.Logger, uc *usecase.Usecases, upgrader websocket.Upgrader, db *sql.DB) *Hub {
-	roomRepo := repository.NewRoomRepo(db)
-	groupRepo := repository.NewGroupsRepo(db)
-	userRepo := repository.NewUserRepo(db)
-	wh := NewWebsocketHandlers(uc, log.With("origin: websocketHandlers"))
+	// roomRepo := repository.NewRoomRepo(db)
+	// groupRepo := repository.NewGroupsRepo(db)
+	// userRepo := repository.NewUserRepo(db)
+	wh := NewWebsocketHandlers(uc, log.With("origin", "websocketHandlers"))
 	return &Hub{
-		upgrader:          upgrader,
-		log:               log,
-		Users2:            userRepo,
-		Rooms2:            roomRepo,
-		Connections:       &connectionsState{state: make(map[string]*SockConnection)},
-		Channels:          repository.NewChannelState(),
-		Channels2:         groupRepo,
+		upgrader: upgrader,
+		log:      log,
+		usecases: uc,
+		// Users2:            userRepo,
+		// Rooms2:            roomRepo,
+		Connections: &connectionsState{state: make(map[string]*SockConnection)},
+		Channels:    repository.NewChannelState(),
+		// Channels2:         groupRepo,
 		WebsocketHandlers: wh,
 		// eventHandlers:     make(map[string]HandlerFunc),
 		eventChan: make(chan internalEventWrap, 10),

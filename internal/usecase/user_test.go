@@ -107,11 +107,16 @@ func TestLogin(t *testing.T) {
 				return
 			}
 			// do not compare random token
-			got.Token = ""
+			// got.Token = ""
 			// if !reflect.DeepEqual(got, tt.want) {
 			// 	t.Errorf("Login() = %v, want %v", got, tt.want)
 			// }
-			assert.Equal(t, got, tt.want)
+			assert.Equal(t, got.Role, tt.want.Role)
+			assert.Equal(t, got.Error, tt.want.Error)
+
+			savedUser, err := uc.UserRepo.GetUserByApikey(got.Token)
+			assert.NoError(t, err)
+			assert.NotNil(t, savedUser.MessageChan)
 		})
 	}
 }

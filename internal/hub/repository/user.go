@@ -56,7 +56,8 @@ func (repo *UserRepository) CreateUser(params database.InsertUserParams) (*entit
 	// 	return nil, enerr.E(op, err, enerr.Database)
 	// }
 
-	repo.messageChannels[row.Name] = make(messageChan, 20)
+	// TODO:
+	repo.messageChannels[row.Name] = make(messageChan, 1000)
 
 	if err := tx.Commit(); err != nil {
 		return nil, enerr.E(op, err, enerr.Internal)

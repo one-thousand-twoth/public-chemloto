@@ -69,7 +69,8 @@ func TestCreateRoom(t *testing.T) {
 			if err != nil {
 				if tt.wantErr != 0 {
 					t.Logf("Error: %+v", err)
-					assert.Equal(t, true, enerr.KindIs(tt.wantErr, err))
+
+					assert.Equal(t, true, enerr.KindIs(tt.wantErr, err), "Kind should be equal")
 					return
 				}
 				t.Log(err)
@@ -153,4 +154,71 @@ func TestSubscribeToRoom(t *testing.T) {
 			assert.Equal(t, tt.roomName, user.Room)
 		})
 	}
+}
+
+func TestGetSubscribersFromRoom(t *testing.T) {
+	t.Cleanup(cleanup)
+
+	var userRepo *repository.UserRepository = repository.NewUserRepo(db)
+
+	var user1 = &entities.User{ID: 1, Apikey: "api_11", Name: "test_user1"}
+
+	us1, err := userRepo.CreateUser(database.InsertUserParams{
+		Name:   user1.Name,
+		Apikey: user1.Apikey,
+		Room:   sql.NullString{},
+		Role:   int64(common.Player_Role),
+	})
+	if err != nil {
+		t.Fatalf("Failed init: %s", err.Error())
+	}
+	var user2 = &entities.User{ID: 2, Apikey: "api_12", Name: "test_user2"}
+
+	us2, err := userRepo.CreateUser(database.InsertUserParams{
+		Name:   user2.Name,
+		Apikey: user2.Apikey,
+		Room:   sql.NullString{},
+		Role:   int64(common.Player_Role),
+	})
+	if err != nil {
+		t.Fatalf("Failed init: %s", err.Error())
+	}
+
+	uc := NewUsecase(db)
+
+	_, err = uc.CreateRoom(CreateRoomRequest{
+		Name: "test_room",
+		Type: "polymers",
+		EngineConfig: map[string]any{
+			"Elements":    map[string]int{},
+			"Checks":      polymers.Checks{},
+			"TimerInt":    0,
+			"Unicast":     nil,
+			"Broadcast":   nil,
+			"MaxPlayers":  2,
+			"IsAutoCheck": false,
+		},
+	}, MockLogger)
+	if err != nil {
+		t.Fatalf("Failed init: %s", err.Error())
+	}
+	err = uc.SubscribeToRoom(context.TODO(), "test_room", us1.ID)
+	assert.NoError(t, err)
+
+	err = uc.SubscribeToRoom(context.TODO(), "test_room", us2.ID)
+	assert.NoError(t, err)
+
+	roomSubs, err := uc.UserRepo.GetRoomSubscribers("test_room")
+	if err != nil {
+		t.Error("failed getting roomSubs")
+	}
+
+	assert.NotEmpty(t, roomSubs)
+	roomSubsIds := make([]entities.ID, 0)
+	for _, v := range roomSubs {
+		roomSubsIds = append(roomSubsIds, v.ID)
+	}
+
+	assert.Contains(t, roomSubsIds, us1.ID)
+	assert.Contains(t, roomSubsIds, us2.ID)
 }

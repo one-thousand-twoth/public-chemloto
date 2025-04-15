@@ -34,7 +34,8 @@ func (uc *Usecases) CreateRoom(req CreateRoomRequest, log *slog.Logger) (*entiti
 		req.EngineConfig,
 		func(username string, msg common.Message) {
 			go func() {
-				user, err := uc.userRepo.GetUserByName(username)
+				log.Debug("Sending unicast message")
+				user, err := uc.UserRepo.GetUserByName(username)
 				if err != nil {
 					log.Error("Error getting user while unicast")
 					return
@@ -44,13 +45,16 @@ func (uc *Usecases) CreateRoom(req CreateRoomRequest, log *slog.Logger) (*entiti
 		},
 		func(msg common.Message) {
 			go func() {
-				users, err := uc.userRepo.GetRoomSubscribers(req.Name)
+				log.Debug("Sending broadcast message")
+				users, err := uc.UserRepo.GetRoomSubscribers(req.Name)
 				if err != nil {
 					log.Error("Error getting user while broadcast", slog.Any("err", err.Error()))
 					return
 				}
 				for _, user := range users {
+					log.Debug("Sending broadcast message in loop")
 					user.MessageChan <- msg
+					log.Debug("Sent broadcast message in loop")
 				}
 			}()
 		},
@@ -60,7 +64,7 @@ func (uc *Usecases) CreateRoom(req CreateRoomRequest, log *slog.Logger) (*entiti
 		return nil, enerr.E(op, err)
 	}
 
-	room, err := uc.roomRepo.AddRoom(req.Name, eng)
+	room, err := uc.RoomRepo.AddRoom(req.Name, eng)
 	if err != nil {
 		return nil, enerr.E(op, err)
 	}
@@ -69,7 +73,7 @@ func (uc *Usecases) CreateRoom(req CreateRoomRequest, log *slog.Logger) (*entiti
 }
 
 func (uc *Usecases) GetRooms(ctx context.Context) ([]*entities.Room, error) {
-	rows, err := uc.roomRepo.GetRooms()
+	rows, err := uc.RoomRepo.GetRooms()
 
 	if err != nil {
 		return nil, err
@@ -133,7 +137,7 @@ func (uc *Usecases) StartGame(
 ) error {
 	const op enerr.Op = "usecase.room/StartGame"
 
-	user, err := uc.userRepo.GetUserByID(userID)
+	user, err := uc.UserRepo.GetUserByID(userID)
 	if err != nil {
 		return enerr.E(op, err)
 	}
@@ -142,7 +146,7 @@ func (uc *Usecases) StartGame(
 		return enerr.E("No permission to start game")
 	}
 
-	room, err := uc.roomRepo.GetRoom(user.Room)
+	room, err := uc.RoomRepo.GetRoom(user.Room)
 	if err != nil {
 		return err
 	}

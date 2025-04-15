@@ -15,6 +15,7 @@ func MustInitDB() *sql.DB {
 	if err != nil {
 		panic(err)
 	}
+	db.SetMaxOpenConns(1)
 	// create tables
 	if _, err := db.ExecContext(context.TODO(), schema.DDL_Schema); err != nil {
 		panic(err)
