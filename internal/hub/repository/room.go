@@ -7,33 +7,15 @@ import (
 
 	"github.com/anrew1002/Tournament-ChemLoto/internal/common/enerr"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/database"
+	"github.com/anrew1002/Tournament-ChemLoto/internal/database/stores"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/engines/models"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/entities"
 	"modernc.org/sqlite"
 	sqlite3 "modernc.org/sqlite/lib"
 )
 
-type EnginesStore struct {
-	engines map[string]models.Engine
-	mu      *sync.Mutex
-}
-
-func (store *EnginesStore) Add(name string, engine models.Engine) {
-	store.mu.Lock()
-	defer store.mu.Unlock()
-
-	store.engines[name] = engine
-}
-
-func (store *EnginesStore) Get(name string, engine models.Engine) models.Engine {
-	store.mu.Lock()
-	defer store.mu.Unlock()
-
-	return store.engines[name]
-}
-
 type RoomRepository struct {
-	engines map[string]models.Engine
+	engines *stores.EnginesStore
 	db      *sql.DB
 	queries *database.Queries
 	mu      *sync.Mutex
@@ -43,7 +25,7 @@ func NewRoomRepo(db *sql.DB) *RoomRepository {
 	return &RoomRepository{
 		db:      db,
 		queries: database.New(db),
-		engines: make(map[string]models.Engine),
+		engines: stores.NewEngineStore(),
 		mu:      &sync.Mutex{},
 	}
 }
@@ -70,7 +52,7 @@ func (repo *RoomRepository) AddRoom(name string, engine models.Engine) (*entitie
 		return nil, enerr.E(op, err, enerr.Internal)
 	}
 
-	repo.engines[name] = engine
+	repo.engines.Add(rowRoom.Name, engine)
 
 	if err := tx.Commit(); err != nil {
 		return nil, enerr.E(op, err, enerr.Internal)
@@ -94,7 +76,7 @@ func (repo *RoomRepository) GetRooms() ([]*entities.Room, error) {
 	for _, v := range rows {
 		rooms = append(rooms, &entities.Room{
 			Name:   v.Name,
-			Engine: repo.engines[v.Name],
+			Engine: repo.engines.Get(v.Name),
 		})
 	}
 	return rooms, nil
@@ -109,7 +91,7 @@ func (repo *RoomRepository) GetRoom(name string) (*entities.Room, error) {
 
 	room := &entities.Room{
 		Name:   row.Name,
-		Engine: repo.engines[row.Name],
+		Engine: repo.engines.Get(row.Name),
 	}
 	return room, nil
 }
@@ -134,10 +116,8 @@ func (repo *RoomRepository) SubscribeToRoom(name string, user *entities.User) er
 	if err != nil {
 		return enerr.E(op, err)
 	}
-
-	repo.mu.Lock()
-	defer repo.mu.Unlock()
-	err = repo.engines[room.Name].AddParticipant(models.Participant{
+	engine := repo.engines.Get(room.Name)
+	err = engine.AddParticipant(models.Participant{
 		Name: user.Name,
 		Role: user.Role,
 	})

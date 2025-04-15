@@ -22,3 +22,12 @@ SELECT
     *
 FROM
     rooms;
+
+-- name: GetUsersByRoom :many
+SELECT
+    *
+FROM
+    users
+WHERE
+    room = ?;
+    

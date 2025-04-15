@@ -56,7 +56,7 @@ func (repo *UserRepository) CreateUser(params database.InsertUserParams) (*entit
 	// 	return nil, enerr.E(op, err, enerr.Database)
 	// }
 
-	repo.messageChannels[row.Name] = make(messageChan)
+	repo.messageChannels[row.Name] = make(messageChan, 20)
 
 	if err := tx.Commit(); err != nil {
 		return nil, enerr.E(op, err, enerr.Internal)
@@ -84,7 +84,7 @@ func (repo *UserRepository) GetUserByApikey(apikey string) (*entities.User, erro
 		Apikey:      row.Apikey,
 		Room:        row.Room.String,
 		Role:        common.Role(row.Role),
-		MessageChan: make(chan common.Message),
+		MessageChan: repo.messageChannels[row.Name],
 	}
 
 	return &user, nil
@@ -102,8 +102,49 @@ func (repo *UserRepository) GetUserByID(id entities.ID) (*entities.User, error) 
 		Apikey:      row.Apikey,
 		Room:        row.Room.String,
 		Role:        common.Role(row.Role),
-		MessageChan: make(chan common.Message),
+		MessageChan: repo.messageChannels[row.Name],
 	}
 
 	return &user, nil
+}
+
+func (repo *UserRepository) GetUserByName(name string) (*entities.User, error) {
+	row, err := repo.queries.GetUserByName(context.TODO(), name)
+	if err != nil {
+		return nil, err
+	}
+
+	user := entities.User{
+		ID:          entities.ID(row.ID),
+		Name:        row.Name,
+		Apikey:      row.Apikey,
+		Room:        row.Room.String,
+		Role:        common.Role(row.Role),
+		MessageChan: repo.messageChannels[row.Name],
+	}
+
+	return &user, nil
+}
+
+func (repo *UserRepository) GetRoomSubscribers(roomname string) ([]entities.User, error) {
+	rows, err := repo.queries.GetUsersByRoom(context.TODO(),
+		sql.NullString{
+			String: roomname,
+			Valid:  true,
+		})
+	if err != nil {
+		return nil, err
+	}
+	users := make([]entities.User, 0, len(rows))
+	for _, row := range rows {
+		users = append(users, entities.User{
+			ID:          entities.ID(row.ID),
+			Name:        row.Name,
+			Apikey:      row.Apikey,
+			Room:        row.Room.String,
+			Role:        common.Role(row.Role),
+			MessageChan: repo.messageChannels[row.Name],
+		})
+	}
+	return users, nil
 }

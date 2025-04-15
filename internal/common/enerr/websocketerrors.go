@@ -7,6 +7,7 @@ import (
 
 	"github.com/anrew1002/Tournament-ChemLoto/internal/common"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/engines/models"
+
 	"github.com/anrew1002/Tournament-ChemLoto/internal/sl"
 )
 

@@ -7,6 +7,7 @@ package database
 
 import (
 	"context"
+	"database/sql"
 )
 
 const deleteRoom = `-- name: DeleteRoom :exec
@@ -53,6 +54,44 @@ func (q *Queries) GetRooms(ctx context.Context) ([]Room, error) {
 	for rows.Next() {
 		var i Room
 		if err := rows.Scan(&i.Name, &i.Engine); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getUsersByRoom = `-- name: GetUsersByRoom :many
+SELECT
+    id, name, apikey, room, role
+FROM
+    users
+WHERE
+    room = ?
+`
+
+func (q *Queries) GetUsersByRoom(ctx context.Context, room sql.NullString) ([]User, error) {
+	rows, err := q.db.QueryContext(ctx, getUsersByRoom, room)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []User
+	for rows.Next() {
+		var i User
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Apikey,
+			&i.Room,
+			&i.Role,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)

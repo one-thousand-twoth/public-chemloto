@@ -87,7 +87,7 @@ type SubscribeRequest struct {
 func (h *WebsocketHandlers) SubscribeHandler2(e internalEventWrap) error {
 
 	const op enerr.Op = "Subscribe handler"
-	log := h.log.With("op", op)
+	log := h.log.With(enerr.OpAttr(op))
 
 	log.Debug("Start Handle Event", "usr", e.userId, "data", fmt.Sprintf("%v", e.msg))
 

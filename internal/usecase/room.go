@@ -32,9 +32,9 @@ func (uc *Usecases) CreateRoom(req CreateRoomRequest, log *slog.Logger) (*entiti
 		req.Name,
 		log,
 		req.EngineConfig,
-		func(userID string, msg common.Message) {
+		func(username string, msg common.Message) {
 			go func() {
-				user, err := uc.userRepo.GetUserByID(entities.ID(32))
+				user, err := uc.userRepo.GetUserByName(username)
 				if err != nil {
 					log.Error("Error getting user while unicast")
 					return
@@ -44,12 +44,14 @@ func (uc *Usecases) CreateRoom(req CreateRoomRequest, log *slog.Logger) (*entiti
 		},
 		func(msg common.Message) {
 			go func() {
-				user, err := uc.userRepo.GetUserByID(entities.ID(32))
+				users, err := uc.userRepo.GetRoomSubscribers(req.Name)
 				if err != nil {
-					log.Error("Error getting user while unicast")
+					log.Error("Error getting user while broadcast", slog.Any("err", err.Error()))
 					return
 				}
-				user.MessageChan <- msg
+				for _, user := range users {
+					user.MessageChan <- msg
+				}
 			}()
 		},
 	)
