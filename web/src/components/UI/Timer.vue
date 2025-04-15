@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { WebsocketConnector } from '@/api/websocket/websocket';
+import { hasTimer } from '@/models/Game';
 import { Role } from '@/models/User';
-import { hasTimer, useGameStore } from '@/stores/useGameStore';
+import { useGameStore } from '@/stores/useGameStore';
 import { useUserStore } from '@/stores/useUserStore';
 import { PauseIcon, PlayIcon, StopIcon } from '@heroicons/vue/24/solid';
 import { computed, inject } from 'vue';
@@ -68,5 +69,5 @@ function TimerPause() {
                 {{ GameStore.gameState.StateStruct.TimerStatus }}
             </div> -->
         </template>
-    </div>  
+    </div>
 </template>

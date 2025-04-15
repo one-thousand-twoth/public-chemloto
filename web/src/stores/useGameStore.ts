@@ -1,5 +1,5 @@
 import { WEBSOCKET_EVENT, WebsocketConnector } from '@/api/websocket/websocket'
-import { GameInfo } from '@/models/Game'
+import { GameInfo, getStateTimer, hasTimer, Player, updateTimer } from '@/models/Game'
 import { Role } from '@/models/User'
 import { acceptHMRUpdate, defineStore } from 'pinia'
 import { computed, inject, ref } from 'vue'
