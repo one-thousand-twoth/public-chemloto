@@ -64,34 +64,17 @@ func (h *Hub) HandleWS2(w http.ResponseWriter, r *http.Request) {
 	go func() {
 		send(connection, log, conn, user)
 	}()
-	go func() {
-		for {
-			log.Debug("SENDing PING MESSAGE")
-			log.Debug("user", slog.Any("msgchan", user.MessageChan))
-			user.MessageChan <- common.Message{
-				Type:   common.ENGINE_ACTION,
-				Ok:     true,
-				Errors: []string{},
-				Body:   map[string]any{"message": "ping"},
-			}
-			log.Debug("SENDED PING MESSAGE")
-			time.Sleep(1 * time.Second)
-		}
-
-	}()
-	log.Debug("Get message", "msg", <-user.MessageChan)
 	user.MessageChan <- common.Message{
 		Type:   common.ENGINE_ACTION,
 		Ok:     true,
 		Errors: []string{},
-		Body:   map[string]any{"message": "hello"},
+		Body:   map[string]any{"message": "hello! What are you doing there?"},
 	}
 	log.Debug("User connected to websocket", "user", user)
 }
 
 func send(connection *SockConnection, log *slog.Logger, conn *websocket.Conn, user *entities.User) {
 	sendMutex := sync.Mutex{}
-	log.Debug("Start send loop in ws ")
 SendLoop:
 	for {
 		select {
@@ -121,7 +104,6 @@ SendLoop:
 			break SendLoop
 		}
 	}
-	log.Debug("Break send loop in ws ")
 }
 
 func recieve(connection *SockConnection, log *slog.Logger, user *entities.User, h *Hub) {

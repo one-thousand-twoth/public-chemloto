@@ -15,6 +15,9 @@ type RoomRepository interface {
 	GetRooms() ([]*entities.Room, error)
 	GetRoom(name string) (*entities.Room, error)
 	SubscribeToRoom(name string, user *entities.User) error
+
+	// TODO: Нужно правильно сделать
+	GetEngine(name string) (models.Engine, error)
 }
 
 type DBInterface interface {

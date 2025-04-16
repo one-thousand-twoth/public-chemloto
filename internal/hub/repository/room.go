@@ -3,7 +3,6 @@ package repository
 import (
 	"context"
 	"database/sql"
-	"sync"
 
 	"github.com/anrew1002/Tournament-ChemLoto/internal/common/enerr"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/database"
@@ -18,7 +17,6 @@ type RoomRepository struct {
 	engines *stores.EnginesStore
 	db      *sql.DB
 	queries *database.Queries
-	mu      *sync.Mutex
 }
 
 func NewRoomRepo(db *sql.DB) *RoomRepository {
@@ -26,8 +24,13 @@ func NewRoomRepo(db *sql.DB) *RoomRepository {
 		db:      db,
 		queries: database.New(db),
 		engines: stores.NewEngineStore(),
-		mu:      &sync.Mutex{},
 	}
+}
+
+func (repo *RoomRepository) GetEngine(name string) (models.Engine, error) {
+	const op enerr.Op = "repository.room/GetEngine"
+
+	return repo.engines.Get(name), nil
 }
 
 func (repo *RoomRepository) AddRoom(name string, engine models.Engine) (*entities.Room, error) {

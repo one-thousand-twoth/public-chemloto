@@ -9,6 +9,7 @@ import (
 	"github.com/anrew1002/Tournament-ChemLoto/internal/common/enerr"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/database"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/engines"
+	"github.com/anrew1002/Tournament-ChemLoto/internal/engines/models"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/entities"
 )
 
@@ -34,7 +35,6 @@ func (uc *Usecases) CreateRoom(req CreateRoomRequest, log *slog.Logger) (*entiti
 		req.EngineConfig,
 		func(username string, msg common.Message) {
 			go func() {
-				log.Debug("Sending unicast message")
 				user, err := uc.UserRepo.GetUserByName(username)
 				if err != nil {
 					log.Error("Error getting user while unicast")
@@ -45,16 +45,13 @@ func (uc *Usecases) CreateRoom(req CreateRoomRequest, log *slog.Logger) (*entiti
 		},
 		func(msg common.Message) {
 			go func() {
-				log.Debug("Sending broadcast message")
 				users, err := uc.UserRepo.GetRoomSubscribers(req.Name)
 				if err != nil {
 					log.Error("Error getting user while broadcast", slog.Any("err", err.Error()))
 					return
 				}
 				for _, user := range users {
-					log.Debug("Sending broadcast message in loop")
 					user.MessageChan <- msg
-					log.Debug("Sent broadcast message in loop")
 				}
 			}()
 		},
@@ -120,6 +117,16 @@ func (uc *Usecases) SubscribeToRoom(ctx context.Context, roomName string, userID
 			Valid:  true,
 		},
 		ID: int64(user.ID),
+	})
+	if err != nil {
+		return err
+	}
+	// TODO:
+	engine, err := uc.RoomRepo.GetEngine(roomName)
+
+	err = engine.AddParticipant(models.Participant{
+		Name: user.Name,
+		Role: user.Role,
 	})
 	if err != nil {
 		return err
