@@ -3,5 +3,6 @@ store.db
 .vscode
 chemloto results
 trace.out
+trace
 
 tmp
