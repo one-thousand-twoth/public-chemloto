@@ -39,13 +39,9 @@ func (r LoginRequest) Validate() error {
 
 func (uc *Usecases) Login(log *slog.Logger, req LoginRequest, code string) (*LoginResponse, error) {
 	const op enerr.Op = "usecase.user/Login"
-	// TODO: add validation
-	// Валидация
-	// Подписка на канал
-
 	err := req.Validate()
 	if err != nil {
-		return nil, err
+		return nil, enerr.E(op, err, enerr.Validation)
 	}
 
 	var role common.Role

@@ -10,8 +10,8 @@ import (
 )
 
 const (
-	host    = "localhost:1090"
-	baseUrl = "/api/v1"
+	host    = "localhost:8090"
+	baseUrl = "/api/v2"
 )
 
 func checkUserInfo(t *testing.T, username string, token string, room string, role string) {

@@ -46,20 +46,7 @@ func (s *Server) Login2() http.HandlerFunc {
 		}
 		user, err := s.usecases.Login(s.log, request, s.code)
 		if err != nil {
-			if enerr.KindIs(enerr.Exist, err) {
-				encode(w, r, http.StatusConflict, Response{Error: []string{"Пользователь с таким именем уже существует"}})
-				return
-			}
-			if enerr.KindIs(enerr.InvalidRequest, err) {
-				encode(w, r, http.StatusBadRequest, Response{Error: []string{"Неправильный код администратора"}})
-				return
-			}
-			if enerr.KindIs(enerr.Internal, err) {
-				encode(w, r, http.StatusInternalServerError, Response{Error: []string{"Ошибка сервера"}})
-				return
-			}
-			// TODO: Сделать общую функцую для ошибок от enerr
-			encode(w, r, http.StatusInternalServerError, Response{Error: []string{"Ошибка сервера"}})
+			encodeError(w, log, err)
 			return
 		}
 
@@ -198,7 +185,6 @@ func (s *Server) GetUser2() http.HandlerFunc {
 			encode(w, r, http.StatusNotFound, clnt)
 			return
 		}
-		s.log.Error("clnt:", slog.Any("clnt", clnt))
 		encode(w, r, http.StatusOK, clnt)
 	}
 }
