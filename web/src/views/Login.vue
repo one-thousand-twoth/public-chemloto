@@ -5,12 +5,21 @@ import { useRouter } from 'vue-router';
 
 const username = ref("")
 const code = ref("")
+const formErrors = ref<Record<string, string>>({})
 
 const userStore = useUserStore();
 
 async function onSubmit() {
-    await userStore.Login(username.value, code.value);
-    if (userStore.UserCreds) {
+    formErrors.value = {}
+    const result = await userStore.Login(username.value, code.value);
+    
+    if (result?.formErrors) {
+      // Устанавливаем ошибки формы для отображения
+      formErrors.value = result.formErrors;
+      return;
+    }
+    
+    if (result?.success && userStore.UserCreds) {
         console.log(await router.replace({ name: "Hub" }))
     }
 }
@@ -18,6 +27,11 @@ async function onSubmit() {
 const router = useRouter()
 
 const isChecked = ref(false)
+
+function Check(){
+    isChecked.value = !isChecked.value
+    code.value = "" 
+}
 
 </script>
 <template>
@@ -34,14 +48,16 @@ const isChecked = ref(false)
                             <input v-model.trim="username" autocomplete="off" type="text" maxlength="25" required
                                 style="width: 95%;">
                         </label>
+                        <p v-if="formErrors.name" class="text-red-500 text-sm mt-1">{{ formErrors.name }}</p>
                         <label>
-                            <input type="checkbox" v-model="isChecked" />
+                            <input type="checkbox" v-on:click="Check()"/>
                             Я админ
                         </label>
                         <label v-show="isChecked">Введите код:
                             <input :required="isChecked ? true : undefined" v-model="code" autocomplete="off"
                                 type="text" maxlength="25" style="width: 95%;">
                         </label>
+                        <p v-if="formErrors.code" class="text-red-500 text-sm mt-1">{{ formErrors.code }}</p>
                         <button type="submit">Войти</button>
                     </form>
                 </div>

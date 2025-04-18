@@ -67,7 +67,10 @@ export const useUserStore = defineStore('users', {
         return;
       }
     },
-    async Login(input: string, code: string) {
+    async Login(input: string, code: string): Promise<{
+      success: boolean;
+      formErrors?: Record<string, string>;
+    }> {
       const toasterStore = useToasterStore();
       const client = new Client(APISettings.protocol + APISettings.baseURL, "");
       const resp = await fetch(client.url(`/users`), {
@@ -80,17 +83,27 @@ export const useUserStore = defineStore('users', {
       });
       if (resp.status === 409) {
         toasterStore.error(`Пользователь с именем ${input} уже существует!`);
-        return;
+        return { success: false };
       }
 
       const json = await resp.json();
       if (!resp.ok) {
         console.error("Failed to login with user");
+
+         // Проверяем есть ли ошибки формы
+        if (json["form_errors"]) {
+          // Возвращаем ошибки формы в компонент
+          return { 
+            success: false, 
+            formErrors: json["form_errors"] 
+          };
+        }
+
         toasterStore.error(`Не удалось войти под именем ${input}`);
         json["error"].forEach((element: string) => {
           toasterStore.error(element);
         });
-        return;
+        return { success: false };
       }
       this.UserCreds = { username: input, token: json["token"], }
       this.UserInfo = { room: json["room"] ?? "", role: json["role"] }
@@ -98,7 +111,7 @@ export const useUserStore = defineStore('users', {
 
       toasterStore.info(`Вы вошли под именем ${this.UserCreds.username}`);
       console.log(`Token for admin ${this.UserCreds.username} created: ${this.UserCreds.token}`);
-
+      return { success: true };
     },
     async check() {
       let self = this

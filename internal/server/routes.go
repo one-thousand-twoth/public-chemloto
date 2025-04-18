@@ -45,7 +45,7 @@ func (s *Server) configureRoutes() {
 		r.Post("/rooms", s.CreateRoom2())
 		// r.Get("/users", s.GetUsers())
 		// r.Post("/users/{username}", s.PatchUser())
-		// r.Delete("/users/{username}", s.DeleteUser())
+		r.Delete("/users/{username}", s.DeleteUser())
 		r.Post("/users", s.Login2())
 		r.Get("/users/{token}", s.GetUser2())
 		r.Get("/ws", s.hub.HandleWS2)

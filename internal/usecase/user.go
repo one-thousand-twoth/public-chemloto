@@ -5,6 +5,7 @@ import (
 	"crypto/rand"
 	"database/sql"
 	"encoding/base64"
+	"errors"
 	"log/slog"
 	"regexp"
 
@@ -32,9 +33,19 @@ func (r LoginRequest) Validate() error {
 	return validation.ValidateStruct(&r,
 		validation.Field(&r.Name,
 			validation.Required,
-			validation.Length(1, 25),
-			validation.Match(regexp.MustCompile(`^[^\s][a-zA-Zа-яА-Я0-9- ]*[^\s]*$`)),
+			validation.Length(1, 25).Error("Должно быть меньше 26 символов"),
+			validation.Match(regexp.MustCompile(`^[a-zA-Zа-яА-Я0-9- ]+$`)).
+				Error("Должно содержать только буквы, цифры и пробел"),
 		))
+}
+func stringEquals(str string) validation.RuleFunc {
+	return func(value interface{}) error {
+		s, _ := value.(string)
+		if s != str {
+			return errors.New("Неправильный код администратора")
+		}
+		return nil
+	}
 }
 
 func (uc *Usecases) Login(log *slog.Logger, req LoginRequest, code string) (*LoginResponse, error) {
@@ -47,11 +58,13 @@ func (uc *Usecases) Login(log *slog.Logger, req LoginRequest, code string) (*Log
 	var role common.Role
 	role = common.Player_Role
 	if req.Code != "" {
-		if req.Code == code {
-			role = common.Admin_Role
-		} else {
-			return nil, enerr.E(op, "Неправильный код администратора", enerr.InvalidRequest)
+		err = validation.Errors{
+			"code": validation.Validate(req.Code, validation.By(stringEquals(code))),
+		}.Filter()
+		if err != nil {
+			return nil, enerr.E(op, err, enerr.Validation)
 		}
+		role = common.Admin_Role
 	}
 	token, err := generateRandomStringURLSafe(32)
 	if err != nil {
@@ -83,6 +96,24 @@ func (uc *Usecases) Login(log *slog.Logger, req LoginRequest, code string) (*Log
 
 }
 
+func (uc *Usecases) DeleteUser(ctx context.Context, username string) error {
+	const op enerr.Op = "usecase.user/DeleteUser"
+
+	user, err := uc.UserRepo.GetUserByName(username)
+	if err != nil {
+		return enerr.E(op, err, enerr.Database)
+	}
+	if user.IsInRoom() {
+		return enerr.E(op, "Пользователь сейчас в комнате, его невозможно удалить")
+	}
+
+	err = uc.queries.DeleteUser(ctx, int64(user.ID))
+	if err != nil {
+		return enerr.E(op, err, enerr.Database)
+	}
+
+	return nil
+}
 func generateRandomStringURLSafe(n int) (string, error) {
 	b, err := generateRandomBytes(n)
 	return base64.URLEncoding.EncodeToString(b), err

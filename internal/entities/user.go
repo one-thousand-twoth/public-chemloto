@@ -47,6 +47,12 @@ func (u *User) HasPermision() bool {
 	}
 	return true
 }
+func (u *User) IsInRoom() bool {
+	if u.Room != "" {
+		return true
+	}
+	return false
+}
 
 func (u *User) SubscribeToRoom(roomName string) error {
 	if u.Room != "" {

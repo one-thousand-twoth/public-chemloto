@@ -188,3 +188,27 @@ func (s *Server) GetUser2() http.HandlerFunc {
 		encode(w, r, http.StatusOK, clnt)
 	}
 }
+
+func (s *Server) DeleteUser() http.HandlerFunc {
+	type Response struct {
+		Error []string `json:"error"`
+	}
+	return func(w http.ResponseWriter, r *http.Request) {
+		const op = "server.handlers.PatchUser"
+		log := s.log.With(slog.String("op", op))
+		username := chi.URLParam(r, "username")
+		if username == "" {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		log.Error("User delete", "user", username)
+		err := s.usecases.DeleteUser(context.TODO(), username)
+		if err != nil {
+			encodeError(w, log, err)
+			return
+		}
+
+		log.Info("Deleted user", "user", username)
+		encode(w, r, http.StatusOK, Response{})
+	}
+}

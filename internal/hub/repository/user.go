@@ -110,9 +110,10 @@ func (repo *UserRepository) GetUserByID(id entities.ID) (*entities.User, error) 
 }
 
 func (repo *UserRepository) GetUserByName(name string) (*entities.User, error) {
+	const op enerr.Op = "repository.user/GetUserByName"
 	row, err := repo.queries.GetUserByName(context.TODO(), name)
 	if err != nil {
-		return nil, err
+		return nil, enerr.E(op, err)
 	}
 
 	user := entities.User{

@@ -89,7 +89,7 @@ func TestLogin(t *testing.T) {
 				Role:  common.Admin_Role,
 				Error: []string{},
 			},
-			wantErr: enerr.E(enerr.InvalidRequest).(*enerr.EngineError),
+			wantErr: enerr.E(enerr.Validation).(*enerr.EngineError),
 		},
 	}
 	for _, tt := range tests {
