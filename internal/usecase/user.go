@@ -53,7 +53,7 @@ func (uc *Usecases) Login(log *slog.Logger, req LoginRequest, code string) (*Log
 			return nil, enerr.E(op, "Неправильный код администратора", enerr.InvalidRequest)
 		}
 	}
-	token, err := GenerateRandomStringURLSafe(32)
+	token, err := generateRandomStringURLSafe(32)
 	if err != nil {
 		return nil, enerr.E(op, err)
 	}
@@ -83,11 +83,11 @@ func (uc *Usecases) Login(log *slog.Logger, req LoginRequest, code string) (*Log
 
 }
 
-func GenerateRandomStringURLSafe(n int) (string, error) {
-	b, err := GenerateRandomBytes(n)
+func generateRandomStringURLSafe(n int) (string, error) {
+	b, err := generateRandomBytes(n)
 	return base64.URLEncoding.EncodeToString(b), err
 }
-func GenerateRandomBytes(n int) ([]byte, error) {
+func generateRandomBytes(n int) ([]byte, error) {
 	b := make([]byte, n)
 	_, err := rand.Read(b)
 	// Note that err == nil only if we read len(b) bytes.
