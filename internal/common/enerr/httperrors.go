@@ -131,7 +131,7 @@ func newHTTPErrResponse(err *EngineError) ErrResponse {
 	case Validation:
 		var formerr validation.Errors
 		if errors.As(err, &formerr) {
-			fmt.Println("Error AS")
+			// fmt.Println("Error AS")
 			j, _ := formerr.MarshalJSON()
 
 			return ErrResponse{
