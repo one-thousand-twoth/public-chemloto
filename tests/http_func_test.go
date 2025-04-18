@@ -1,6 +1,7 @@
 package tests
 
 import (
+	"net/http"
 	"net/url"
 	"testing"
 
@@ -21,27 +22,30 @@ func TestCreateUser(t *testing.T) {
 	username := getRandomUsername()
 
 	resp := Createuser(e, username, "")
-	resp.Value("error").IsNull()
-	checkUserInfo(t, username, resp.Value("token").String().Raw(), "", "Player_Role")
+	jresp := resp.JSON().Object()
+	jresp.Value("error").IsNull()
+	checkUserInfo(t, username, jresp.Value("token").String().Raw(), "", "Player_Role")
 
 	// test create admin
 	username = getRandomUsername()
 
 	resp = Createuser(e, username, "test_code")
-	resp.Value("error").IsNull()
-	checkUserInfo(t, username, resp.Value("token").String().Raw(), "", "Admin_Role")
+	jresp = resp.JSON().Object()
+	jresp.Value("error").IsNull()
+	checkUserInfo(t, username, jresp.Value("token").String().Raw(), "", "Admin_Role")
 
 	// test create  with same name is not null
 	username = username
 
 	resp = Createuser(e, username, "test_code")
-	resp.Value("error").Array().Length().IsEqual(1)
+	resp.Status(http.StatusBadRequest)
+	jresp = resp.JSON().Object()
+	jresp.Value("error").Object().Value("kind").IsEqual("item already exists")
 }
 
-func Createuser(e *httpexpect.Expect, username string, code string) *httpexpect.Object {
+func Createuser(e *httpexpect.Expect, username string, code string) *httpexpect.Response {
 	resp := e.POST("/users").
 		WithJSON(map[string]interface{}{"name": username, "code": code}).
-		Expect().
-		JSON().Object().ContainsKey("token").ContainsKey("error")
+		Expect()
 	return resp
 }

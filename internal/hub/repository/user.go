@@ -40,7 +40,7 @@ func (repo *UserRepository) CreateUser(params database.InsertUserParams) (*entit
 	if err != nil {
 		if sqliteErr, ok := err.(*sqlite.Error); ok {
 			if sqliteErr.Code() == sqlite3.SQLITE_CONSTRAINT_UNIQUE {
-				return nil, enerr.E(op, err, enerr.Exist)
+				return nil, enerr.E(op, "Пользователь с таким именем уже существует", enerr.Exist)
 			}
 		}
 		// encode(w, r, http.StatusConflict, Response{Error: []string{"Пользователь с таким именем уже существует"}})

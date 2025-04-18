@@ -14,7 +14,7 @@ import (
 func TestWebsocketSubscribe(t *testing.T) {
 	e := httpexpect.Default(t, u.String())
 	username := getRandomUsername()
-	resp := Createuser(e, username, "")
+	resp := Createuser(e, username, "").JSON().Object()
 	uWS := url.URL{
 		Scheme: "ws",
 		Host:   host,
