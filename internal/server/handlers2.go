@@ -77,7 +77,7 @@ func (s *Server) PatchUser() http.HandlerFunc {
 			encode(w, r, http.StatusBadRequest, Response{Error: []string{"Неправильный формат запроса"}})
 			return
 		}
-		_, err = s.usecases.PatchUserRole(context.TODO(), usecase.PatchRequest{
+		err = s.usecases.PatchUserRole(context.TODO(), usecase.PatchRequest{
 			Name: username,
 			Role: req.Role,
 		})

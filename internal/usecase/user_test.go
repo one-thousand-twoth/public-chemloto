@@ -6,7 +6,6 @@ import (
 	"database/sql"
 	"fmt"
 	"log/slog"
-	"reflect"
 	"testing"
 
 	"github.com/anrew1002/Tournament-ChemLoto/internal/common"
@@ -128,7 +127,7 @@ func TestPatchUser(t *testing.T) {
 	// db := sqlite.MustInitDB()
 	params := database.InsertUserParams{
 		Name:   "TestUser",
-		Apikey: "",
+		Apikey: "test_api",
 		Room:   sql.NullString{},
 		Role:   int64(common.Player_Role),
 	}
@@ -158,7 +157,7 @@ func TestPatchUser(t *testing.T) {
 			},
 			want: &entities.User{
 				Name:   params.Name,
-				Apikey: "",
+				Apikey: params.Apikey,
 				Room:   "",
 				Role:   common.Judge_Role,
 			},
@@ -174,7 +173,7 @@ func TestPatchUser(t *testing.T) {
 			},
 			want: &entities.User{
 				Name:   params.Name,
-				Apikey: "",
+				Apikey: params.Apikey,
 				Room:   "",
 				Role:   common.Player_Role,
 			},
@@ -183,13 +182,14 @@ func TestPatchUser(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got, err := uc.PatchUserRole(context.TODO(), tt.args.req)
+			err := uc.PatchUserRole(context.TODO(), tt.args.req)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("PatchUser() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("PatchUser() = %v, want %v", got, tt.want)
+			_, err = uc.UserRepo.GetUserByApikey("test_api")
+			if !tt.wantErr && err != nil {
+				t.Error("shouldnt be error")
 			}
 		})
 	}

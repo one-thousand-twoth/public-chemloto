@@ -137,7 +137,7 @@ type PatchRequest struct {
 //	type Response struct {
 //		Error []string `json:"error"`
 //	}
-func (uc *Usecases) PatchUserRole(ctx context.Context, req PatchRequest) (*entities.User, error) {
+func (uc *Usecases) PatchUserRole(ctx context.Context, req PatchRequest) error {
 	const op enerr.Op = "usecase.user/PatchUser"
 	// log = log.With(slog.String("op", op))
 
@@ -145,22 +145,16 @@ func (uc *Usecases) PatchUserRole(ctx context.Context, req PatchRequest) (*entit
 		Role: int64(req.Role),
 		Name: req.Name,
 	}
-	row, err := uc.queries.PatchUserRole(context.TODO(), params)
+	_, err := uc.queries.PatchUserRole(context.TODO(), params)
 	if err != nil {
 		if sqliteErr, ok := err.(*sqlite.Error); ok {
 			if sqliteErr.Code() == sqlite3.SQLITE_CONSTRAINT_UNIQUE {
-				return nil, enerr.E(op, err, enerr.Exist)
+				return enerr.E(op, err, enerr.Exist)
 			}
 		}
-		return nil, enerr.E(op, err, enerr.Internal)
+		return enerr.E(op, err, enerr.Internal)
 	}
-	user := &entities.User{
-		Name:   row.Name,
-		Apikey: row.Apikey,
-		Room:   row.Room.String,
-		Role:   common.Role(row.Role),
-	}
-	return user, nil
+	return nil
 
 }
 func (uc *Usecases) RouteActionToUserRoom(ctx context.Context, userID entities.ID, msg map[string]any) error {
