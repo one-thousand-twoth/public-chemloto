@@ -57,6 +57,20 @@ func (h *Hub) HandleWS2(w http.ResponseWriter, r *http.Request) {
 		}()
 	}
 
+	room, err := h.usecases.RoomRepo.GetRoom(user.Room)
+	// if user have room then send him room info
+	if err == nil {
+		go func() {
+			info := room.Engine.PreHook()
+			user.MessageChan <- common.Message{
+				Type:   common.ENGINE_INFO,
+				Ok:     true,
+				Errors: []string{},
+				Body:   info,
+			}
+		}()
+	}
+
 	go func() {
 		recieve(connection, log, user, h)
 	}()
