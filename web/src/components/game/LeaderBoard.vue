@@ -1,7 +1,7 @@
 <script setup lang="ts">
+import { UserInfo } from '@/components/UI/';
 import { Role } from '@/models/User';
 import { useGameStore } from '@/stores/useGameStore';
-import { UserInfo } from '@/components/UI/';
 
 const GameStore = useGameStore()
 const emit = defineEmits<{
@@ -11,7 +11,6 @@ const emit = defineEmits<{
 </script>
 <template>
     <div>
-        <h2>Топ игроков</h2>
         <ul class="list-none p-0 font-bold m-0">
             <li @click="emit('selectPlayer', pl.Name)" class="break-words flex flex-wrap justify-between items-center p-2
                     hover:underline 

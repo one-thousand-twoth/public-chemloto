@@ -2,18 +2,23 @@
 import { WebsocketConnector } from '@/api/websocket/websocket';
 import obtain from "@/assets/sounds/notification.mp3";
 import { ButtonPanelAdmin, ButtonPanelPlayer, CheckPlayer, LeaderBoard, UserElements } from '@/components/game';
-import { ElementImage, IconButtonBackground, Modal, Timer, UserInfo } from '@/components/UI/';
+import { ElementImage, IconButton, IconButtonBackground, Modal, Timer, UserInfo } from '@/components/UI/';
 import { Hand } from '@/models/Game';
 import { Role } from '@/models/User';
 import { useGameStore } from '@/stores/useGameStore';
 import { useUserStore } from '@/stores/useUserStore';
 import {
     ArrowLeftStartOnRectangleIcon,
+    ArrowsPointingOutIcon,
     CheckIcon,
     EllipsisVerticalIcon
 } from "@heroicons/vue/24/outline";
 import { computed, inject, ref, watch, } from 'vue';
 import FieldsTable from './FieldsTable.vue';
+
+import { useFullscreen } from '@vueuse/core';
+import { useTemplateRef } from 'vue';
+
 
 const GameStore = useGameStore()
 const userStore = useUserStore()
@@ -60,13 +65,21 @@ const RemainsButton = ref(false)
 let audio = new Audio(obtain);
 
 watch(() => GameStore.gameState.Bag.LastElements, () => { audio.play() })
+
+
+const el = useTemplateRef('el')
+const { toggle } = useFullscreen(el)
 </script>
 <template>
-    <div class="relative flex bg-gray-100  flex-col items-center overflow-x-hidden">
-        <div class="flex justify-between w-lvw grow gap-10 ">
+
+    <div ref='el'>
+        <div class="relative p-2 gap-12 grid grid-cols-[1.5fr_1.5fr_2fr] h-[100svh]  overflow-y-scroll bg-bg  w-full  items-center">
+
+
+
             <!-- #region LEFT -->
-            <div class="flex flex-col m-3 w-[20%] gap-2">
-                <div class="bars p-3 min-w-[8.5rem]  grow-[1] bg-gray-50">
+            <div class="relative   flex h-full flex-col gap-2">
+                <div class="bars shadow-large p-3 min-w-[8.5rem]  grow-[1] bg-gray-50">
                     <LeaderBoard @selectPlayer="(name: string) => { curInfoPlayer = name }"></LeaderBoard>
                 </div>
                 <IconButtonBackground v-if="GameStore.gameState.Status !== 'STATUS_STARTED'"
@@ -74,36 +87,46 @@ watch(() => GameStore.gameState.Bag.LastElements, () => { audio.play() })
                     @click="DisconnectGame()">Выйти</IconButtonBackground>
             </div>
             <!-- #endregion LEFT -->
+
+
             <!-- #region CENTER -->
-            <div class="flex flex-col items-center  h-lvh max-w-[900px] gap-2 p-5 pb-60 grow-[3]">
+            <div class=" relative
+             flex flex-col  gap-2 items-center justify-center
+              h-full
+             ">
                 <div v-if="GameStore.gameState.Status == 'STATUS_COMPLETED'" class="text-lg">
                     Игра завершена
                 </div>
-                <Timer v-else />
+                <Timer class="w-full shadow-large " v-else />
 
-                <div class=" h-auto w-full mb-8 max-w-[50lvh] gap-2 flex flex-wrap items-center justify-center">
-                    <ElementImage class="grow-[2] center" :elname="GameStore.currElement" />
-                    <div class="flex flex-col flex-wrap gap-1 items-center" id="lastElementsContainer">
-                        <ElementImage v-for="el in GameStore.LastElements.slice(1)" :elname="el" />
+                <div class="w-full px-2 py-4 flex flex-col gap-2 items-center justify-center 
+                 bars border-0 border-b-2 border-t-2
+                 
+                ">
+                    <ElementImage class="h-full w-[60%]   center" :elname="GameStore.currElement" />
+                    <div class="relative flex  w-full flex-1 flex-row flex-nowrap gap-3 items-center" id="lastElementsContainer">
+                        <ElementImage class="w-full" v-for="el in GameStore.LastElements.slice(1, 5)" :elname="el" />
                     </div>
                 </div>
-                <IconButtonBackground class="w-full  p-2 z-[3] bg-blue-500 text-white  rounded-lg"
+                <!-- <IconButtonBackground class="w-full  p-2 z-[3] bg-blue-500 text-white  rounded-lg"
                     :icon="EllipsisVerticalIcon" @click="RemainsButton = !RemainsButton">Выпавшие элементы
-                </IconButtonBackground>
-                <FieldsTable />
+                </IconButtonBackground> -->
+                <!-- <FieldsTable /> -->
                 <template v-if="GameStore.gameState.Status !== 'STATUS_COMPLETED'">
                     <ButtonPanelAdmin v-if="userStore.UserInfo.role != Role.Player" />
                     <ButtonPanelPlayer v-else />
                 </template>
             </div>
             <!-- #endregion CENTER -->
+
+
             <!-- #region RIGHT -->
-            <div class='relative flex flex-col m-3 w-[20%] gap-2'>
-                <div class="bars p-3 min-w-[8.5rem]  grow-[1] bg-gray-50">
-                    <h2 class="text-clip overflow-hidden ">Поднятые руки</h2>
+            <div class='relative  flex flex-col h-full w-[1fr] gap-2'>
+                <IconButton class="absolute left-[-45px]" :icon="ArrowsPointingOutIcon" @click="toggle" />
+                <div class="bars  shadow-large p-3 min-w-[8.5rem]  grow-[1] bg-gray-50">
                     <ul class="list-none p-0 font-bold m-0">
                         <li @click="curCheckPlayer = pl" class="break-words flex justify-between items-center p-2 hover:underline rounded-md my-2 mx-0
-                        border-solid border-2 border-gray-600 m-3" v-for="pl in GameStore.gameState.RaisedHands">
+                            border-solid border-2 border-gray-600 m-3" v-for="pl in GameStore.gameState.RaisedHands">
                             <div class=" inline-flex">
                                 <CheckIcon v-if="pl.Checked" class="text-lg size-6" />
                                 <UserInfo :role="pl.Player.Role" :name="pl.Player.Name" />
@@ -123,53 +146,54 @@ watch(() => GameStore.gameState.Bag.LastElements, () => { audio.play() })
             </div>
             <!-- #endregion RIGHT -->
 
-        </div>
 
 
-        <div class=" h-96"></div>
 
 
-        <Modal :show="currPlayer !== undefined" @close="curInfoPlayer = ''; score = 0">
-            <template #header>
-                <h3 class="font-bold text-center">Информация о игроке {{ curInfoPlayer }}</h3>
-            </template>
-            <template #body>
-                <UserElements v-if="currPlayer" :player="currPlayer" />
 
-                <form v-if="userStore.UserInfo.role != Role.Player" class="flex flex-col gap-1"
-                    @submit.prevent="AddScore(score, curInfoPlayer)">
-                    <div class="text-lg">Добавить очки: </div>
-                    <input type="number" min="0" v-model="score" />
-                    <button type="submit">Отправить</button>
-                </form>
-            </template>
 
-        </Modal>
-        <Modal v-if="userStore.UserInfo.role != Role.Player" :show="curCheckPlayer !== undefined"
-            @close="curCheckPlayer = undefined">
-            <template #header>
-                <h3 class="font-bold text-center">Проверка структуры {{ curCheckPlayer?.Player.Name }}</h3>
-            </template>
-            <template v-if="curCheckPlayer !== undefined" #body>
-                <CheckPlayer :player="curCheckPlayer" />
-            </template>
-        </Modal>
+            <Modal :show="currPlayer !== undefined" @close="curInfoPlayer = ''; score = 0">
+                <template #header>
+                    <h3 class="font-bold text-center">Информация о игроке {{ curInfoPlayer }}</h3>
+                </template>
+                <template #body>
+                    <UserElements v-if="currPlayer" :player="currPlayer" />
 
-        <Modal :show="RemainsButton !== false" @close="RemainsButton = false">
-            <template #header>
-                <h3 class="font-bold text-center"> Выпавшие элементы</h3>
-            </template>
-            <template #body>
-                <div class="flex flex-wrap  justify-start my-3 gap-3">
-                    <div v-for="key in Object.keys(GameStore.gameState.Bag.DraftedElements)"
-                        class="flex items-center mb-3 gap-1">
-                        <ElementImage class="w-8" :elname="key" />
-                        <div>{{ GameStore.gameState.Bag.DraftedElements[key] }}</div>
+                    <form v-if="userStore.UserInfo.role != Role.Player" class="flex flex-col gap-1"
+                        @submit.prevent="AddScore(score, curInfoPlayer)">
+                        <div class="text-lg">Добавить очки: </div>
+                        <input type="number" min="0" v-model="score" />
+                        <button type="submit">Отправить</button>
+                    </form>
+                </template>
+
+            </Modal>
+            <Modal v-if="userStore.UserInfo.role != Role.Player" :show="curCheckPlayer !== undefined"
+                @close="curCheckPlayer = undefined">
+                <template #header>
+                    <h3 class="font-bold text-center">Проверка структуры {{ curCheckPlayer?.Player.Name }}</h3>
+                </template>
+                <template v-if="curCheckPlayer !== undefined" #body>
+                    <CheckPlayer :player="curCheckPlayer" />
+                </template>
+            </Modal>
+
+            <Modal :show="RemainsButton !== false" @close="RemainsButton = false">
+                <template #header>
+                    <h3 class="font-bold text-center"> Выпавшие элементы</h3>
+                </template>
+                <template #body>
+                    <div class="flex flex-wrap  justify-start my-3 gap-3">
+                        <div v-for="key in Object.keys(GameStore.gameState.Bag.DraftedElements)"
+                            class="flex items-center mb-3 gap-1">
+                            <ElementImage class="w-8" :elname="key" />
+                            <div>{{ GameStore.gameState.Bag.DraftedElements[key] }}</div>
+                        </div>
                     </div>
-                </div>
-            </template>
-        </Modal>
+                </template>
+            </Modal>
 
+        </div>
     </div>
 </template>
 

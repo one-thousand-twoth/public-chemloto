@@ -55,8 +55,8 @@ function TimerPause() {
 </script>
 
 <template>
-    <div class="flex relative items-center">
-        <div class="px-4 py-4 whitespace-nowrap text-3xl font-3xl text-gray-800">
+    <div class="flex relative items-center justify-center bars">
+        <div class="px-4 py-1 whitespace-nowrap text-[20px] text-main ">
             {{ timerString }}
         </div>
         <template v-if="hasTimer(GameStore.gameState) && UserStore.UserInfo.role != Role.Player">
@@ -68,6 +68,6 @@ function TimerPause() {
             <!-- <div>
                 {{ GameStore.gameState.StateStruct.TimerStatus }}
             </div> -->
-        </template>
+        </template> 
     </div>
 </template>

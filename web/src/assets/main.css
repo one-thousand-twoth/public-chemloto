@@ -2,6 +2,10 @@
 @tailwind components;
 @tailwind utilities;
 
+/* @theme{
+  --color-blued: #4E88CF;
+} */
+
 body {
 
   margin: 0;
@@ -10,7 +14,7 @@ body {
 }
 
 button {
-  @apply rounded-lg bg-blue-500 text-white font-bold px-4 py-2 w-fit hover:bg-blue-600 hover:cursor-pointer transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed disabled:opacity-90;
+  @apply rounded-lg bg-main text-white font-bold px-4 py-2 w-fit hover:bg-blue-600 hover:cursor-pointer transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed disabled:opacity-90;
 }
 
 input {
@@ -32,7 +36,9 @@ h2 {
 h3 {
   @apply text-black font-bold text-lg;
 }
-
-.bars {
-  @apply border-solid border-2 border-blue-400 rounded-lg;
+@layer components {
+  .bars {
+    @apply border-solid border-2 border-main rounded-[10px];
+  }
 }
+
