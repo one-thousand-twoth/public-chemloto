@@ -2,6 +2,7 @@
 export default {
   content: ["./src/**/*.{vue,ts}"],
   theme: {
+   
     dropShadow: {
       'small': '0 35px 35px rgba(0, 0, 0, 0.25)',
       'large': [
@@ -15,6 +16,11 @@ export default {
       colors: {
         'main': '#627bd9',
         'bg': '#F9F6F9',
+        'playing': '#6AB760',
+      },
+      borderRadius:{
+        DEFAULT: '10px',
+        'large': '12px'
       },
     },
   },
