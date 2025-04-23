@@ -49,10 +49,10 @@ func (repo *RoomRepository) AddRoom(name string, engine models.Engine) (*entitie
 	if err != nil {
 		if sqliteErr, ok := err.(*sqlite.Error); ok {
 			if sqliteErr.Code() == sqlite3.SQLITE_CONSTRAINT_UNIQUE {
-				return nil, enerr.E(op, err, enerr.Exist)
+				return nil, enerr.E(op, "Комната уже существует", enerr.Exist)
 			}
 			if sqliteErr.Code() == sqlite3.SQLITE_CONSTRAINT_PRIMARYKEY {
-				return nil, enerr.E(op, err, enerr.Exist)
+				return nil, enerr.E(op, "Комната уже существует", enerr.Exist)
 			}
 		}
 		return nil, enerr.E(op, err, enerr.Internal)

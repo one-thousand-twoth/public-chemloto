@@ -5,15 +5,12 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/anrew1002/Tournament-ChemLoto/internal/appvalidation"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/common"
-	"github.com/anrew1002/Tournament-ChemLoto/internal/common/enerr"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/entities"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/sl"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/usecase"
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/render"
-	"github.com/go-playground/validator/v10"
 )
 
 func (s *Server) Login2() http.HandlerFunc {
@@ -127,32 +124,11 @@ func (s *Server) CreateRoom2() http.HandlerFunc {
 			},
 		}
 
-		// type PolymersConfig struct {
-		// 	Name        string         `json:"name" validate:"required,min=1,safeinput"`
-		// 	MaxPlayers  int            `json:"maxPlayers" validate:"required,gt=1,lt=100"`
-		// 	Elements    map[string]int `json:"elementCounts" validate:"required"`
-		// 	Time        int            `validate:"excluded_if=isAuto false,gte=0"`
-		// 	IsAuto      bool           `json:"isAuto"`
-		// 	IsAutoCheck bool           `json:isAutoCheck`
-		// }
-
 		_, err = s.usecases.CreateRoom(createRoomRequest, s.log)
 		if err != nil {
-			log.Error("failed to add room", sl.Err(err))
-			switch validateErr := err.(type) {
-			case validator.ValidationErrors:
-				encode(w, r, http.StatusBadRequest, Response{Error: appvalidation.ValidationError(validateErr)})
-				return
-			}
-			if enerr.KindIs(enerr.Exist, err) {
-				encode(w, r, http.StatusConflict, Response{Error: []string{"Комната уже существует"}})
-				return
-			}
-			encode(w, r, http.StatusConflict, Response{Error: []string{"Сервер не смог создать комнату"}})
+			encodeError(w, log, err)
 			return
 		}
-		// s.log.Info("Room created", "name", req.Name, "time", req.Time)
-		// s.hub.SendMessageOverChannel("default", models.Message{Type: websocket.TextMessage, Body: []byte(req.Name)})
 		encode(w, r, http.StatusOK, Response{Rooms: nil, Error: []string{}})
 	}
 }
