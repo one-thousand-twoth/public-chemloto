@@ -7,22 +7,21 @@ import (
 	"github.com/anrew1002/Tournament-ChemLoto/internal/common"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/common/enerr"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/database"
+	"github.com/anrew1002/Tournament-ChemLoto/internal/database/stores"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/entities"
 	"modernc.org/sqlite"
 	sqlite3 "modernc.org/sqlite/lib"
 )
 
-type messageChan chan common.Message
-
 type UserRepository struct {
-	messageChannels map[string]messageChan
+	messageChannels *stores.StreamStore
 	db              *sql.DB
 	queries         *database.Queries
 }
 
-func NewUserRepo(db *sql.DB) *UserRepository {
+func NewUserRepo(db *sql.DB, memMessageStream *stores.StreamStore) *UserRepository {
 	return &UserRepository{
-		messageChannels: map[string]messageChan{},
+		messageChannels: memMessageStream,
 		db:              db,
 		queries:         database.New(db),
 	}
@@ -57,7 +56,7 @@ func (repo *UserRepository) CreateUser(params database.InsertUserParams) (*entit
 	// }
 
 	// TODO:
-	repo.messageChannels[row.Name] = make(messageChan, 1000)
+	repo.messageChannels.Add(row.Name, make(entities.MessageStream, 1000))
 
 	if err := tx.Commit(); err != nil {
 		return nil, enerr.E(op, err, enerr.Internal)
@@ -68,7 +67,7 @@ func (repo *UserRepository) CreateUser(params database.InsertUserParams) (*entit
 		Apikey:      row.Apikey,
 		Room:        row.Room.String,
 		Role:        common.Role(row.Role),
-		MessageChan: repo.messageChannels[row.Name],
+		MessageChan: repo.messageChannels.Get(row.Name),
 	}
 	return user, nil
 }
@@ -85,7 +84,7 @@ func (repo *UserRepository) GetUserByApikey(apikey string) (*entities.User, erro
 		Apikey:      row.Apikey,
 		Room:        row.Room.String,
 		Role:        common.Role(row.Role),
-		MessageChan: repo.messageChannels[row.Name],
+		MessageChan: repo.messageChannels.Get(row.Name),
 	}
 
 	return &user, nil
@@ -103,7 +102,7 @@ func (repo *UserRepository) GetUserByID(id entities.ID) (*entities.User, error) 
 		Apikey:      row.Apikey,
 		Room:        row.Room.String,
 		Role:        common.Role(row.Role),
-		MessageChan: repo.messageChannels[row.Name],
+		MessageChan: repo.messageChannels.Get(row.Name),
 	}
 
 	return &user, nil
@@ -122,7 +121,7 @@ func (repo *UserRepository) GetUserByName(name string) (*entities.User, error) {
 		Apikey:      row.Apikey,
 		Room:        row.Room.String,
 		Role:        common.Role(row.Role),
-		MessageChan: repo.messageChannels[row.Name],
+		MessageChan: repo.messageChannels.Get(row.Name),
 	}
 
 	return &user, nil
@@ -145,7 +144,7 @@ func (repo *UserRepository) GetRoomSubscribers(roomname string) ([]entities.User
 			Apikey:      row.Apikey,
 			Room:        row.Room.String,
 			Role:        common.Role(row.Role),
-			MessageChan: repo.messageChannels[row.Name],
+			MessageChan: repo.messageChannels.Get(row.Name),
 		})
 	}
 	return users, nil

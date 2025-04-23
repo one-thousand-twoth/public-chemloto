@@ -8,6 +8,7 @@ import (
 	"github.com/anrew1002/Tournament-ChemLoto/internal/common"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/common/enerr"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/database"
+	"github.com/anrew1002/Tournament-ChemLoto/internal/database/stores"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/engines/polymers"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/entities"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/hub/repository"
@@ -87,7 +88,9 @@ func TestCreateRoom(t *testing.T) {
 func TestSubscribeToRoom(t *testing.T) {
 	t.Cleanup(cleanup)
 
-	var userRepo *repository.UserRepository = repository.NewUserRepo(db)
+	memStreams := stores.NewStreamStore()
+
+	var userRepo *repository.UserRepository = repository.NewUserRepo(db, memStreams)
 	var user = &entities.User{ID: 1, Apikey: "api", Name: "test_user"}
 
 	_, err := userRepo.CreateUser(database.InsertUserParams{
@@ -158,8 +161,8 @@ func TestSubscribeToRoom(t *testing.T) {
 
 func TestGetSubscribersFromRoom(t *testing.T) {
 	t.Cleanup(cleanup)
-
-	var userRepo *repository.UserRepository = repository.NewUserRepo(db)
+	memStreams := stores.NewStreamStore()
+	var userRepo *repository.UserRepository = repository.NewUserRepo(db, memStreams)
 
 	var user1 = &entities.User{ID: 1, Apikey: "api_11", Name: "test_user1"}
 

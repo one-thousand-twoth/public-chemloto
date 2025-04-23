@@ -10,13 +10,15 @@ import (
 
 type ID int64
 
+type MessageStream chan common.Message
+
 type User struct {
-	ID          ID                  `json:"id"`
-	Name        string              `json:"username"`
-	Apikey      string              `json:"-"`
-	Room        string              `json:"room"`
-	Role        common.Role         `json:"role"`
-	MessageChan chan common.Message `json:"-"`
+	ID          ID            `json:"id"`
+	Name        string        `json:"username"`
+	Apikey      string        `json:"-"`
+	Room        string        `json:"room"`
+	Role        common.Role   `json:"role"`
+	MessageChan MessageStream `json:"-"`
 	// channels    []string            `json:"channels"`
 }
 

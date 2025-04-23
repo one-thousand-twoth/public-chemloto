@@ -135,6 +135,23 @@ func (uc *Usecases) SubscribeToRoom(ctx context.Context, roomName string, userID
 	if err != nil {
 		return err
 	}
+
+	// then NOTIFY
+	users, err := uc.RoomRepo.GetRoomUsers(context.TODO(), roomName)
+	if err != nil {
+		// TODO:
+		return nil
+	}
+	data := engine.PreHook()
+	for _, v := range users {
+
+		v.MessageChan <- common.Message{
+			Type: common.ENGINE_INFO,
+			Ok:   true,
+			Body: data,
+		}
+	}
+
 	return nil
 
 }
@@ -209,6 +226,15 @@ func (uc *Usecases) StartGame(
 
 	return nil
 
+}
+
+func (uc *Usecases) GetRoomUsers(ctx context.Context, roomname string) ([]*entities.User, error) {
+	const op enerr.Op = "usecase.room/GetRoomUsers"
+	users, err := uc.RoomRepo.GetRoomUsers(ctx, roomname)
+	if err != nil {
+		return nil, enerr.E(op, err)
+	}
+	return users, nil
 }
 
 // func UnSubscribeToRoom(

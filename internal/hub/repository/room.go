@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"errors"
 
 	"github.com/anrew1002/Tournament-ChemLoto/internal/common/enerr"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/database"
@@ -15,18 +16,24 @@ import (
 
 type RoomRepository struct {
 	engines *stores.EnginesStore
+	streams *stores.StreamStore
 	db      *sql.DB
 	queries *database.Queries
 }
 
-func NewRoomRepo(db *sql.DB) *RoomRepository {
+func NewRoomRepo(db *sql.DB, memMessageStream *stores.StreamStore) *RoomRepository {
 	return &RoomRepository{
 		db:      db,
 		queries: database.New(db),
 		engines: stores.NewEngineStore(),
+		streams: memMessageStream,
 	}
 }
 
+// Предполгается что вы точно знаете, что комната была создана и вы вызываете ее в блокирующей транзакции
+//
+// Эта функция опасна, так как может неявно отдать нулевое значение
+// Но я закрываю глаза, так как она используется лишь в одном случае, из-за плохой моей архитектуры :Э
 func (repo *RoomRepository) GetEngine(name string) (models.Engine, error) {
 	const op enerr.Op = "repository.room/GetEngine"
 
@@ -136,4 +143,28 @@ func (repo *RoomRepository) SubscribeToRoom(name string, user *entities.User) er
 	}
 
 	return nil
+}
+
+func (repo *RoomRepository) GetRoomUsers(ctx context.Context, roomname string) ([]*entities.User, error) {
+	const op enerr.Op = "repository.room/GetRoomUsers"
+
+	rows, err := repo.queries.GetUsersByRoom(ctx, sql.NullString{
+		String: roomname,
+		Valid:  true,
+	})
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			rows = make([]database.User, 0)
+
+		} else {
+			return nil, err
+		}
+	}
+	users := make([]*entities.User, 0, len(rows))
+	for _, v := range rows {
+		usM := entities.ToUserModel(v)
+		usM.MessageChan = repo.streams.Get(v.Name)
+		users = append(users, &usM)
+	}
+	return users, nil
 }

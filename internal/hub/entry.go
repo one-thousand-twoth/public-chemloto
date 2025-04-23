@@ -97,7 +97,6 @@ SendLoop:
 			if err != nil {
 				log.Error("Marshaling data", slog.Any("data", message))
 			}
-			log.Debug("envelope", "env", string(envelope))
 			sendMutex.Lock()
 			_ = conn.WriteMessage(websocket.TextMessage, envelope)
 			sendMutex.Unlock()
