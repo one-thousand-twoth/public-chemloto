@@ -64,7 +64,7 @@ func (h *WebsocketHandlers) UseHandler(t common.MessageType, f HandlerFunc2) {
 
 func (h *WebsocketHandlers) SetupHandlers() {
 	h.UseHandler(common.HUB_SUBSCRIBE, h.SubscribeHandler2)
-	// h.UseHandler(common.HUB_UNSUBSCRIBE, UnSubscribe)
+	h.UseHandler(common.HUB_UNSUBSCRIBE, h.UnSubscribeHandler2)
 	h.UseHandler(common.ENGINE_ACTION, h.EngineAction2)
 	h.UseHandler(common.HUB_STARTGAME, h.StartGame2)
 	// h.UseHandler(common.HUB_EXITGAME, StopGame)
@@ -137,10 +137,10 @@ func (h *WebsocketHandlers) UnSubscribeHandler2(e internalEventWrap) error {
 
 	switch data.Target {
 	case "room":
-		// err := usecase.(h.roomRepo, data.Name, &e.user)
-		// if err != nil {
-		// 	return err
-		// }
+		err := h.usecases.UnsubscribeFromRoom(context.TODO(), data.Name, e.userId)
+		if err != nil {
+			return err
+		}
 	case "channel":
 		// err := usecase.SubscribeToChannel(h.Channels, data.Name, e.user)
 		panic("TODO")
@@ -149,7 +149,7 @@ func (h *WebsocketHandlers) UnSubscribeHandler2(e internalEventWrap) error {
 	}
 
 	e.MessageChannel <- common.Message{
-		Type: common.HUB_SUBSCRIBE,
+		Type: common.HUB_UNSUBSCRIBE,
 		Ok:   true,
 		Body: map[string]any{
 			"Target": "room",

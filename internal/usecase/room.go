@@ -138,6 +138,53 @@ func (uc *Usecases) SubscribeToRoom(ctx context.Context, roomName string, userID
 	return nil
 
 }
+func (uc *Usecases) UnsubscribeFromRoom(ctx context.Context, roomName string, userID entities.ID) error {
+	const op enerr.Op = "usecase.room/UnsubscribeFromRoom"
+
+	tx, err := uc.db.BeginTx(ctx, nil)
+	defer tx.Rollback()
+	if err != nil {
+		return err
+	}
+
+	queries := uc.queries.WithTx(tx)
+
+	rowUser, err := queries.GetUserByID(ctx, int64(userID))
+	if err != nil {
+		return enerr.E(op, err)
+	}
+
+	user := entities.ToUserModel(rowUser)
+
+	err = user.UnsubscribeFromRoom(roomName)
+	if err != nil {
+		return enerr.E(op, err)
+	}
+
+	err = queries.UpdateUserRoom(ctx, database.UpdateUserRoomParams{
+		Room: sql.NullString{
+			String: "",
+			Valid:  false,
+		},
+		ID: int64(user.ID),
+	})
+	if err != nil {
+		return err
+	}
+	// TODO:
+	engine, _ := uc.RoomRepo.GetEngine(roomName)
+
+	err = engine.RemoveParticipant(user.Name)
+	if err != nil {
+		return err
+	}
+	err = tx.Commit()
+	if err != nil {
+		return err
+	}
+	return nil
+
+}
 
 func (uc *Usecases) StartGame(
 	userID entities.ID,
