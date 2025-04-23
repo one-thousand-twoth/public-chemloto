@@ -1,7 +1,10 @@
 <script setup lang="ts">
-import { RaiseHandComp, TradeExchange, UserElements } from '@/components/game/';
+import { DesignButton, RaiseHandComp, TradeExchange, UserElements } from '@/components/game/';
 import { Modal } from '@/components/UI/index';
 import { useGameStore } from '@/stores/useGameStore';
+import {
+    HandRaisedIcon, PuzzlePieceIcon
+} from "@heroicons/vue/24/solid";
 import { computed, ref } from 'vue';
 
 // const props = defineProps<{
@@ -24,25 +27,40 @@ const RaiseHandButton = ref(false)
 const TradeButton = ref(false)
 
 
-
+const selectedTool = ref('puzzle')
+const selectedPalace = ref('strip')
 </script>
 <template>
-    <template v-if="gameStore.gameState.Status === 'STATUS_WAITING'">
+    <!-- <template v-if="gameStore.gameState.Status === 'STATUS_WAITING'">
         <button disabled >Ждем начала</button>
     </template>
-    <template v-else>
+<template v-else>
         <template v-if="gameStore.gameState.State == 'OBTAIN'">
             <button @click="RaiseHandButton = !RaiseHandButton">Поднять
                 руку</button>
         </template>
-        <template v-if="gameStore.gameState.State == 'HAND'">
+<template v-if="gameStore.gameState.State == 'HAND'">
             <button  @click="RaiseHandButton = !RaiseHandButton">Поднять
                 руку</button>
         </template>
-        <template v-if="gameStore.gameState.State == 'TRADE'">
+<template v-if="gameStore.gameState.State == 'TRADE'">
             <button @click="TradeButton = !TradeButton">Обменять</button>
         </template>
-    </template>
+</template> -->
+    <div class="flex  gap-2">
+        <DesignButton class="" v-model="selectedPalace"  value="puzzle" label="Puzzle">
+            <PuzzlePieceIcon class="size-7 lg:size-10" />
+        </DesignButton>
+        <div class="flex rounded shadow-large border border-b-main border-b-2">
+            <DesignButton class="rounded-none rounded-l" v-model="selectedTool" value="puzzle" label="Puzzle">
+                <PuzzlePieceIcon class="size-7 lg:size-10" />
+            </DesignButton>
+    
+            <DesignButton class="rounded-none rounded-r" v-model="selectedTool" value="hand" label="Hand">
+                <HandRaisedIcon class="size-7 lg:size-10 -rotate-90" />
+            </DesignButton>
+        </div>
+    </div>
 
     <Modal :show="currPlayer !== undefined" @close="curInfoPlayer = ''">
         <template #header>

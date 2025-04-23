@@ -1,12 +1,17 @@
 <script setup lang="ts">
 import { WebsocketConnector } from '@/api/websocket/websocket';
+import { DesignButton } from '@/components/game';
 import { Modal } from '@/components/UI/index';
 import { ObtainStateHandler, TradeStateHandler, useGameStore } from '@/stores/useGameStore';
 import { useUserStore } from '@/stores/useUserStore';
+import {
+    ArrowDownCircleIcon,
+    HandRaisedIcon, PuzzlePieceIcon, ShoppingBagIcon
+} from "@heroicons/vue/24/solid";
 import { storeToRefs } from "pinia";
 import { computed, inject, ref } from 'vue';
+import IconButton from '../UI/IconButton.vue';
 import Trade from './Trade.vue';
-
 // const props = defineProps<{
 //     modal: string;
 // }>()
@@ -63,34 +68,65 @@ function sendContinue() {
 const TradeButton = ref(false)
 
 
+const selectedTool = ref('puzzle')
+const selectedPalace = ref<"strip" | "list">('strip')
+
+function swap() {
+    if (selectedPalace.value == 'strip') {
+        selectedPalace.value = 'list'
+    } else {
+        selectedPalace.value = 'strip'
+    }
+}
 
 </script>
 <template>
-    <template v-if="gameStore.gameState.Status === 'STATUS_WAITING'">
+    <div class="flex gap-2">
+
+        <div class="flex  border-slate-300 hover:bg-slate-100 border-b-main border-b-2  shadow-large items-center cursor-pointer px-2 py-2 rounded border bg-white
+              border-main-dark text-main
+              border-slate-300 "
+            @click="swap()">
+            <component :is="selectedPalace == 'strip' ? ShoppingBagIcon : ArrowDownCircleIcon" class="size-7 lg:size-10 text-slate-500" />
+        </div>
+
+
+        <div class="flex rounded shadow-large border border-b-main border-b-2">
+            <DesignButton class="rounded-none rounded-l" v-model="selectedTool" value="puzzle" label="Puzzle">
+                <PuzzlePieceIcon class="size-7 lg:size-10" />
+            </DesignButton>
+
+            <DesignButton class="rounded-none rounded-r" v-model="selectedTool" value="hand" label="Hand">
+                <HandRaisedIcon class="size-7 lg:size-10 -rotate-90" />
+            </DesignButton>
+        </div>
+    </div>
+
+    <!-- <template v-if="gameStore.gameState.Status === 'STATUS_WAITING'">
         <button @click="StartGame()">
             Начать игру
         </button>
     </template>
-    <template v-else>
+<template v-else>
         <template v-if="gameStore.gameState.State == 'OBTAIN'">
             <button @click="GetElement()">Достать
                 элемент</button>
         </template>
-        <template v-if="gameStore.gameState.State == 'HAND'">
+<template v-if="gameStore.gameState.State == 'HAND'">
             <button disabled @click="GetElement()">Ждем
                 проверки</button>
         </template>
-        <template v-if="gameStore.gameState.State == 'TRADE'">
+<template v-if="gameStore.gameState.State == 'TRADE'">
             <button @click="TradeButton = !TradeButton">Обменять</button>
             <button @click="sendContinue()">Продолжить</button>
         </template>
-    </template>
-    <Modal :show="TradeButton" @close="TradeButton = false">
-        <template #header>
+</template>
+<Modal :show="TradeButton" @close="TradeButton = false">
+    <template #header>
             <h3 class="font-bold text-center">Обменять</h3>
         </template>
-        <template v-if="gameStore.SelfPlayer" #body>
+    <template v-if="gameStore.SelfPlayer" #body>
             <Trade :players="gameStore.gameState.Players" />
         </template>
-    </Modal>
+</Modal> -->
 </template>

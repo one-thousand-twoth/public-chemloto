@@ -15,6 +15,7 @@ export default {
     extend: {
       colors: {
         'main': '#627bd9',
+        'main-light': '#6BAEFF',
         'bg': '#F9F6F9',
         'playing': '#6AB760',
       },

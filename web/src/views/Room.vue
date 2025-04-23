@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { WebsocketConnector } from '@/api/websocket/websocket';
 import obtain from "@/assets/sounds/notification.mp3";
-import { ButtonPanelAdmin, ButtonPanelPlayer, CheckPlayer, LeaderBoard, UserElements } from '@/components/game';
+import { ButtonPanelAdmin, ButtonPanelPlayer, CheckPlayer, DesignButton, LeaderBoard, UserElements } from '@/components/game';
 import { ElementImage, IconButton, IconButtonBackground, Modal, Timer, UserInfo } from '@/components/UI/';
 import { Hand } from '@/models/Game';
 import { Role } from '@/models/User';
@@ -73,7 +73,8 @@ const { toggle } = useFullscreen(el)
 <template>
 
     <div ref='el'>
-        <div class="relative p-2 gap-12 grid grid-cols-[1.5fr_1.5fr_2fr] h-[100svh]  overflow-y-scroll bg-bg  w-full  items-center">
+        <div
+            class="relative p-2 gap-12 grid grid-cols-[1.5fr_1.5fr_2fr] h-[100svh]  overflow-y-scroll bg-bg  w-dvw  items-center">
 
 
 
@@ -90,38 +91,48 @@ const { toggle } = useFullscreen(el)
 
 
             <!-- #region CENTER -->
-            <div class=" relative
-             flex flex-col  gap-2 items-center justify-center
-              h-full
+            <div class=" relative flex flex-col gap-4 lg:gap-20  items-center justify-center 
+             h-[100%]
+             lg:h-[80%]
+
+            pb-4
+            lg:pb-0
+
              ">
+                <!-- <div class="w-full p-6  bg-red-500"> Привет</div>
+                <div class="relative flex-col flex flex-initial items-center justify-center flex-shrink p-2 h-[30vh] w-full bg-red-500">
+                   
+                    <ElementImage class="flex-1 max-w-[60%] aspect-square" :elname="GameStore.currElement" />
+                    <div class="relative  flex flex-grow-0   w-full flex-1 flex-row flex-nowrap gap-3 items-center" id="lastElementsContainer">
+                        <ElementImage class="w-full h-auto" v-for="el in GameStore.LastElements.slice(1, 5)" :elname="el" />
+                    </div>
+                </div>
+                <div class="w-full p-6  bg-red-500"> Привет</div> -->
                 <div v-if="GameStore.gameState.Status == 'STATUS_COMPLETED'" class="text-lg">
                     Игра завершена
                 </div>
                 <Timer class="w-full shadow-large " v-else />
 
-                <div class="w-full px-2 py-4 flex flex-col gap-2 items-center justify-center 
-                 bars border-0 border-b-2 border-t-2
-                 
+                <div class="relative flex-1  w-full px-2 py-4 flex flex-col gap-2   items-center justify-center 
+                 bars border-0 border-b-2 border-t-2  
                 ">
-                    <ElementImage class="h-full w-[60%]   center" :elname="GameStore.currElement" />
-                    <div class="relative flex  w-full flex-1 flex-row flex-nowrap gap-3 items-center" id="lastElementsContainer">
-                        <ElementImage class="w-full" v-for="el in GameStore.LastElements.slice(1, 5)" :elname="el" />
+                    <ElementImage class="flex-1 max-w-[80%] aspect-square" :elname="GameStore.currElement" />
+                    <div class="relative  flex flex-grow-0   w-full flex-1 flex-row flex-nowrap gap-3 items-center" id="lastElementsContainer">
+                        <ElementImage class="w-full h-auto" v-for="el in GameStore.LastElements.slice(1, 5)" :elname="el" />
                     </div>
                 </div>
-                <!-- <IconButtonBackground class="w-full  p-2 z-[3] bg-blue-500 text-white  rounded-lg"
-                    :icon="EllipsisVerticalIcon" @click="RemainsButton = !RemainsButton">Выпавшие элементы
-                </IconButtonBackground> -->
-                <!-- <FieldsTable /> -->
+                
                 <template v-if="GameStore.gameState.Status !== 'STATUS_COMPLETED'">
                     <ButtonPanelAdmin v-if="userStore.UserInfo.role != Role.Player" />
                     <ButtonPanelPlayer v-else />
                 </template>
+
             </div>
             <!-- #endregion CENTER -->
 
 
             <!-- #region RIGHT -->
-            <div class='relative  flex flex-col h-full w-[1fr] gap-2'>
+            <div class='relative  flex flex-col h-full gap-2'>
                 <IconButton class="absolute left-[-45px]" :icon="ArrowsPointingOutIcon" @click="toggle" />
                 <div class="bars  shadow-large p-3 min-w-[8.5rem]  grow-[1] bg-gray-50">
                     <ul class="list-none p-0 font-bold m-0">
