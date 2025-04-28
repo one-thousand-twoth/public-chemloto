@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { WebsocketConnector } from '@/api/websocket/websocket';
 import ChemicalElementFormInput from '@/components/UI/ChemicalElementFormInput.vue';
-import { Hand } from '@/stores/useGameStore';
-import { inject, ref } from 'vue';
+import { Hand } from '@/models/Game';
 import { Polymers } from '@/models/Polymers';
+import { inject, ref } from 'vue';
 const props = defineProps<{
 	player: Hand;
 }>()

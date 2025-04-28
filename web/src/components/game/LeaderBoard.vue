@@ -11,7 +11,7 @@ const emit = defineEmits<{
 <template>
     <div>
         <ul class="list-none p-0 font-bold m-0">
-            <li @click="emit('selectPlayer', pl.Name)" class="break-words text-xs flex flex-wrap justify-between items-center p-1 px-2 border-2 border-b-4 border-playing
+            <li @click="emit('selectPlayer', pl.Name)" class="block break-words text-xs flex flex-wrap justify-between items-center p-1 px-2 border-2 border-b-4 border-playing
                     hover:underline 
                     rounded-large my-2"
                 v-for="pl in GameStore.gameState.Players.filter((pl) => pl.Role === Role.Player).sort((a, b) => b.Score - a.Score)"

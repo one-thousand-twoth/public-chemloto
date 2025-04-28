@@ -1,6 +1,5 @@
 import { WEBSOCKET_EVENT, WebsocketConnector } from '@/api/websocket/websocket'
 import { GameInfo, getStateTimer, hasTimer, Player, updateTimer } from '@/models/Game'
-import { Role } from '@/models/User'
 import { acceptHMRUpdate, defineStore } from 'pinia'
 import { computed, inject, ref } from 'vue'
 import { useUserStore } from './useUserStore'
@@ -176,7 +175,7 @@ export const useGameStore = defineStore('game', () => {
     })
 
     const SelfPlayer = computed(() => {
-        return gameState.value.Players.find((player) => player.Name == userStore.UserCreds?.username) as Player
+        return gameState.value.Players.find((player) => player.Name == userStore.UserCreds?.username)
     })
 
     function EngineInfo(e: WEBSOCKET_EVENT) {

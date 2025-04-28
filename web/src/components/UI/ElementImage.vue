@@ -8,5 +8,5 @@ const imgUrl = computed (() => new URL(`../../assets/items/${props.elname}.svg`,
 </script>
 
 <template>
-  <div class="relative"><img class=" drop-shadow-large h-full w-auto aspect-square" :src="imgUrl" /></div>
+  <div class="relative flex justify-center items-center"><img class="drop-shadow-large h-full w-auto aspect-square" :src="imgUrl" /></div>
 </template>

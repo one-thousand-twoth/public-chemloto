@@ -16,7 +16,6 @@ const model = defineModel()
 <template>
 	<div class="flex items-center mb-3 gap-3">
 		<ElementImage class="w-8" :elname="elname" />
-
-		<input :disabled="disabled" type="number" :max="max" min="0" v-model="model" />
+		<input class="" :disabled="disabled" type="number" :max="max" min="0" v-model="model" />
 	</div>
 </template>

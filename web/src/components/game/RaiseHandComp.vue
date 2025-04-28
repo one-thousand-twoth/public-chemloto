@@ -1,22 +1,31 @@
 <script setup lang="ts">
 import { WebsocketConnector } from '@/api/websocket/websocket';
-import ChemicalElementFormInput from '@/components/UI/ChemicalElementFormInput.vue';
-import { Player } from '@/stores/useGameStore';
-import { inject, ref } from 'vue';
-import { Polymers } from '@/models/Polymers';
+import { ChemicalElementCounter, SelectedElements, StructureList } from '@/components/game';
+import { NewModal } from '@/components/UI';
+import { Player } from '@/models/Game';
+import { CommonStructureNames, Field, Polymer, Polymers, StructureNames } from '@/models/Polymers';
+import { useKeyboardStore } from '@/stores/useRaiseHand';
+import { useFocus } from '@vueuse/core';
+import { openModal } from 'jenesius-vue-modal';
+import { storeToRefs } from 'pinia';
+import { computed, inject, ref, useTemplateRef, watch } from 'vue';
+import ChemicalElementCounterMobile from './ChemicalElementCounterMobile.vue';
 
 const props = defineProps<{
 	player: Player;
 }>()
 
+const handStore = useKeyboardStore()
+const { Value, InputsValues } = storeToRefs(handStore)
+
 const ws = inject('connector') as WebsocketConnector
 
-interface CheckStruct {
-	Field: string,
-	Name: string,
+interface CheckStruct<K extends Field> {
+	Field: K,
+	Name: StructureNames<K> | undefined
 }
 
-function Check(ch: CheckStruct, str: { [id: string]: number; }) {
+function Check(ch: CheckStruct<any>, str: { [id: string]: number; }) {
 	console.log(str)
 	ws.Send({
 		Type: "ENGINE_ACTION",
@@ -27,41 +36,83 @@ function Check(ch: CheckStruct, str: { [id: string]: number; }) {
 	})
 }
 
-const availableFields = Object.entries(Polymers).filter(([field, _]) => { return !props.player.CompletedFields.includes(field) })
+const availableFields = Object.entries(Polymers)
+
 console.debug(availableFields)
-const check = ref<CheckStruct>({
-	Field: availableFields[0][0],
-	Name: '',
+
+type AllCheckStructs = {
+	[K in Field]: CheckStruct<K>
+}[Field];
+
+const check = ref<AllCheckStructs>({
+	Field: 'Альфа',
+	Name: undefined,
 })
+
 
 const struct = ref<{ [id: string]: number; }>(
 	Object.fromEntries(Object.entries(props.player.Bag).map(([name]) => { return [name, 0] }))
 )
 
+// const struct = Structure.value = Object.fromEntries(Object.entries(props.player.Bag).map(([name]) => { return [name, 0] }))
+
+
+// type CurrenElements = typeof Polymers[check.Field][check.Name][0]
+
+const selectedElem = defineModel<string | number>("selectedElem")
+
+const currentElements = computed<Polymer | undefined>(() => {
+	const { Field, Name } = check.value;
+	if (!Name) return undefined;
+	switch (Field) {
+		case 'Альфа':
+			return Polymers['Альфа'][Name];
+		case 'Бета':
+			return Polymers['Бета'][Name];
+		case 'Гамма':
+			return Polymers['Гамма'][Name];
+		default:
+			return undefined;
+	}
+});
+
+watch(currentElements, () => {
+	selectedElem.value = ''
+	Object.keys(InputsValues.value).forEach((key) => {
+		InputsValues.value[key] = '0';
+	});
+
+
+})
+
+function Select(name: string) {
+
+}
+
+
+
+
 </script>
 
 <template>
-	<form @submit.prevent="Check(check, struct)">
-		<div class="flex flex-col gap-4 ">
-			<section>
-				<label for="roomName">Поле:</label>
-				<select v-model="check.Field">
-					<option disabled value="">Выберите</option>
-					<option v-for="[field, _] in availableFields">{{ field }}</option>
-				</select>
-			</section>
-			<section v-if='check.Field'>
-				<label for="roomName">Название структуры:</label>
-				<select v-model="check.Name">
-					<option disabled value="">Выберите</option>
-					<option v-for="[v] in Object.entries(Polymers[check.Field])">{{ v }}</option>
-				</select>
-			</section>
-			<div v-if="Polymers[check.Field][check.Name] !== undefined" class="flex flex-wrap justify-between">
-				<ChemicalElementFormInput v-for="[elname] in Object.entries(Polymers[check.Field][check.Name][0])"
-					:elname="elname" :max="player.Bag[elname] ?? 0" v-model.number="struct[elname]" />
-			</div>
-			<button type="submit">Отправить</button>
+	<form @submit.prevent="Check(check, struct)" class="flex h-full flex-col gap-2 mx-auto">
+		<section class="flex">
+			<select v-model="check.Field" id="field"
+				class=" w-auto bg-gray-50 border border-gray-300 text-gray-900 text-base rounded-l-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5>">
+				<option value="Альфа" selected>α</option>
+				<option value="Бета">β</option>
+				<option value="Гамма">γ</option>
+			</select>
+			<select class="rounded-r-lg   w-full" v-model="check.Name">
+				<option disabled value="">Выберите</option>
+				<option v-for="[v] in Object.entries(Polymers[check.Field])">{{ v }}</option>
+			</select>
+		</section>
+		<div v-if="currentElements !== undefined" class="flex my-auto flex-wrap justify-around">
+			<ChemicalElementCounterMobile :key="elname" v-for="elname in Object.keys(currentElements[0])"
+				v-model:selected="selectedElem" :selector="elname" :elname="elname" :max="player.Bag[elname] ?? 0"
+				v-model:input_value="struct[elname]" />
 		</div>
+		<button class="mt-auto" type="submit">Отправить</button>
 	</form>
 </template>

@@ -3,8 +3,7 @@ import { computed } from 'vue';
 
 const props = defineProps<{
   modelValue: string | number,
-  value: string | number,
-  label?: string
+  value: string | number
 }>()
 
 const emit = defineEmits<{

@@ -12,9 +12,10 @@ import { storeToRefs } from "pinia";
 import { computed, inject, ref } from 'vue';
 import IconButton from '../UI/IconButton.vue';
 import Trade from './Trade.vue';
-// const props = defineProps<{
-//     modal: string;
-// }>()
+
+const selectedBtn = defineModel<"strip" | "list">('btn', { required: true })
+const selectedRadio = defineModel<'puzzle' | 'trade'>('radio',{ required: true })
+
 
 const ws = inject('connector') as WebsocketConnector
 
@@ -68,14 +69,14 @@ function sendContinue() {
 const TradeButton = ref(false)
 
 
-const selectedTool = ref('puzzle')
-const selectedPalace = ref<"strip" | "list">('strip')
+// const selectedTool = ref('puzzle')
+// const selectedBtn = ref<"strip" | "list">('strip')
 
 function swap() {
-    if (selectedPalace.value == 'strip') {
-        selectedPalace.value = 'list'
+    if (selectedBtn.value == 'strip') {
+        selectedBtn.value = 'list'
     } else {
-        selectedPalace.value = 'strip'
+        selectedBtn.value = 'strip'
     }
 }
 
@@ -87,16 +88,16 @@ function swap() {
               border-main-dark text-main
               border-slate-300 "
             @click="swap()">
-            <component :is="selectedPalace == 'strip' ? ShoppingBagIcon : ArrowDownCircleIcon" class="size-7 lg:size-10 text-slate-500" />
+            <component :is="selectedBtn == 'strip' ? ShoppingBagIcon : ArrowDownCircleIcon" class="size-7 lg:size-10 text-slate-500" />
         </div>
 
 
         <div class="flex rounded shadow-large border border-b-main border-b-2">
-            <DesignButton class="rounded-none rounded-l" v-model="selectedTool" value="puzzle" label="Puzzle">
+            <DesignButton class="rounded-none rounded-l" v-model="selectedRadio" value="puzzle" label="Puzzle">
                 <PuzzlePieceIcon class="size-7 lg:size-10" />
             </DesignButton>
 
-            <DesignButton class="rounded-none rounded-r" v-model="selectedTool" value="hand" label="Hand">
+            <DesignButton class="rounded-none rounded-r" v-model="selectedRadio" value="hand" label="Hand">
                 <HandRaisedIcon class="size-7 lg:size-10 -rotate-90" />
             </DesignButton>
         </div>
