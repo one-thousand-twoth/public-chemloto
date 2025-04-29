@@ -16,7 +16,7 @@ const props = defineProps<{
 }>()
 
 const handStore = useKeyboardStore()
-const { Value, InputsValues } = storeToRefs(handStore)
+const {  InputsValues } = storeToRefs(handStore)
 
 const ws = inject('connector') as WebsocketConnector
 
@@ -25,16 +25,23 @@ interface CheckStruct<K extends Field> {
 	Name: StructureNames<K> | undefined
 }
 
-function Check(ch: CheckStruct<any>, str: { [id: string]: number; }) {
+type InputEntries = { [id: string]: string; }
+
+function Check(ch: CheckStruct<any>, str: InputEntries) {
 	console.log(str)
 	ws.Send({
 		Type: "ENGINE_ACTION",
 		Action: "RaiseHand",
 		Field: ch.Field,
 		Name: ch.Name,
-		Structure: Object.fromEntries(Object.entries(str).filter(([_, v]) => v !== 0)),
+		Structure: Object.fromEntries(Object.entries(str).map(([k, v]) => [k, Number(v)])),
 	})
 }
+
+const isMobile = computed(() => {
+	return true
+	return navigator.maxTouchPoints > 1
+})
 
 const availableFields = Object.entries(Polymers)
 
@@ -50,8 +57,8 @@ const check = ref<AllCheckStructs>({
 })
 
 
-const struct = ref<{ [id: string]: number; }>(
-	Object.fromEntries(Object.entries(props.player.Bag).map(([name]) => { return [name, 0] }))
+const struct = ref<InputEntries>(
+	Object.fromEntries(Object.entries(props.player.Bag).map(([name]) => { return [name, '0'] }))
 )
 
 // const struct = Structure.value = Object.fromEntries(Object.entries(props.player.Bag).map(([name]) => { return [name, 0] }))
@@ -109,9 +116,14 @@ function Select(name: string) {
 			</select>
 		</section>
 		<div v-if="currentElements !== undefined" class="flex my-auto flex-wrap justify-around">
-			<ChemicalElementCounterMobile :key="elname" v-for="elname in Object.keys(currentElements[0])"
+			<ChemicalElementCounterMobile v-if="isMobile" :key="elname" v-for="elname in Object.keys(currentElements[0])"
 				v-model:selected="selectedElem" :selector="elname" :elname="elname" :max="player.Bag[elname] ?? 0"
 				v-model:input_value="struct[elname]" />
+			<ChemicalElementCounter v-else :key="'_'+elname" v-for="elname in Object.keys(currentElements[0])"
+				 :elname="elname" :max="player.Bag[elname] ?? 0"
+				v-model:input_value="struct[elname]">
+
+			</ChemicalElementCounter>
 		</div>
 		<button class="mt-auto" type="submit">Отправить</button>
 	</form>

@@ -101,6 +101,9 @@ function swap() {
                 <HandRaisedIcon class="size-7 lg:size-10 -rotate-90" />
             </DesignButton>
         </div>
+        <button @click="StartGame()">
+            Начать игру
+        </button>
     </div>
 
     <!-- <template v-if="gameStore.gameState.Status === 'STATUS_WAITING'">

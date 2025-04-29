@@ -121,14 +121,8 @@ function click(e: Event) {
 
 
             <!-- #region CENTER -->
-            <div class=" relative flex flex-col gap-4 lg:gap-20  items-center justify-center 
-             h-[100%]
-             lg:h-[80%]
-
-            pb-4
-            lg:pb-0
-
-             ">
+            <div class=" relative flex h-[100%] flex-col items-center  justify-center gap-4 
+             pb-4 lg:h-[80%] lg:gap-20 lg:pb-0             ">
                 <!-- <div class="w-full p-6  bg-red-500"> Привет</div>
                 <div class="relative flex-col flex flex-initial items-center justify-center flex-shrink p-2 h-[30vh] w-full bg-red-500">
                    
@@ -169,6 +163,16 @@ function click(e: Event) {
                 <IconButton class="absolute left-[-45px]" :icon="ArrowsPointingOutIcon" @click="toggle" />
                 <div class="bars  shadow-large p-3 min-w-[8.5rem]  grow-[1] bg-gray-50">
 
+                    <ul v-if="userStore.UserInfo.role != Role.Player" class="list-none h-full p-0 font-bold m-0">
+                        <li @click="curCheckPlayer = pl" class="break-words flex justify-between items-center p-2 hover:underline rounded-md my-2 mx-0
+                        border-solid border-2 border-gray-600 m-3" v-for="pl in GameStore.gameState.RaisedHands">
+                            <div class=" inline-flex">
+                                <CheckIcon v-if="pl.Checked" class="text-lg size-6" />
+                                <UserInfo :role="pl.Player.Role" :name="pl.Player.Name" />
+                            </div>
+                            {{ pl.Field }}
+                        </li>
+                    </ul>
                     <RaiseHandComp v-model:selectedElem="click_selected_raiseHand" v-show="selectedTool == 'puzzle'"
                         v-if="GameStore.SelfPlayer" :player="GameStore.SelfPlayer" />
                     <ul v-show="selectedTool == 'trade'" class="list-none p-0 font-bold m-0">

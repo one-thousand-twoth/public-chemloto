@@ -9,7 +9,7 @@ type Checks struct {
 func checkFields(checks Checks, field string, name string, data map[string]int) bool {
 	var eq bool
 	for _, entry := range checks.Fields[field][name] {
-		eq = reflect.DeepEqual(removeZeroValues(entry), data)
+		eq = reflect.DeepEqual(removeZeroValues(entry), removeZeroValues(data))
 		if eq {
 			break
 		}

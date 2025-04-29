@@ -13,22 +13,22 @@ const props = defineProps<{
 // const updateValue = (event) => {
 
 // }
-const model = defineModel<number>({ default: 0 })
+const model = defineModel<string>('input_value',{ default: '0' })
 
 function onInput(event: Event) {
   const raw = (event.target as HTMLInputElement).value
 
-  model.value = raw === '' ? 0 : Number(raw)
+  model.value = raw === '' ? '0' : raw
   
 }
 
 watch(model, (val) => {
     // @ts-ignore
     if (val === null || val === undefined || val === '') {
-        model.value = 0
+        model.value = '0'
     }
-    if (val > 20) {  
-        model.value = 20
+    if (Number(val) > 20) {  
+        model.value = '20'
     }
 })
 </script>
@@ -37,7 +37,7 @@ watch(model, (val) => {
         <ElementImage class="w-10 z-10" :elname="elname" />
         <input  @input="onInput"
             class="relative text-right right-4 w-12  bg-gray-50 border border-gray-500 text-gray-900 font-bold text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block>"
-            :disabled="disabled" type="number" :max="max" min="0" :value="model" />
+            :disabled="disabled" type="number"  min="0" :value="model" />
     </div>
 </template>
 

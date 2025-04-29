@@ -270,7 +270,11 @@ func (engine *PolymersEngine) AddParticipant(player models.Participant) error {
 		}
 	}
 	engine.participants = append(engine.participants,
-		&Player{Participant: player, Bag: make(map[string]int), CompletedFields: make([]string, 0, engine.maxPlayers)},
+		&Player{
+			Participant:     player,
+			Bag:             map[string]int{"H": 50, "C": 50, "C6H5": 50, "CH3": 40},
+			CompletedFields: make([]string, 0, engine.maxPlayers),
+		},
 	)
 	return nil
 }
