@@ -9,13 +9,13 @@ tasks:
       - task: build:go32
   build:go64:
     cmds:
-      - go build -o tournament_x64.exe .\\cmd\\tournament\\
+      - go build -tags=production -o tournament_x64.exe .\\cmd\\tournament\\
     env:
       GOOS: windows
       GOARCH: amd64
   build:go32:
     cmds:
-      - go build -o tournament_x32.exe .\\cmd\\tournament\\
+      - go build -tags=production -o tournament_x32.exe .\\cmd\\tournament\\
     env:
       GOOS: windows
       GOARCH: 386

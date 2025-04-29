@@ -1,9 +1,9 @@
 package server
 
 import (
-	"embed"
 	"errors"
 	"io"
+	"io/fs"
 	"mime"
 	"net/http"
 	"path"
@@ -69,7 +69,7 @@ func NotFoundHandler(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
-func tryRead(fs embed.FS, prefix, requestedPath string, w http.ResponseWriter) error {
+func tryRead(fs fs.FS, prefix, requestedPath string, w http.ResponseWriter) error {
 	f, err := fs.Open(path.Join(prefix, requestedPath))
 	if err != nil {
 		return err
