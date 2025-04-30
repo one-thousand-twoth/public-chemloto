@@ -14,7 +14,7 @@ import IconButton from '../UI/IconButton.vue';
 import Trade from './Trade.vue';
 
 const selectedBtn = defineModel<"strip" | "list">('btn', { required: true })
-const selectedRadio = defineModel<'puzzle' | 'trade'>('radio',{ required: true })
+const selectedRadio = defineModel<'puzzle' | 'trade'>('radio', { required: true })
 
 
 const ws = inject('connector') as WebsocketConnector
@@ -82,28 +82,33 @@ function swap() {
 
 </script>
 <template>
-    <div class="flex gap-2">
+    <div class="flex flex-wrap justify-center gap-2">
+        <template v-if="gameStore.gameState.Status === 'STATUS_WAITING'">
+            <button @click="StartGame()">
+                Начать игру
+            </button>
+        </template>
+        <template v-if="gameStore.gameState.Status === 'STATUS_STARTED'">
+            <!-- <div class="flex border-slate-300 hover:bg-slate-100 border-b-main border-b-2 
+         shadow-large items-center cursor-pointer px-2 py-2 rounded border bg-white
+         border-main-dark text-main" @click="swap()">
+                <component :is="selectedBtn == 'strip' ? ShoppingBagIcon : ArrowDownCircleIcon"
+                    class="size-7 lg:size-10 text-slate-500" />
+            </div>
 
-        <div class="flex  border-slate-300 hover:bg-slate-100 border-b-main border-b-2  shadow-large items-center cursor-pointer px-2 py-2 rounded border bg-white
-              border-main-dark text-main
-              border-slate-300 "
-            @click="swap()">
-            <component :is="selectedBtn == 'strip' ? ShoppingBagIcon : ArrowDownCircleIcon" class="size-7 lg:size-10 text-slate-500" />
-        </div>
 
+            <div class="flex rounded shadow-large border border-b-main border-b-2">
+                <DesignButton class="rounded-none rounded-l" v-model="selectedRadio" value="puzzle" label="Puzzle">
+                    <PuzzlePieceIcon class="size-7 lg:size-10" />
+                </DesignButton>
 
-        <div class="flex rounded shadow-large border border-b-main border-b-2">
-            <DesignButton class="rounded-none rounded-l" v-model="selectedRadio" value="puzzle" label="Puzzle">
-                <PuzzlePieceIcon class="size-7 lg:size-10" />
-            </DesignButton>
-
-            <DesignButton class="rounded-none rounded-r" v-model="selectedRadio" value="hand" label="Hand">
-                <HandRaisedIcon class="size-7 lg:size-10 -rotate-90" />
-            </DesignButton>
-        </div>
-        <button @click="StartGame()">
-            Начать игру
-        </button>
+                <DesignButton class="rounded-none rounded-r" v-model="selectedRadio" value="hand" label="Hand">
+                    <HandRaisedIcon class="size-7 lg:size-10 -rotate-90" />
+                </DesignButton>
+            </div> -->
+            <button :disabled="!isObtainState" class="text-sm" @click="GetElement()">Достать
+                элемент</button>
+        </template>
     </div>
 
     <!-- <template v-if="gameStore.gameState.Status === 'STATUS_WAITING'">

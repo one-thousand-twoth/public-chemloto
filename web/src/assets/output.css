@@ -791,6 +791,10 @@ select {
   border-color: rgb(98 123 217 / var(--tw-border-opacity));
 }
 
+.invisible {
+  visibility: hidden;
+}
+
 .collapse {
   visibility: collapse;
 }
@@ -841,6 +845,10 @@ select {
 
 .top-0 {
   top: 0px;
+}
+
+.top-\[-14px\] {
+  top: -14px;
 }
 
 .top-\[0\.5rem\] {
@@ -960,6 +968,22 @@ select {
   margin-top: auto;
 }
 
+.ml-20 {
+  margin-left: 5rem;
+}
+
+.ml-12 {
+  margin-left: 3rem;
+}
+
+.ml-10 {
+  margin-left: 2.5rem;
+}
+
+.ml-8 {
+  margin-left: 2rem;
+}
+
 .block {
   display: block;
 }
@@ -986,6 +1010,10 @@ select {
 
 .grid {
   display: grid;
+}
+
+.hidden {
+  display: none;
 }
 
 .aspect-square {
@@ -1025,6 +1053,10 @@ select {
 
 .h-\[100\%\] {
   height: 100%;
+}
+
+.h-\[100lvh\] {
+  height: 100lvh;
 }
 
 .h-\[100svh\] {
@@ -1286,6 +1318,10 @@ select {
   overflow-x: auto;
 }
 
+.overflow-y-auto {
+  overflow-y: auto;
+}
+
 .overflow-y-hidden {
   overflow-y: hidden;
 }
@@ -1304,6 +1340,10 @@ select {
 
 .rounded {
   border-radius: 10px;
+}
+
+.rounded-\[8px\] {
+  border-radius: 8px;
 }
 
 .rounded-full {
@@ -1403,6 +1443,10 @@ select {
   border-style: solid;
 }
 
+.border-dashed {
+  border-style: dashed;
+}
+
 .border-blue-400 {
   --tw-border-opacity: 1;
   border-color: rgb(96 165 250 / var(--tw-border-opacity));
@@ -1478,6 +1522,11 @@ select {
   background-color: rgb(59 130 246 / var(--tw-bg-opacity));
 }
 
+.bg-denial {
+  --tw-bg-opacity: 1;
+  background-color: rgb(255 107 110 / var(--tw-bg-opacity));
+}
+
 .bg-gray-50 {
   --tw-bg-opacity: 1;
   background-color: rgb(249 250 251 / var(--tw-bg-opacity));
@@ -1486,6 +1535,11 @@ select {
 .bg-main-light {
   --tw-bg-opacity: 1;
   background-color: rgb(107 174 255 / var(--tw-bg-opacity));
+}
+
+.bg-main-tint {
+  --tw-bg-opacity: 1;
+  background-color: rgb(209 230 255 / var(--tw-bg-opacity));
 }
 
 .bg-red-500 {
@@ -1698,6 +1752,11 @@ select {
   color: rgb(30 64 175 / var(--tw-text-opacity));
 }
 
+.text-gray-500 {
+  --tw-text-opacity: 1;
+  color: rgb(107 114 128 / var(--tw-text-opacity));
+}
+
 .text-gray-600 {
   --tw-text-opacity: 1;
   color: rgb(75 85 99 / var(--tw-text-opacity));
@@ -1746,6 +1805,11 @@ select {
 .text-white {
   --tw-text-opacity: 1;
   color: rgb(255 255 255 / var(--tw-text-opacity));
+}
+
+.text-main-tint {
+  --tw-text-opacity: 1;
+  color: rgb(209 230 255 / var(--tw-text-opacity));
 }
 
 .underline {
@@ -1799,13 +1863,18 @@ body {
 button {
   width: -moz-fit-content;
   width: fit-content;
-  border-radius: 0.5rem;
+  border-radius: 2px;
+  border-bottom-width: 4px;
+  --tw-border-opacity: 1;
+  border-color: rgb(98 123 217 / var(--tw-border-opacity));
   --tw-bg-opacity: 1;
-  background-color: rgb(98 123 217 / var(--tw-bg-opacity));
-  padding-left: 1rem;
-  padding-right: 1rem;
-  padding-top: 0.5rem;
-  padding-bottom: 0.5rem;
+  background-color: rgb(107 174 255 / var(--tw-bg-opacity));
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  font-size: 0.875rem;
+  line-height: 1.25rem;
   font-weight: 700;
   --tw-text-opacity: 1;
   color: rgb(255 255 255 / var(--tw-text-opacity));
@@ -1817,14 +1886,26 @@ button {
 button:hover {
   cursor: pointer;
   --tw-bg-opacity: 1;
-  background-color: rgb(37 99 235 / var(--tw-bg-opacity));
+  background-color: rgb(98 123 217 / var(--tw-bg-opacity));
 }
 
 button:disabled {
   cursor: not-allowed;
   --tw-bg-opacity: 1;
-  background-color: rgb(156 163 175 / var(--tw-bg-opacity));
-  opacity: 0.9;
+  background-color: rgb(228 228 228 / var(--tw-bg-opacity));
+  --tw-text-opacity: 1;
+  color: rgb(141 140 140 / var(--tw-text-opacity));
+}
+
+@media (min-width: 768px) {
+  button {
+    padding-left: 1rem;
+    padding-right: 1rem;
+    padding-top: 0.5rem;
+    padding-bottom: 0.5rem;
+    font-size: 1rem;
+    line-height: 1.5rem;
+  }
 }
 
 input {
@@ -1943,6 +2024,10 @@ h3 {
 }
 
 @media (min-width: 768px) {
+  .md\:ml-0 {
+    margin-left: 0px;
+  }
+
   .md\:max-h-\[70vh\] {
     max-height: 70vh;
   }
@@ -1953,6 +2038,10 @@ h3 {
 
   .md\:w-\[60vw\] {
     width: 60vw;
+  }
+
+  .md\:gap-12 {
+    gap: 3rem;
   }
 
   .md\:p-8 {
@@ -1982,4 +2071,3 @@ h3 {
     padding-bottom: 0px;
   }
 }
-

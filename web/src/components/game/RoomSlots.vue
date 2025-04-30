@@ -1,11 +1,7 @@
 <script setup lang="ts">
 import { WebsocketConnector } from '@/api/websocket/websocket';
 import obtain from "@/assets/sounds/notification.mp3";
-import { ButtonPanelAdmin, ButtonPanelPlayer, CheckPlayer, LeaderBoard, UserElements } from '@/components/game';
-import RaiseHandComp from '@/components/game/RaiseHandComp.vue';
-import { NumKey } from '@/components/keyboard';
-import { ElementImage, IconButton, IconButtonBackground, Modal, Timer, UserInfo } from '@/components/UI/';
-import { Hand } from '@/models/Game';
+import { IconButton, IconButtonBackground } from '@/components/UI';
 import { Role } from '@/models/User';
 import { useGameStore } from '@/stores/useGameStore';
 import { useKeyboardStore } from '@/stores/useRaiseHand';
@@ -13,12 +9,11 @@ import { useUserStore } from '@/stores/useUserStore';
 import {
     ArrowLeftStartOnRectangleIcon,
     ArrowsPointingOutIcon,
-    CheckIcon,
     EllipsisVerticalIcon
 } from "@heroicons/vue/24/outline";
 import { useFullscreen } from '@vueuse/core';
 import { storeToRefs } from 'pinia';
-import { computed, inject, ref, useTemplateRef, watch } from 'vue';
+import { inject, ref, useTemplateRef, watch } from 'vue';
 
 
 const GameStore = useGameStore()
@@ -36,14 +31,7 @@ function DisconnectGame() {
         }
     )
 }
-function EXITGame() {
-    ws.Send(
-        {
-            "Type": "HUB_EXITGAME",
-            "Name": userStore.UserInfo.room
-        }
-    )
-}
+
 
 
 const AdditionallyButton = ref(false)
@@ -71,7 +59,7 @@ function click(e: Event) {
 
     <div @click="click">
         <div
-            class="relative p-2 gap-12 grid grid-cols-[1.2fr_1.0fr_2fr] h-[100svh]  overflow-y-scroll bg-bg  w-dvw  items-center">
+            class="relative p-2 gap-4 md:gap-12 grid grid-cols-[1.2fr_1.0fr_2fr] h-[100lvh]   overflow-y-auto bg-bg  w-dvw  items-center">
 
             <!-- #region LEFT -->
             <div class="relative   flex h-full flex-col gap-2">
@@ -86,28 +74,28 @@ function click(e: Event) {
             <!-- #endregion LEFT -->
 
             <!-- #region CENTER -->
-            <div class=" relative flex flex-col gap-4 lg:gap-20  items-center justify-center 
-             h-[100%]  lg:h-[80%]  pb-4  lg:pb-0
+            <div class=" relative flex flex-col gap-2 lg:gap-20  items-center justify-center 
+             h-[100%]  lg:h-[80%]  lg:pb-0
              ">
                 <slot name="center" />
             </div>
             <!-- #endregion CENTER -->
 
             <!-- #region RIGHT -->
-            <div class='relative  flex flex-col h-full gap-2'>
+            <div class='relative ml-8 md:ml-0 flex flex-col h-full gap-2'>
                 <IconButton class="absolute left-[-45px]" :icon="ArrowsPointingOutIcon" @click="toggle" />
                 <div class="bars  shadow-large p-3 min-w-[8.5rem]  grow-[1] bg-gray-50">
 
                     <slot name="right"></slot>
 
                 </div>
-                <div v-if="AdditionallyButton"
-                    class="relative z-[2]  top-[14px] border-solid border-2 text-sm border-blue-400 rounded-lg rounded-b-none p-3 ">
+                <!-- <IconButtonBackground v-if="userStore.UserInfo.role != Role.Player"
+                    class="w-full  bg-blue-500 text-white  rounded-lg" :icon="EllipsisVerticalIcon"
+                    @click="AdditionallyButton = !AdditionallyButton">Дополнительно</IconButtonBackground> -->
+                <!-- <div v-if="AdditionallyButton"
+                    class="absolute z-[2]  top-[-14px] border-solid border-2 text-sm border-blue-400 rounded-lg rounded-b-none p-3 ">
                     <div @click="EXITGame()" class="underline hover:text-blue-500">Закрыть игру</div>
-                </div>
-                <IconButtonBackground v-if="userStore.UserInfo.role != Role.Player"
-                    class="w-full z-[3] bg-blue-500 text-white  rounded-lg" :icon="EllipsisVerticalIcon"
-                    @click="AdditionallyButton = !AdditionallyButton">Дополнительно</IconButtonBackground>
+                </div> -->
             </div>
             <!-- #endregion RIGHT -->
         </div>

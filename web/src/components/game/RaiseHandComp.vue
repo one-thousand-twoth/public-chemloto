@@ -1,9 +1,9 @@
 <script setup lang="ts">
 import { WebsocketConnector } from '@/api/websocket/websocket';
 import { ChemicalElementCounter, SelectedElements, StructureList } from '@/components/game';
-import { NewModal } from '@/components/UI';
 import { Player } from '@/models/Game';
 import { CommonStructureNames, Field, Polymer, Polymers, StructureNames } from '@/models/Polymers';
+import { useGameStore } from '@/stores/useGameStore';
 import { useKeyboardStore } from '@/stores/useRaiseHand';
 import { useFocus } from '@vueuse/core';
 import { openModal } from 'jenesius-vue-modal';
@@ -15,8 +15,11 @@ const props = defineProps<{
 	player: Player;
 }>()
 
+const gameStore = useGameStore()
+
+
 const handStore = useKeyboardStore()
-const {  InputsValues } = storeToRefs(handStore)
+const { InputsValues } = storeToRefs(handStore)
 
 const ws = inject('connector') as WebsocketConnector
 
@@ -95,7 +98,11 @@ watch(currentElements, () => {
 function Select(name: string) {
 
 }
-
+const isSubmitedHand = computed(() => {
+	return gameStore.gameState.RaisedHands.some(
+		(v) => v.Player.Name === gameStore.SelfPlayer?.Name
+	)
+})
 
 
 
@@ -103,7 +110,7 @@ function Select(name: string) {
 
 <template>
 	<form @submit.prevent="Check(check, struct)" class="flex h-full flex-col gap-2 mx-auto">
-		<section class="flex">
+		<section class="flex ">
 			<select v-model="check.Field" id="field"
 				class=" w-auto bg-gray-50 border border-gray-300 text-gray-900 text-base rounded-l-lg focus:ring-blue-500 focus:border-blue-500 block p-2.5>">
 				<option value="Альфа" selected>α</option>
@@ -115,16 +122,44 @@ function Select(name: string) {
 				<option v-for="[v] in Object.entries(Polymers[check.Field])">{{ v }}</option>
 			</select>
 		</section>
-		<div v-if="currentElements !== undefined" class="flex my-auto flex-wrap justify-around">
-			<ChemicalElementCounterMobile v-if="isMobile" :key="elname" v-for="elname in Object.keys(currentElements[0])"
-				v-model:selected="selectedElem" :selector="elname" :elname="elname" :max="player.Bag[elname] ?? 0"
-				v-model:input_value="struct[elname]" />
-			<ChemicalElementCounter v-else :key="'_'+elname" v-for="elname in Object.keys(currentElements[0])"
-				 :elname="elname" :max="player.Bag[elname] ?? 0"
-				v-model:input_value="struct[elname]">
+		<div v-if="currentElements !== undefined" class="flex  my-auto flex-wrap justify-around items-center">
+			<ChemicalElementCounterMobile v-if="isMobile" :key="elname"
+				v-for="elname in Object.keys(currentElements[0])" v-model:selected="selectedElem" :selector="elname"
+				:elname="elname" :max="player.Bag[elname] ?? 0" v-model:input_value="struct[elname]" />
+			<ChemicalElementCounter v-else :key="'_' + elname" v-for="elname in Object.keys(currentElements[0])"
+				:elname="elname" :max="player.Bag[elname] ?? 0" v-model:input_value="struct[elname]">
 
 			</ChemicalElementCounter>
 		</div>
-		<button class="mt-auto" type="submit">Отправить</button>
+		<div v-else class="bg-main-tint h-full bars border-dashed flex  justify-center items-center text-sm"> Выберите структуру
+			для сборки </div>
+		<button v-if="!isSubmitedHand" class="self-end" type="submit">Отправить</button>
+		<div class="mt-auto bg-main-tint px-2 py-1 rounded-[8px] loading " v-else> Дождитесь пока судья проверит
+			структуру</div>
 	</form>
 </template>
+
+<style scoped>
+.loading:after {
+	overflow: hidden;
+	display: inline-block;
+	vertical-align: bottom;
+	-webkit-animation: ellipsis steps(4, end) 900ms infinite;
+	animation: ellipsis steps(4, end) 900ms infinite;
+	content: "\2026";
+	/* ascii code for the ellipsis character */
+	width: 0px;
+}
+
+@keyframes ellipsis {
+	to {
+		width: 1.25em;
+	}
+}
+
+@-webkit-keyframes ellipsis {
+	to {
+		width: 1.25em;
+	}
+}
+</style>

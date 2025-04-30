@@ -22,13 +22,13 @@ function onInput(event: Event) {
   
 }
 
-watch(model, (val) => {
+watch(model, (val, old) => {
     // @ts-ignore
     if (val === null || val === undefined || val === '') {
         model.value = '0'
     }
-    if (Number(val) > 20) {  
-        model.value = '20'
+    if (Number(val) > 99) {  
+        model.value = old
     }
 })
 </script>

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { useKeyboardStore } from '@/stores/useRaiseHand';
+import { reactivePick } from '@vueuse/core';
 import { storeToRefs } from 'pinia';
 import { computed, onMounted, onUnmounted, useTemplateRef, watch } from 'vue';
 import ElementImage from '../UI/ElementImage.vue';
@@ -44,22 +45,23 @@ function select() {
   instance.value?.focus()
 }
 
+const inp = reactivePick(InputsValues.value, 'props.elname')
+watch(inp, (val) => {
+  console.log('imp',val)
+})
 
-
-watch(InputsValues, (values) => {
-  const val = values["raise_input_" + props.elname]
-  console.log(val)
+watch(() => InputsValues.value["raise_input_" + props.elname], (val, old) => {
+  console.log("elname", props.elname, "val", val, 'old', val)
   // @ts-ignore
   if (val === null || val === undefined || val === '') {
     model.value = 0
   }
   model.value = val
-  if (Number(val) > 20) {
-    model.value = 20
-    values["raise_input_" + props.elname]= '20'
+  if (Number(val) > 99) {
+    InputsValues.value["raise_input_" + props.elname] = old
   }
- 
-}, {deep: true})
+
+}, { deep: true })
 </script>
 <template>
   <div :class="isSelected ? 'drop-shadow-large' : ''" @click.stop="select()" class="relative flex items-center mb-3">
@@ -69,7 +71,8 @@ watch(InputsValues, (values) => {
       class="relative text-right right-4 w-12  bg-gray-50 border border-gray-500 text-gray-900 font-bold text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block>"
       type="number" disabled :max="max" min="0" :value="model" /> -->
     <input readonly @focus="select()" :ref="'input_div' + elname" class="relative text-right right-4 w-12  bg-gray-50 border border-gray-500 text-gray-900 font-bold text-sm rounded-lg
-      focus:border-main block  px-2 py-1 " :class="isSelected ? 'border-2 border-main' : ''" type="number" :max="max" min="0" v-model="model">
+      focus:border-main block  px-2 py-1 " :class="isSelected ? 'border-2 border-main' : ''" type="number" :max="max"
+      min="0" v-model="model">
     </input>
 
   </div>

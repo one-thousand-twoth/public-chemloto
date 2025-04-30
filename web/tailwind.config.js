@@ -16,6 +16,10 @@ export default {
       colors: {
         'main': '#627bd9',
         'main-light': '#6BAEFF',
+        'main-tint': '#D1E6FF',
+        'disabled-bg': '#E4E4E4',
+        'disabled-fg': '#8D8C8C',
+        'denial': '#FF6B6E',
         'bg': '#F9F6F9',
         'playing': '#6AB760',
       },

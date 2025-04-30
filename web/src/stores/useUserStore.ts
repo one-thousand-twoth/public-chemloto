@@ -153,6 +153,7 @@ export const useUserStore = defineStore('users', {
   },
   getters: {
     connected: (state) => state.UserInfo?.room != "",
+    hasPermision: (state) => state.UserInfo.role != Role.Player,
   }
 })
 

@@ -7,14 +7,16 @@
 } */
 
 body {
-
   margin: 0;
   padding: 0;
   @apply bg-slate-500 bg-opacity-5;
 }
 
 button {
-  @apply rounded-lg bg-main text-white font-bold px-4 py-2 w-fit hover:bg-blue-600 hover:cursor-pointer transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed disabled:opacity-90;
+  @apply text-sm md:text-base rounded-[2px] bg-main-light border-b-4
+   border-main text-white font-bold px-2 py-1 md:px-4 md:py-2  w-fit
+    hover:bg-main hover:cursor-pointer transition-colors 
+     disabled:cursor-not-allowed disabled:bg-disabled-bg disabled:text-disabled-fg;
 }
 
 input {
@@ -41,4 +43,3 @@ h3 {
     @apply border-solid border-2 border-main rounded-[10px];
   }
 }
-
