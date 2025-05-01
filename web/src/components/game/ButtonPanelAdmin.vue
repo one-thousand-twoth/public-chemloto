@@ -1,21 +1,11 @@
 <script setup lang="ts">
 import { WebsocketConnector } from '@/api/websocket/websocket';
-import { DesignButton } from '@/components/game';
-import { Modal } from '@/components/UI/index';
-import { ObtainStateHandler, TradeStateHandler, useGameStore } from '@/stores/useGameStore';
+import ObtainStateController from '@/state_controllers/obtain';
+import TradeStateController from '@/state_controllers/trade';
+import { useGameStore } from '@/stores/useGameStore';
 import { useUserStore } from '@/stores/useUserStore';
-import {
-    ArrowDownCircleIcon,
-    HandRaisedIcon, PuzzlePieceIcon, ShoppingBagIcon
-} from "@heroicons/vue/24/solid";
 import { storeToRefs } from "pinia";
-import { computed, inject, ref } from 'vue';
-import IconButton from '../UI/IconButton.vue';
-import Trade from './Trade.vue';
-
-const selectedBtn = defineModel<"strip" | "list">('btn', { required: true })
-const selectedRadio = defineModel<'puzzle' | 'trade'>('radio', { required: true })
-
+import { inject, ref } from 'vue';
 
 const ws = inject('connector') as WebsocketConnector
 
@@ -31,54 +21,26 @@ function StartGame() {
     })
 }
 
-const isObtainState = computed(() => gameState.value.State === "OBTAIN");
-const isTradeState = computed(() => gameState.value.State === "TRADE");
 
-const ObtainHandler = computed(() => {
-    if (!isObtainState.value) return null;
-    return gameStore.currentStateHandler as ObtainStateHandler;
-});
-const TradeHandler = computed(() => {
-    if (!isTradeState.value) return null;
-    return gameStore.currentStateHandler as TradeStateHandler;
-});
-
+const ObtainContollerr = new ObtainStateController(ws)
+const TradeController = new TradeStateController(ws)
 
 
 function GetElement() {
-    if (!ObtainHandler.value) return;
-    ObtainHandler.value.getElement()
+    if (!ObtainContollerr.isValid()) return;
+    ObtainContollerr.getElement()
 }
 function sendContinue() {
-    if (ObtainHandler.value) {
-        ObtainHandler.value.sendContinue()
+    if (ObtainContollerr.isValid()) {
+        ObtainContollerr.sendContinue()
     }
-    if (TradeHandler.value) {
-        TradeHandler.value.sendContinue()
+    if (TradeController.isValid()) {
+        TradeController.sendContinue()
     }
-    console.log("State doesn`t provide sendContinue action")
+    throw new Error("State doesn`t provide sendContinue action")
 }
 
-// const currPlayer = computed(() => {
-//     return gameState.Players.find(player => player.Name === curInfoPlayer.value)
-// })
 
-// const curInfoPlayer = ref('')
-// const curCheckPlayer = ref<Hand>()
-// const RaiseHandButton = ref(false)
-const TradeButton = ref(false)
-
-
-// const selectedTool = ref('puzzle')
-// const selectedBtn = ref<"strip" | "list">('strip')
-
-function swap() {
-    if (selectedBtn.value == 'strip') {
-        selectedBtn.value = 'list'
-    } else {
-        selectedBtn.value = 'strip'
-    }
-}
 
 </script>
 <template>
@@ -106,7 +68,7 @@ function swap() {
                     <HandRaisedIcon class="size-7 lg:size-10 -rotate-90" />
                 </DesignButton>
             </div> -->
-            <button :disabled="!isObtainState" class="text-sm" @click="GetElement()">Достать
+            <button :disabled="!ObtainContollerr.isValid()" class="text-sm" @click="GetElement()">Достать
                 элемент</button>
         </template>
     </div>

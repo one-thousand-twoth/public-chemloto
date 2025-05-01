@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { WebsocketConnector } from '@/api/websocket/websocket';
 import obtain from "@/assets/sounds/notification.mp3";
-import { ButtonPanelAdmin, ButtonPanelPlayer, CheckPlayer, LeaderBoard, UserElements } from '@/components/game';
+import { ButtonPanelAdmin, ButtonPanelPlayer, CheckPlayer, LeaderBoard, TradeExchange, UserElements } from '@/components/game';
 import RaiseHandComp from '@/components/game/RaiseHandComp.vue';
 import RoomSlots from '@/components/game/RoomSlots.vue';
 import { NumKey } from '@/components/keyboard';
@@ -119,17 +119,8 @@ const click_selected_raiseHand = ref('')
         <template #right>
             <RaiseHandComp v-model:selectedElem="click_selected_raiseHand" v-show="selectedTool == 'puzzle'"
                 v-if="GameStore.SelfPlayer" :player="GameStore.SelfPlayer" />
-            <ul v-show="selectedTool == 'trade'" class="list-none p-0 font-bold m-0">
-                <li @click="curCheckPlayer = pl" class="break-words flex justify-between items-center p-2 hover:underline rounded-md my-2 mx-0
-                            border-solid border-2 border-gray-600 m-3" v-for="pl in GameStore.gameState.RaisedHands">
-                    <div class=" inline-flex">
-                        <CheckIcon v-if="pl.Checked" class="text-lg size-6" />
-                        <UserInfo :role="pl.Player.Role" :name="pl.Player.Name" />
-                    </div>
-                    {{ pl.Field }}
-                </li>
 
-            </ul>
+            <TradeExchange v-show="selectedTool == 'trade'"/>
         </template>
 
     </RoomSlots>

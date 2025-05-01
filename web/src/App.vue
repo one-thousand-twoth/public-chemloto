@@ -11,6 +11,6 @@ defineOptions({
     <div ref='el'>
         <router-view v-bind="$attrs" />
         <Toaster />
-        <modal-container class="z-50"/>
+        <modal-container/>
     </div>
 </template>

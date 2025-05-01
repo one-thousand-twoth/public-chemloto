@@ -4,6 +4,7 @@ import RoomList from '@/components/RoomList.vue';
 import IconButton from '@/components/UI/IconButton.vue';
 // import { emojiRole } from '@/models/User';s
 import UserInfo from '@/components/UI/UserInfo.vue';
+import { useGameStore } from '@/stores/useGameStore';
 import { useUserStore } from '@/stores/useUserStore';
 import {
     ArrowLeftStartOnRectangleIcon
@@ -18,6 +19,7 @@ const tabs = {
 
 const picked = ref('Комнаты')
 const userStore = useUserStore()
+const gameStore = useGameStore()
 const { connected, fetching } = storeToRefs(userStore)
 async function Remove() {
     await userStore.Remove(userStore.UserCreds!.username)
@@ -25,7 +27,7 @@ async function Remove() {
 }
 </script>
 <template>
-    <div v-if="fetching"> Загрузка...</div>
+    <div v-if="fetching || gameStore.fetching"> Загрузка...</div>
     <template v-else>
         <div class="relative md:p-8 flex flex-col " v-if="!connected">
             <div

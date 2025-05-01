@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { DesignButton, RaiseHandComp, SelectedElements, TradeExchange, UserElements } from '@/components/game/';
-import { Modal, NewModal } from '@/components/UI';
+import { Modal } from '@/components/UI';
 import { useGameStore } from '@/stores/useGameStore';
 import {
     ArrowDownCircleIcon,
@@ -76,7 +76,7 @@ function swap() {
                 <PuzzlePieceIcon class="size-7 lg:size-10" />
             </DesignButton>
 
-            <DesignButton class="rounded-none rounded-r" v-model="selectedRadio" value="hand" label="Hand">
+            <DesignButton class="rounded-none rounded-r" v-model="selectedRadio" value="trade" label="Trade">
                 <HandRaisedIcon class="size-7 lg:size-10 -rotate-90" />
             </DesignButton>
         </div>
