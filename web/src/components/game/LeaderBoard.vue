@@ -12,9 +12,9 @@ const emit = defineEmits<{
     <div>
         <!-- <ul class="list-none p-0 font-bold m-0"> -->
         <TransitionGroup tag="ul" name="fade" class="container list-none p-0 font-bold m-0">
-        <li @click="emit('selectPlayer', pl.Name)" class="item cursor-pointer break-words text-xs flex flex-wrap justify-between items-center p-1 px-2 border-2 border-b-4 border-playing
+        <li @click="emit('selectPlayer', pl.Name)" class="item cursor-pointer break-words text-xs flex flex-wrap justify-between items-center py-1 px-2 border-2 border-b-4 border-playing
                     hover:underline 
-                    rounded-large my-2"
+                    rounded-large my-1"
             v-for="pl in GameStore.gameState.Players.filter((pl) => pl.Role === Role.Player).sort((a, b) => b.Score - a.Score)"
             :key="pl.Name">
             <div class=" inline-flex gap-1 items-center" v-bind="$attrs">

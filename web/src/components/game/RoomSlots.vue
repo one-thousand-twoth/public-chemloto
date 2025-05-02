@@ -59,11 +59,11 @@ function click(e: Event) {
 
     <div @click="click">
         <div
-            class="relative p-2 gap-4 md:gap-12 grid grid-cols-[1.2fr_1.0fr_2fr] h-[100lvh]   overflow-y-auto bg-bg  w-dvw  items-center">
+            class="relative p-2 gap-4 md:gap-12 grid grid-cols-[1.2fr_1.0fr_2fr] h-lvh grid-rows-[calc(100lvh-1rem)] bg-bg  w-dvw  items-stretch">
 
             <!-- #region LEFT -->
-            <div class="relative   flex h-full flex-col gap-2">
-                <div class=" w-full bars shadow-large p-3 min-w-[8.5rem]  grow-[1] bg-gray-50">
+            <div class="relative flex flex-col gap-2">
+                <div class="bars shadow-large grow flex flex-col justify-stretch min-h-[0] p-3 min-w-[8.5rem] bg-gray-50">
                     <slot name="left" />
                 </div>
                 <IconButtonBackground v-if="GameStore.gameState.Status !== 'STATUS_STARTED'"

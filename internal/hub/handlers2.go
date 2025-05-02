@@ -184,3 +184,24 @@ func (h *WebsocketHandlers) StartGame2(e internalEventWrap) error {
 
 	return nil
 }
+
+func (h *WebsocketHandlers) StopGame(e internalEventWrap) error {
+	type dataT struct {
+		Type string
+		Name string
+	}
+	op := "Hub/StopGame"
+	log := h.log.With("op", op)
+	var data dataT
+	if err := mapstructure.Decode(e.msg, &data); err != nil {
+
+		return enerr.E(op, fmt.Sprintf("failed to decode event body: %s", err.Error()))
+	}
+	log.Debug("Start Handle Event StopGame", "usr", e.userId, "room", data.Name, "data", fmt.Sprintf("%v", e.msg))
+
+	err := h.usecases.StopGame(context.TODO(), data.Name, e.userId)
+	if err != nil {
+		return enerr.E(op, err)
+	}
+	return nil
+}

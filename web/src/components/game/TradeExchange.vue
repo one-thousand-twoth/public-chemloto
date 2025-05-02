@@ -14,8 +14,8 @@ import { computed, inject, ref } from 'vue';
 import TradeExchangeStocks from './TradeExchangeStocks.vue';
 
 const gameStore = useGameStore()
-const { gameState } = storeToRefs(gameStore)
-const player = gameStore.SelfPlayer
+const { gameState, SelfPlayer } = storeToRefs(gameStore)
+const player = SelfPlayer
 
 const ws = inject('connector') as WebsocketConnector
 
@@ -52,28 +52,28 @@ function ackTrade(req: string) {
     tradeController.ackTrade(req);
 }
 
-const selfStock = computed(() => tradeState.value?.StateStruct?.StockExchange.StockList.find(stock => stock.Owner === player?.Name) ?? null)
+const selfStock = computed(() => tradeState.value?.StateStruct?.StockExchange.StockList.find(stock => stock.Owner === player.value?.Name) ?? null)
 
 const stockList = computed(() => {
     if (!tradeState.value?.StateStruct?.StockExchange.StockList) return [];
-    return Object.entries(tradeState.value.StateStruct.StockExchange.StockList).filter(([_, v]) => v.Owner !== player?.Name);
+    return Object.entries(tradeState.value.StateStruct.StockExchange.StockList).filter(([_, v]) => v.Owner !== player.value?.Name);
 });
 const requests = computed(() => {
     if (!selfStock.value) return []
     return Object.entries(selfStock.value?.Requests).filter(([_, v]) => v.Accept)
 })
 const alreadyTradedStruct = computed(() => {
-    return tradeState.value?.StateStruct?.StockExchange.TradeLog.find(log => log.User === player?.Name) ?? null
+    return tradeState.value?.StateStruct?.StockExchange.TradeLog.find(log => log.User === player.value?.Name) ?? null
 })
 
 console.log("TradeState",tradeController.isValid())
 
 </script>
 <template>
-    <div class="w-full  h-full">
+    <div class="w-full h-full overflow-y-scroll ">
         
         <div v-if="!tradeController.isValid()" class="w-full bg-gray-200 rounded-[2px] text-center flex-col flex items-center justify-center h-full text-lg text-gray-600">
-            Торовля ещё не началась
+            Торговля ещё не началась
             <ElementImage class=" w-8 inline m-1" elname="TRADE" />
             <p class="loading"></p>
         </div>

@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { WebsocketConnector } from '@/api/websocket/websocket';
 import obtain from "@/assets/sounds/notification.mp3";
-import { ButtonPanelAdmin, ButtonPanelPlayer, CheckPlayer, LeaderBoard, TradeExchange, UserElements } from '@/components/game';
+import { ButtonPanelAdmin, ButtonPanelPlayer, CheckPlayer, FieldsTable, LeaderBoard, TradeExchange, UserElements } from '@/components/game';
 import RaiseHandComp from '@/components/game/RaiseHandComp.vue';
 import RoomSlots from '@/components/game/RoomSlots.vue';
 import { NumKey } from '@/components/keyboard';
@@ -89,12 +89,13 @@ const click_selected_raiseHand = ref('')
 
     <RoomSlots>
         <template #left>
+            <div v-show="!showKeyboard" class="flex flex-col flex-1 min-h-[0]">
+                <LeaderBoard class=" overflow-y-auto flex-1 min-h-[0]" @selectPlayer="(name: string) => { curInfoPlayer = name }"></LeaderBoard>
+                <!-- <FieldsTable class="w-fit self-end flex-shrink-0 mx-auto" /> -->
+            </div>
             <div class="h-full flex flex-col justify-center " v-show="showKeyboard">
                 <NumKey class="" />
-            </div>
-            <div v-show="!showKeyboard">
-                <LeaderBoard class="" @selectPlayer="(name: string) => { curInfoPlayer = name }"></LeaderBoard>
-            </div>
+            </div> 
         </template>
         <template #center>
             <div v-if="GameStore.gameState.Status == 'STATUS_COMPLETED'" class="text-lg">

@@ -27,7 +27,7 @@ async function Remove() {
 }
 </script>
 <template>
-    <div v-if="fetching || gameStore.fetching"> Загрузка...</div>
+    <div v-if="fetching"> Загрузка...</div>
     <template v-else>
         <div class="relative md:p-8 flex flex-col " v-if="!connected">
             <div

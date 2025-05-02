@@ -45,12 +45,12 @@ function notAccepted(stock: StockEntity) {
 		<div v-if="stockList.length === 0">
 			Другие игроки ещё не сделали своих предложений...
 		</div>
-		<div class="flex text-sm flex-nowrap mb-2 flex-col" v-for="[_, Stock] in stockList">
-			<div class="mb-1 flex gap-1">
-				<UserInfo :name="Stock.Owner" :role="Role.Player" />
-				<span> предлагает:</span>
-			</div>
-			<div class=" w-fit  border-solid border-2 border-blue-400 rounded-lg px-2 py-1">
+		<div class="flex text-sm flex-nowrap mb-1 flex-col" v-for="[_, Stock] in stockList">
+			<div class=" w-full  border-solid border-2 border-blue-400 rounded-lg px-2 py-1">
+				<div class="inline-flex  flex-wrap items-center justify-end mb-1 flex gap-1">
+					<UserInfo :name="Stock.Owner" :role="Role.Player" />
+					<span> отдает:</span>
+				</div>
 				<div class="flex">
 					<div class=" text-lg inline-flex gap-1 items-center">
 						<ElementImage class=" w-8 inline m-1" :elname="Stock.Element" />

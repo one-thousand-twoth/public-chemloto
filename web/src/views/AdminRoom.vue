@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { WebsocketConnector } from '@/api/websocket/websocket';
 import obtain from "@/assets/sounds/notification.mp3";
-import { ButtonPanelAdmin, ButtonPanelPlayer, CheckPlayer, LeaderBoard, UserElements } from '@/components/game';
+import { ButtonPanelAdmin, ButtonPanelPlayer, CheckPlayer, FieldsTable, LeaderBoard, UserElements } from '@/components/game';
 import RaiseHandComp from '@/components/game/RaiseHandComp.vue';
 import RoomSlots from '@/components/game/RoomSlots.vue';
 import { NumKey } from '@/components/keyboard';
@@ -69,9 +69,7 @@ const showKeyboard = computed(() => {
     return InputName.value !== ''
 })
 
-let audio = new Audio(obtain);
 
-watch(() => GameStore.gameState.Bag.LastElements, () => { audio.play() })
 
 
 
@@ -86,12 +84,30 @@ const selectedBtn = ref<"strip" | "list">('strip')
     <RoomSlots>
 
         <template #left>
+            <div v-show="!showKeyboard" class="flex flex-col flex-1 min-h-[0]">
+                <LeaderBoard class=" overflow-y-auto flex-1 min-h-[0]" @selectPlayer="(name: string) => { curInfoPlayer = name }"></LeaderBoard>
+                <FieldsTable class="w-fit self-end flex-shrink-0 mx-auto" />
+            </div>
             <div class="h-full flex flex-col justify-center " v-show="showKeyboard">
                 <NumKey class="" />
-            </div>
-            <div v-show="!showKeyboard">
-                <LeaderBoard class="" @selectPlayer="(name: string) => { curInfoPlayer = name }"></LeaderBoard>
-            </div>
+            </div> 
+            <!-- <div class="relative flex flex-col flex-1" v-show="!showKeyboard"> -->
+                <!-- <LeaderBoard class=" overflow-y-scroll flex-1 min-h-[0]" @selectPlayer="(name: string) => { curInfoPlayer = name }"></LeaderBoard> -->
+                <!-- <div class="flex grow flex-col overflow-scroll flex-1 min-h-[min-content] bg-blue-300">
+                    <div class="bars">Привет</div>
+                    <div class="bars">Привет</div>
+                    <div class="bars">Привет</div>
+                    <div class="bars">Привет</div>
+                    <div class="bars">Привет</div>
+                    <div class="bars">Привет</div>
+                    <div class="bars">Привет</div>
+                    <div class="bars">Привет</div>
+                    <div class="bars">Привет</div>
+                    <div class="bars">Привет</div>
+                    <div class="bars">Привет</div>
+                </div> -->
+                <!-- <FieldsTable class="w-fit self-end flex-shrink-0 mx-auto" /> -->
+            <!-- </div> -->
         </template>
 
         <template #center>

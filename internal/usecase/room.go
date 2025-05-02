@@ -92,10 +92,10 @@ func (uc *Usecases) SubscribeToRoom(ctx context.Context, roomName string, userID
 	const op enerr.Op = "usecase.room/SubscribeToRoom"
 
 	tx, err := uc.db.BeginTx(ctx, nil)
-	defer tx.Rollback()
 	if err != nil {
 		return err
 	}
+	defer tx.Rollback()
 
 	queries := uc.queries.WithTx(tx)
 
@@ -159,10 +159,10 @@ func (uc *Usecases) UnsubscribeFromRoom(ctx context.Context, roomName string, us
 	const op enerr.Op = "usecase.room/UnsubscribeFromRoom"
 
 	tx, err := uc.db.BeginTx(ctx, nil)
-	defer tx.Rollback()
 	if err != nil {
 		return err
 	}
+	defer tx.Rollback()
 
 	queries := uc.queries.WithTx(tx)
 
@@ -237,22 +237,38 @@ func (uc *Usecases) GetRoomUsers(ctx context.Context, roomname string) ([]*entit
 	return users, nil
 }
 
-// func UnSubscribeToRoom(
-// 	roomRepo RoomRepository,
-// 	roomName string,
-// 	user *entities.User,
-// ) error {
-// 	const op enerr.Op = "usecase.subscribtions/UnsubscribeToRoom"
+func (uc *Usecases) StopGame(ctx context.Context, roomName string, userID entities.ID) error {
+	const op enerr.Op = "usecase.room/StopGame"
 
-// 	// if data.Target == "" || data.Name == "" {
-// 	// 	return enerr.E(op, "empty field", enerr.Validation)
-// 	// }
+	tx, err := uc.db.BeginTx(ctx, nil)
+	if err != nil {
+		return enerr.E(op, err, enerr.Internal)
+	}
+	defer tx.Rollback()
 
-// 	err := roomRepo.Un(roomName, user)
-// 	if err != nil {
-// 		return err
-// 	}
+	queries := uc.queries.WithTx(tx)
 
-// 	return nil
+	rowUser, err := queries.GetUserByID(ctx, int64(userID))
+	if err != nil {
+		return enerr.E(op, err)
+	}
 
-// }
+	user := entities.ToUserModel(rowUser)
+
+	if !user.HasPermision() {
+		return enerr.E("No permission to start game")
+	}
+
+	// TODO:
+	engine, err := uc.RoomRepo.GetEngine(roomName)
+
+	engine.Exit()
+
+	err = tx.Commit()
+	if err != nil {
+		return enerr.E(op, err, enerr.Internal)
+	}
+
+	return nil
+
+}
