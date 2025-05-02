@@ -12,6 +12,7 @@ import { TradeStateHandler } from '@/state_controllers';
 import { storeToRefs } from 'pinia';
 import { computed, inject, ref } from 'vue';
 import TradeExchangeStocks from './TradeExchangeStocks.vue';
+import TradeSelected from './TradeSelected.vue';
 
 const gameStore = useGameStore()
 const { gameState, SelfPlayer } = storeToRefs(gameStore)
@@ -66,20 +67,22 @@ const alreadyTradedStruct = computed(() => {
     return tradeState.value?.StateStruct?.StockExchange.TradeLog.find(log => log.User === player.value?.Name) ?? null
 })
 
-console.log("TradeState",tradeController.isValid())
+console.log("TradeState", tradeController.isValid())
 
 </script>
 <template>
-    <div class="w-full h-full overflow-y-scroll ">
-        
-        <div v-if="!tradeController.isValid()" class="w-full bg-gray-200 rounded-[2px] text-center flex-col flex items-center justify-center h-full text-lg text-gray-600">
+    <div class="w-full h-full overflow-y-auto ">
+
+        <div v-if="!tradeController.isValid()"
+            class="w-full bg-gray-200 rounded-[2px] text-center flex-col flex items-center justify-center h-full text-lg text-gray-600">
             Торговля ещё не началась
             <ElementImage class=" w-8 inline m-1" elname="TRADE" />
             <p class="loading"></p>
         </div>
 
-        <div v-else class="w-full flex flex-col  gap-4">
-            <div v-if="alreadyTradedStruct" class="px-4 py-2 flex items-center justify-center border-solid border-2 border-blue-400 rounded-lg;">
+        <div v-else class="relative h-full w-full flex flex-col  gap-4">
+            <div v-if="alreadyTradedStruct"
+                class="px-4 py-2 flex items-center justify-center border-solid border-2 border-blue-400 rounded-lg;">
                 На этом ходу вы поменялись:
                 <div class=" text-lg inline-flex gap-1 items-center">
                     <ElementImage class=" w-8 inline m-1" :elname="alreadyTradedStruct.GetElement" />
@@ -113,7 +116,7 @@ console.log("TradeState",tradeController.isValid())
                 </div>
             </form>
 
-            <div class="text-sm  bars pb-2 border-0 border-b-2 " v-else>
+            <div class=" flex flex-col h-1/2 text-sm  bars pb-2 border-0 border-b-2 " v-else>
                 <div class="flex flex-nowrap flex-col mb-1">
                     <!-- <span class="mb-1">Ваш лот:</span> -->
                     <div>
@@ -130,51 +133,55 @@ console.log("TradeState",tradeController.isValid())
                         </div>
                     </div>
                 </div>
-                <details class="pl-2">
-                    <summary>
+                <div class="relative flex flex-col px-2 grow overflow-y-auto">
+                    <div>
                         <div
                             class="inline-flex w-5 h-5 text-sm items-center justify-center rounded-full bg-blue-400 text-white font-medium">
-                            {{ Object.entries(selfStock.Requests).filter(([_,v]) => {return v.Accept == true}).length }}
+                            {{Object.entries(selfStock.Requests).filter(([_, v]) => { return v.Accept == true }).length}}
                         </div>
                         Согласны:
-                    </summary>
-                    <p class="inline-flex items-center w-full" v-for="([_, request]) in requests">
-                        {{ request.Player }}
-                        <IconButton class="ml-auto" @click="ackTrade(request.ID)" :icon="CheckIcon" />
-                    </p>
-                </details>
+                    </div>
+                    <div class="">
+                        <p class=" inline-flex items-center w-full" v-for="([_, request]) in requests">
+                            {{ request.Player }}
+                            <IconButton class="ml-auto" @click="ackTrade(request.ID)" :icon="CheckIcon" />
+                        </p>
+
+                    </div>
+                    <div v-if="requests.length == 0" class="block my-auto text-center ">
+                        Еще никто из игроков не согласился на ваше предложение
+                    </div>
+                </div>
+
             </div>
             <div>
-                <TradeExchangeStocks :stockList="stockList" />
+                <TradeSelected :stockList="stockList" />
             </div>
-        </div> 
+        </div>
     </div>
 </template>
 
 <style scoped>
-
 .loading:after {
-	overflow: hidden;
-	display: inline-block;
-	vertical-align: bottom;
-	-webkit-animation: ellipsis steps(4, end) 900ms infinite;
-	animation: ellipsis steps(4, end) 900ms infinite;
-	content: "\2026";
-	/* ascii code for the ellipsis character */
-	width: 0px;
+    overflow: hidden;
+    display: inline-block;
+    vertical-align: bottom;
+    -webkit-animation: ellipsis steps(4, end) 900ms infinite;
+    animation: ellipsis steps(4, end) 900ms infinite;
+    content: "\2026";
+    /* ascii code for the ellipsis character */
+    width: 0px;
 }
 
 @keyframes ellipsis {
-	to {
-		width: 1.25em;
-	}
+    to {
+        width: 1.25em;
+    }
 }
 
 @-webkit-keyframes ellipsis {
-	to {
-		width: 1.25em;
-	}
+    to {
+        width: 1.25em;
+    }
 }
-
-
 </style>

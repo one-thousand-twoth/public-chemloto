@@ -5,7 +5,7 @@ import TradeStateController from '@/state_controllers/trade';
 import { useGameStore } from '@/stores/useGameStore';
 import { useUserStore } from '@/stores/useUserStore';
 import { storeToRefs } from "pinia";
-import { inject, ref } from 'vue';
+import { computed, inject, ref, watch } from 'vue';
 
 const ws = inject('connector') as WebsocketConnector
 
@@ -40,6 +40,16 @@ function sendContinue() {
     throw new Error("State doesn`t provide sendContinue action")
 }
 
+const isTrade = computed(() => { return gameState.value.State == 'TRADE' })
+const isCoolDown = ref(false)
+watch(isTrade, (visible) => {
+    if (visible) {
+        isCoolDown.value = true
+        setTimeout(() => {
+            isCoolDown.value = false
+        }, 3000)
+    }
+})
 
 
 </script>
@@ -68,8 +78,9 @@ function sendContinue() {
                     <HandRaisedIcon class="size-7 lg:size-10 -rotate-90" />
                 </DesignButton>
             </div> -->
-            <button :disabled="!ObtainContollerr.isValid()" class="text-sm" @click="GetElement()">Достать
+            <button :disabled="isTrade" class="text-sm" @click="GetElement()">Достать
                 элемент</button>
+            <button v-if="isTrade" :disabled="isCoolDown" @click="sendContinue()">Продолжить</button>
         </template>
     </div>
 

@@ -67,7 +67,7 @@ func (h *WebsocketHandlers) SetupHandlers() {
 	h.UseHandler(common.HUB_UNSUBSCRIBE, h.UnSubscribeHandler2)
 	h.UseHandler(common.ENGINE_ACTION, h.EngineAction2)
 	h.UseHandler(common.HUB_STARTGAME, h.StartGame2)
-	// h.UseHandler(common.HUB_EXITGAME, StopGame)
+	h.UseHandler(common.HUB_EXITGAME, h.StopGame)
 
 }
 
