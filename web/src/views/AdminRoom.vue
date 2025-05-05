@@ -133,7 +133,7 @@ const selectedBtn = ref<"strip" | "list">('strip')
 
         <template #right>
             <div class="h-full flex flex-col">
-                <p class="text-sm">Поднятые руки:</p>
+                <p class="text-sm md:text-base md:font-semibold">Поднятые руки:</p>
                 <div class="flex-1">
                     <ul class="list-none p-0 font-bold m-0">
                         <li @click="openModal(CheckPlayer, { hand: hand })" class=" cursor-pointer break-words flex justify-between items-center p-2 hover:underline rounded-md my-2 mx-0
@@ -146,6 +146,7 @@ const selectedBtn = ref<"strip" | "list">('strip')
                             {{ hand.Field }}
                         </li>
                     </ul>
+                    <div class=""></div>
                 </div>
                 <details>
                     <summary class="mb-2">

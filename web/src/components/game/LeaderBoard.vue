@@ -45,7 +45,7 @@ function Click(playername: string) {
     <!-- <ul class="list-none p-0 font-bold m-0"> -->
     <TransitionGroup tag="ul" name="fade" class="container list-none p-0 font-bold m-0">
       <li @click="Click(pl.Name)" class="item cursor-pointer
-      break-words text-xs
+      break-words text-xs md:text-base
       items-center py-1 px-2 border-2 border-b-4
       hover:underline 
                     rounded-large my-1" :class="currentPlayerSelection == pl.Name ? 'border-main' : ' border-playing'"
@@ -53,7 +53,7 @@ function Click(playername: string) {
         <div class=" flex flex-wrap justify-between">
           <div class=" inline-flex gap-1 items-center" v-bind="$attrs">
             <component :is="IconRole(pl.Role)" class="size-4 text-slate-700" />
-            <span class="text-slate-700"> {{ pl.Name }}</span>
+            <span class="text-slate-700 overflow text-clip "> {{ pl.Name }}</span>
           </div>
           <span>{{ pl.Score }}</span>
         </div>

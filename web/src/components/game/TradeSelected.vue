@@ -7,8 +7,8 @@ import TradeStateController from '@/state_controllers/trade';
 import { useInterfaceStore } from '@/stores/RoomInterface';
 import { useGameStore } from '@/stores/useGameStore';
 import {
-    // ChatBubbleOvalLeftEllipsisIcon,
-    CheckIcon, XMarkIcon
+	// ChatBubbleOvalLeftEllipsisIcon,
+	CheckIcon, XMarkIcon
 } from "@heroicons/vue/24/outline";
 import { ChatBubbleOvalLeftEllipsisIcon } from "@heroicons/vue/24/solid";
 import { storeToRefs } from 'pinia';
@@ -50,8 +50,9 @@ function notAccepted(stock: StockEntity) {
 
 <template>
 	<div class="">
-		<div v-if="SelectedStock === undefined">
-			Этот игрок еще не предложил свой обмен
+		<div class="bg-gray-200 py-2 rounded-[2px] text-base text-center flex-col flex items-center justify-center h-full md:text-lg text-gray-600"
+		 v-if="SelectedStock === undefined">
+			Выберите игрока в панели слева, чтобы отобразить его предложение
 		</div>
         <div v-else>
             <div class="inline-flex  flex-wrap items-center justify-end mb-1 flex gap-1">

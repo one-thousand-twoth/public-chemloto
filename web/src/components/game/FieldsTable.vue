@@ -8,14 +8,14 @@ const GameStore = useGameStore()
         <div class="-m-1.5">
             <div class="p-1.5 min-w-full inline-block align-middle">
                 <div class="overflow-hidden">
-                    <table class="min-w-full divide-y divide-gray-200">
+                    <table class="min-w-full divide-y text-start  md:text-2xl divide-gray-200">
                         <thead>
                             <tr>
-                                <th scope="col" class="px-3 py-1 text-start  font-medium text-gray-700 ">
+                                <th scope="col" class="px-3 py-1  font-medium text-gray-700 ">
                                     α</th>
-                                <th scope="col" class="px-3 py-1 text-start  font-medium text-gray-700 ">
+                                <th scope="col" class="px-3 py-1  font-medium text-gray-700 ">
                                     β</th>
-                                <th scope="col" class="px-3 py-1 text-start  font-medium text-gray-700 ">
+                                <th scope="col" class="px-3 py-1   font-medium text-gray-700 ">
                                     γ</th>
 
                             </tr>

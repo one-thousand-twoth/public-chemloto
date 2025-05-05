@@ -39,8 +39,8 @@ const curInfoPlayer = ref('')
 const InterfaceStore = useInterfaceStore()
 const { currentPlayerSelection } = storeToRefs(InterfaceStore)
 
-watch(currentPlayerSelection,()=>{
-    if (currentPlayerSelection.value === undefined){
+watch(currentPlayerSelection, () => {
+    if (currentPlayerSelection.value === undefined) {
         return
     }
     selectedTool.value = 'trade'
@@ -60,6 +60,8 @@ const selectedTool = ref<'puzzle' | 'trade'>('puzzle')
 const selectedBtn = ref<"strip" | "list">('strip')
 
 const click_selected_raiseHand = ref('')
+
+const playerElems = GameStore.SelfPlayer
 
 
 
@@ -85,11 +87,18 @@ const click_selected_raiseHand = ref('')
             <div class="relative flex-1  w-full px-2 py-4 flex flex-col gap-2   items-center justify-center 
                  bars border-0 border-b-2 border-t-2  
                 ">
-                <ElementImage class="flex-1 max-w-[80%] aspect-square" :elname="GameStore.currElement" />
-                <div class="relative  flex flex-grow-0   w-full flex-1 flex-row flex-nowrap gap-1 lg:gap-2 justify-center items-center"
-                    id="lastElementsContainer">
-                    <ElementImage class="w-full h-auto" v-for="el in GameStore.LastElements.slice(1, 5)" :elname="el" />
-                </div>
+                <template v-if="selectedBtn === 'strip'">
+
+                    <ElementImage class="flex-1 max-w-[80%] aspect-square" :elname="GameStore.currElement" />
+                    <div class="relative  flex flex-grow-0   w-full flex-1 flex-row flex-nowrap gap-1 lg:gap-2 justify-center items-center"
+                        id="lastElementsContainer">
+                        <ElementImage class="w-full h-auto" v-for="el in GameStore.LastElements.slice(1, 5)"
+                            :elname="el" />
+                    </div>
+                </template>
+                <template v-if="selectedBtn === 'list'">
+                    <UserElements :player="GameStore.SelfPlayer" />
+                </template>
             </div>
 
             <template v-if="GameStore.gameState.Status !== 'STATUS_COMPLETED'">

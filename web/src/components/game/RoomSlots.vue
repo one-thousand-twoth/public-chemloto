@@ -8,12 +8,13 @@ import { useKeyboardStore } from '@/stores/useRaiseHand';
 import { useUserStore } from '@/stores/useUserStore';
 import {
     ArrowLeftStartOnRectangleIcon,
+    ArrowsPointingInIcon,
     ArrowsPointingOutIcon,
     EllipsisVerticalIcon
 } from "@heroicons/vue/24/outline";
 import { useFullscreen } from '@vueuse/core';
 import { storeToRefs } from 'pinia';
-import { inject, ref, useTemplateRef, watch } from 'vue';
+import { computed, inject, ref, useTemplateRef, watch } from 'vue';
 
 
 const GameStore = useGameStore()
@@ -43,7 +44,9 @@ watch(() => GameStore.gameState.Bag.LastElements, () => { audio.play() })
 
 // @ts-ignore
 const el = useTemplateRef('el')
-const { toggle } = useFullscreen(el)
+const { toggle, isFullscreen } = useFullscreen(el)
+
+const FullscreenIcon = computed(() => { return isFullscreen.value ? ArrowsPointingInIcon : ArrowsPointingOutIcon })
 
 const click_selected_raiseHand = ref('')
 
@@ -63,7 +66,8 @@ function click(e: Event) {
 
             <!-- #region LEFT -->
             <div class="relative flex flex-col gap-2">
-                <div class="bars shadow-large grow flex flex-col justify-stretch min-h-[0] p-3 min-w-[8.5rem] bg-gray-50">
+                <div
+                    class="bars shadow-large grow flex flex-col justify-stretch min-h-[0] p-3 min-w-[8.5rem] bg-gray-50">
                     <slot name="left" />
                 </div>
                 <IconButtonBackground v-if="GameStore.gameState.Status !== 'STATUS_STARTED'"
@@ -83,7 +87,7 @@ function click(e: Event) {
 
             <!-- #region RIGHT -->
             <div class='relative ml-8 md:ml-0 flex flex-col h-full gap-2'>
-                <IconButton class="absolute left-[-45px]" :icon="ArrowsPointingOutIcon" @click="toggle" />
+                <IconButton class="absolute left-[-45px]" :icon="FullscreenIcon" @click="toggle" />
                 <div class="bars  shadow-large p-3 min-w-[8.5rem]  grow-[1] bg-gray-50">
 
                     <slot name="right"></slot>

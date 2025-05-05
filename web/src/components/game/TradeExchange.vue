@@ -93,7 +93,7 @@ console.log("TradeState", tradeController.isValid())
             <form v-else-if="!selfStock" class="flex  flex-col gap-4" @submit.prevent="handleTrade(tradeForm)">
 
                 <div>
-                    <section class="flex flex-col gap-1 mb-2 items-end">
+                    <section class="flex flex-col gap-1 mb-2 ">
                         <label>Элемент:</label>
                         <select v-model="tradeForm.Element">
                             <option disabled value="" class="text-right">Выберите</option>

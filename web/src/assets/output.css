@@ -1163,6 +1163,14 @@ select {
   width: 100vw;
 }
 
+.w-7 {
+  width: 1.75rem;
+}
+
+.w-\[26px\] {
+  width: 26px;
+}
+
 .min-w-96 {
   min-width: 24rem;
 }
@@ -1239,6 +1247,14 @@ select {
 
 .grid-cols-\[1\.2fr_1\.0fr_2fr\] {
   grid-template-columns: 1.2fr 1.0fr 2fr;
+}
+
+.grid-cols-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.grid-cols-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .grid-rows-\[calc\(100lvh-1rem\)\] {
@@ -1364,8 +1380,16 @@ select {
   overflow-y: scroll;
 }
 
+.text-clip {
+  text-overflow: clip;
+}
+
 .whitespace-nowrap {
   white-space: nowrap;
+}
+
+.text-nowrap {
+  text-wrap: nowrap;
 }
 
 .break-words {
@@ -2102,6 +2126,30 @@ h3 {
 
   .md\:p-8 {
     padding: 2rem;
+  }
+
+  .md\:text-base {
+    font-size: 1rem;
+    line-height: 1.5rem;
+  }
+
+  .md\:text-lg {
+    font-size: 1.125rem;
+    line-height: 1.75rem;
+  }
+
+  .md\:text-2xl {
+    font-size: 1.5rem;
+    line-height: 2rem;
+  }
+
+  .md\:font-semibold {
+    font-weight: 600;
+  }
+
+  .md\:text-main {
+    --tw-text-opacity: 1;
+    color: rgb(98 123 217 / var(--tw-text-opacity));
   }
 }
 
