@@ -1,18 +1,20 @@
 <script lang="ts">
 import { WebsocketConnector } from "@/api/websocket/websocket";
 import CreateRoom from "@/components/CreateRoom.vue";
-import Modal from "@/components/UI/Modal.vue";
+import { ElementImage, IconButton, Modal } from '@/components/UI';
 import { i18nStatus } from "@/models/RoomModel";
 import { Role } from "@/models/User";
 import { useUserStore } from "@/stores/useUserStore";
 import {
-  ArrowPathIcon
+  ArrowPathIcon,
 } from "@heroicons/vue/24/outline";
+import {
+  PlayIcon
+} from "@heroicons/vue/24/solid";
 import { computed, defineComponent, inject, ref } from "vue";
 import { useRoomsStore } from '../stores/useRoomsStore';
-import { IconButton } from './UI/index';
 export default defineComponent({
-  components: { IconButton, Modal, CreateRoom },
+  components: { IconButton, Modal, CreateRoom, ElementImage, PlayIcon },
   setup() {
     const userStore = useUserStore()
     const selfuser = userStore.getUser()
@@ -47,38 +49,31 @@ export default defineComponent({
 <template>
   <!-- <div class="h-screen flex items-center justify-center bg-opacity-5 bg-slate-500">
     <div class=" flex items-center  justify-center gap-4 flex-col"> -->
-  <div class="p-4 shadow-lg bg-white">
-    <table class="mb-4">
-      <thead>
-        <tr>
-          <th>Имя</th>
-          <th>Статус</th>
-          <th></th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr v-if="roomStore.fetching">
-          <td colspan="3">Загрузка...</td>
-        </tr>
-        <tr v-else-if="!rooms.length">
-          <td colspan="3">Пока нет доступных комнат</td>
-        </tr>
-        <tr v-else v-for="room in rooms" :key="room.name">
-          <td class="">{{ room.name }}</td>
-          <td> {{ i18nStatus(room.engine.Status) }}</td>
-          <td>
-            <button @click="ConnectGame(room.name)">Подключиться</button>
-          </td>
-        </tr>
-      </tbody>
-    </table>
+  <div class="p-4 shadow-lg  max-w-[80%] mx-auto ">
 
-    <div class="mb-5">
+    <div class="flex flex-col gap-1 justify-stretch ">
+      <div v-for="room in rooms" :key="room.name"  class="flex gap-2 bg-white shadow-large bars px-2 py-1">
+        <div class="flex gap-2 flex-wrap w-full" >
+          <ElementImage class="w-10" elname="H" />
+          <div>
+            <p class="text-sm">Полимеры</p> 
+            <p class="text-lg"> {{ room.name }}</p>
+          </div>
+          <div class="mx-auto my-auto w-40">
+            {{ i18nStatus(room.engine.Status) }}
+          </div>
+        </div>
+        <button class="ml-auto my-1" @click="ConnectGame(room.name)"><PlayIcon class="size-6"/></button>
+      </div>
+    </div>
+   
+    <div class="mt-4">
       <div class=" flex flex-row gap-2">
         <button v-if="selfuser.role != Role.Player" @click="showModal = !showModal">Создать</button>
         <IconButton :icon="ArrowPathIcon" @click="roomStore.Fetch()" />
       </div>
     </div>
+
     <Modal :show="showModal" @close="showModal = !showModal">
       <template #header>
         <h3 class="font-bold text-center">Создать игру</h3>
