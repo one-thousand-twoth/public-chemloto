@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"log/slog"
+	"regexp"
 
 	"github.com/anrew1002/Tournament-ChemLoto/internal/common"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/common/enerr"
@@ -11,12 +12,30 @@ import (
 	"github.com/anrew1002/Tournament-ChemLoto/internal/engines"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/engines/models"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/entities"
+	"github.com/invopop/validation"
 )
 
-type CreateRoomRequest struct {
-	Name         string `json:"name" validate:"required,min=1,safeinput"`
-	Type         string `json:"type"`
-	EngineConfig map[string]any
+type CreateRoomParams struct {
+	Name         string         `json:"name"`
+	Type         string         `json:"type"`
+	EngineConfig map[string]any `json:"engineConfig"`
+}
+
+func (arg *CreateRoomParams) Validate() error {
+	return validation.ValidateStruct(&arg,
+		validation.Field(&arg.Name,
+			validation.Required,
+			validation.Length(1, 25).Error("Должно быть меньше 26 символов"),
+			validation.Match(regexp.MustCompile(`^[a-zA-Zа-яА-Я0-9- ]+$`)).
+				Error("Должно содержать только буквы, цифры и пробел"),
+		),
+		validation.Field(&arg.Name,
+			validation.In("polymers", "amino").Error("Неизвестный тип движка"),
+		),
+		validation.Field(&arg.EngineConfig,
+			validation.NotNil.Error("Конфиг не должен быть пустым"),
+		),
+	)
 }
 
 type Response struct {
@@ -24,15 +43,17 @@ type Response struct {
 	Error []string `json:"error"`
 }
 
-func (uc *Usecases) CreateRoom(req CreateRoomRequest, log *slog.Logger) (*entities.Room, error) {
+func (uc *Usecases) CreateRoom(args CreateRoomParams, log *slog.Logger) (*entities.Room, error) {
 
 	const op = "server.handlers.CreateRoom"
 
+	log.Info("Creating room...", slog.Any("args", args))
+
 	eng, err := engines.NewEngine(
-		req.Type,
-		req.Name,
+		args.Type,
+		args.Name,
 		log,
-		req.EngineConfig,
+		args.EngineConfig,
 		func(username string, msg common.Message) {
 			go func() {
 				user, err := uc.UserRepo.GetUserByName(username)
@@ -45,7 +66,7 @@ func (uc *Usecases) CreateRoom(req CreateRoomRequest, log *slog.Logger) (*entiti
 		},
 		func(msg common.Message) {
 			go func() {
-				users, err := uc.UserRepo.GetRoomSubscribers(req.Name)
+				users, err := uc.UserRepo.GetRoomSubscribers(args.Name)
 				if err != nil {
 					log.Error("Error getting user while broadcast", slog.Any("err", err.Error()))
 					return
@@ -61,7 +82,7 @@ func (uc *Usecases) CreateRoom(req CreateRoomRequest, log *slog.Logger) (*entiti
 		return nil, enerr.E(op, err)
 	}
 
-	room, err := uc.RoomRepo.AddRoom(req.Name, eng)
+	room, err := uc.RoomRepo.AddRoom(args.Name, eng)
 	if err != nil {
 		return nil, enerr.E(op, err)
 	}

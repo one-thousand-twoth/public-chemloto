@@ -10,8 +10,7 @@ import {
 	CheckIcon, XMarkIcon
 } from "@heroicons/vue/24/outline";
 import { ChatBubbleOvalLeftEllipsisIcon } from "@heroicons/vue/24/solid";
-import { storeToRefs } from 'pinia';
-import { computed, inject } from 'vue';
+import { inject } from 'vue';
 
 
 const ws = inject('connector') as WebsocketConnector

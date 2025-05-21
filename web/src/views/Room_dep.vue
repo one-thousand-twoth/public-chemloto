@@ -76,16 +76,16 @@ watch(() => GameStore.gameState.Bag.LastElements, () => { audio.play() })
 
 // @ts-ignore
 const el = useTemplateRef('el')
+// @ts-ignore
 const { toggle } = useFullscreen(el)
 
 const selectedTool = ref<'puzzle' | 'trade'>('puzzle')
 const selectedBtn = ref<"strip" | "list">('strip')
-const value = ref('0')
-const show = ref(true)
+
 const click_selected_raiseHand = ref('')
 
 
-function click(e: Event) {
+function click(_: Event) {
     // console.log(e)
     click_selected_raiseHand.value = ''
     InputName.value = ""

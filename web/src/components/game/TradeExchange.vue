@@ -11,7 +11,6 @@ import { GameInfo, StateTRADE } from '@/models/Game';
 import { TradeStateHandler } from '@/state_controllers';
 import { storeToRefs } from 'pinia';
 import { computed, inject, ref } from 'vue';
-import TradeExchangeStocks from './TradeExchangeStocks.vue';
 import TradeSelected from './TradeSelected.vue';
 
 const gameStore = useGameStore()

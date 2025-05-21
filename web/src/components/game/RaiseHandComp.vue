@@ -1,14 +1,12 @@
 <script setup lang="ts">
 import { WebsocketConnector } from '@/api/websocket/websocket';
-import { ChemicalElementCounter, SelectedElements, StructureList } from '@/components/game';
+import { ChemicalElementCounter } from '@/components/game';
 import { Player } from '@/models/Game';
-import { CommonStructureNames, Field, Polymer, Polymers, StructureNames } from '@/models/Polymers';
+import { Field, Polymer, Polymers, StructureNames } from '@/models/Polymers';
 import { useGameStore } from '@/stores/useGameStore';
 import { useKeyboardStore } from '@/stores/useRaiseHand';
-import { useFocus } from '@vueuse/core';
-import { openModal } from 'jenesius-vue-modal';
 import { storeToRefs } from 'pinia';
-import { computed, inject, ref, useTemplateRef, watch } from 'vue';
+import { computed, inject, ref, watch } from 'vue';
 import ChemicalElementCounterMobile from './ChemicalElementCounterMobile.vue';
 
 const props = defineProps<{
@@ -42,7 +40,6 @@ function Check(ch: CheckStruct<any>, str: InputEntries) {
 }
 
 const isMobile = computed(() => {
-	return true
 	return navigator.maxTouchPoints > 1
 })
 
@@ -95,9 +92,7 @@ watch(currentElements, () => {
 
 })
 
-function Select(name: string) {
 
-}
 const isSubmitedHand = computed(() => {
 	return gameStore.gameState.RaisedHands.some(
 		(v) => v.Player.Name === gameStore.SelfPlayer?.Name

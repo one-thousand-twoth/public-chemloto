@@ -2,19 +2,17 @@
 import { WebsocketConnector } from '@/api/websocket/websocket';
 import obtain from "@/assets/sounds/notification.mp3";
 import { IconButton, IconButtonBackground } from '@/components/UI';
-import { Role } from '@/models/User';
 import { useGameStore } from '@/stores/useGameStore';
 import { useKeyboardStore } from '@/stores/useRaiseHand';
 import { useUserStore } from '@/stores/useUserStore';
 import {
     ArrowLeftStartOnRectangleIcon,
     ArrowsPointingInIcon,
-    ArrowsPointingOutIcon,
-    EllipsisVerticalIcon
+    ArrowsPointingOutIcon
 } from "@heroicons/vue/24/outline";
 import { useFullscreen } from '@vueuse/core';
 import { storeToRefs } from 'pinia';
-import { computed, inject, ref, useTemplateRef, watch } from 'vue';
+import { computed, inject, ref, ShallowRef, useTemplateRef, watch } from 'vue';
 
 
 const GameStore = useGameStore()
@@ -35,7 +33,7 @@ function DisconnectGame() {
 
 
 
-const AdditionallyButton = ref(false)
+// const AdditionallyButton = ref(false)
 
 
 let audio = new Audio(obtain);
@@ -43,7 +41,7 @@ let audio = new Audio(obtain);
 watch(() => GameStore.gameState.Bag.LastElements, () => { audio.play() })
 
 // @ts-ignore
-const el = useTemplateRef('el')
+const el = useTemplateRef('el') as Readonly<ShallowRef<HTMLDivElement | null>>
 const { toggle, isFullscreen } = useFullscreen(el)
 
 const FullscreenIcon = computed(() => { return isFullscreen.value ? ArrowsPointingInIcon : ArrowsPointingOutIcon })
@@ -51,7 +49,7 @@ const FullscreenIcon = computed(() => { return isFullscreen.value ? ArrowsPointi
 const click_selected_raiseHand = ref('')
 
 
-function click(e: Event) {
+function click(_: Event) {
     click_selected_raiseHand.value = ''
     InputName.value = ""
 
@@ -60,7 +58,7 @@ function click(e: Event) {
 </script>
 <template>
 
-    <div @click="click">
+    <div ref='el2' @click="click">
         <div
             class="relative p-2 gap-4 md:gap-12 grid grid-cols-[1.2fr_1.0fr_2fr] h-lvh grid-rows-[calc(100lvh-1rem)] bg-bg  w-dvw  items-stretch">
 

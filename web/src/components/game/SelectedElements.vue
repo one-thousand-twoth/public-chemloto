@@ -1,13 +1,10 @@
 <script setup lang="ts">
-import { Polymers } from '@/models/Polymers';
-import { IconRole, Role } from '@/models/User';
-import { useGameStore } from '@/stores/useGameStore';
-import { closeModal } from 'jenesius-vue-modal';
+// import { useGameStore } from '@/stores/useGameStore';
 
-const GameStore = useGameStore()
-const emit = defineEmits<{
-    selectPlayer: [name: string]
-}>()
+// const GameStore = useGameStore()
+// const emit = defineEmits<{
+//     selectPlayer: [name: string]
+// }>()
 
 </script>
 <template>

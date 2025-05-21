@@ -1,6 +1,6 @@
 import { APISettings } from '@/api/config'
 import { Client } from '@/api/core/client'
-import { Room } from '@/models/RoomModel'
+import { CreateRoomRequest, Room } from '@/models/RoomModel'
 import { acceptHMRUpdate, defineStore } from 'pinia'
 import { ref } from 'vue'
 import { useToasterStore } from '../stores/useToasterStore'
@@ -34,7 +34,7 @@ export const useRoomsStore = defineStore('rooms', () => {
     }
     fetching.value = false
   }
-  async function CreateGame (room: Room) {
+  async function CreateGame (room: CreateRoomRequest) {
     if (userStore.UserCreds == null) {
       return
     }

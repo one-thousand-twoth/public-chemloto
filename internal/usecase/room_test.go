@@ -21,7 +21,7 @@ func TestCreateRoom(t *testing.T) {
 	uc := NewUsecase(db)
 
 	type args struct {
-		req CreateRoomRequest
+		req CreateRoomParams
 	}
 	configPolymers := map[string]any{
 		"Elements":    map[string]int{},
@@ -42,7 +42,7 @@ func TestCreateRoom(t *testing.T) {
 		{
 			name: "Create Room",
 			args: args{
-				req: CreateRoomRequest{
+				req: CreateRoomParams{
 					Name:         "test_room",
 					Type:         "polymers",
 					EngineConfig: configPolymers,
@@ -54,7 +54,7 @@ func TestCreateRoom(t *testing.T) {
 		{
 			name: "Create Room duplicate should error",
 			args: args{
-				req: CreateRoomRequest{
+				req: CreateRoomParams{
 					Name:         "test_room",
 					Type:         "polymers",
 					EngineConfig: configPolymers,
@@ -105,7 +105,7 @@ func TestSubscribeToRoom(t *testing.T) {
 	if err != nil {
 		t.Fatal("Failed init")
 	}
-	_, err = uc.CreateRoom(CreateRoomRequest{
+	_, err = uc.CreateRoom(CreateRoomParams{
 		Name: "test_room",
 		Type: "polymers",
 		EngineConfig: map[string]any{
@@ -189,7 +189,7 @@ func TestGetSubscribersFromRoom(t *testing.T) {
 
 	uc := NewUsecase(db)
 
-	_, err = uc.CreateRoom(CreateRoomRequest{
+	_, err = uc.CreateRoom(CreateRoomParams{
 		Name: "test_room",
 		Type: "polymers",
 		EngineConfig: map[string]any{

@@ -89,12 +89,9 @@ func (s *Server) PatchUser() http.HandlerFunc {
 
 func (s *Server) CreateRoom2() http.HandlerFunc {
 	type Request struct {
-		Name        string         `json:"name" validate:"required,min=1,safeinput"`
-		MaxPlayers  int            `json:"maxPlayers" validate:"required,gt=1,lt=100"`
-		Elements    map[string]int `json:"elementCounts" validate:"required"`
-		Time        int            `validate:"excluded_if=isAuto false,gte=0"`
-		IsAuto      bool           `json:"isAuto"`
-		IsAutoCheck bool           `json:isAutoCheck`
+		Name         string         `json:"name" validate:"required,min=1,safeinput"`
+		Type         string         `json:"type"`
+		EngineConfig map[string]any `json:"engineConfig"`
 	}
 	type Response struct {
 		Rooms any      `json:"rooms"`
@@ -112,19 +109,13 @@ func (s *Server) CreateRoom2() http.HandlerFunc {
 			return
 		}
 		log.Debug("request body decoded", slog.Any("request", req))
-		createRoomRequest := usecase.CreateRoomRequest{
-			Name: req.Name,
-			Type: "polymers",
-			EngineConfig: map[string]any{
-				"MaxPlayers":  req.MaxPlayers,
-				"Elements":    req.Elements,
-				"Time":        req.Time,
-				"IsAuto":      req.IsAuto,
-				"IsAutoCheck": req.IsAutoCheck,
-			},
+		createRoomParams := usecase.CreateRoomParams{
+			Name:         req.Name,
+			Type:         req.Type,
+			EngineConfig: req.EngineConfig,
 		}
 
-		_, err = s.usecases.CreateRoom(createRoomRequest, s.log)
+		_, err = s.usecases.CreateRoom(createRoomParams, s.log)
 		if err != nil {
 			encodeError(w, log, err)
 			return

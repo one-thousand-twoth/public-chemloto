@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { watch } from 'vue';
 import ElementImage from '../UI/ElementImage.vue';
-const props = defineProps<{
+defineProps<{
     // modelValue: number;
     elname: string;
     max: number;

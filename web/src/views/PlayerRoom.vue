@@ -1,40 +1,21 @@
 <script setup lang="ts">
-import { WebsocketConnector } from '@/api/websocket/websocket';
 import obtain from "@/assets/sounds/notification.mp3";
-import { ButtonPanelAdmin, ButtonPanelPlayer, CheckPlayer, FieldsTable, LeaderBoard, TradeExchange, UserElements } from '@/components/game';
+import { ButtonPanelPlayer, LeaderBoard, TradeExchange, UserElements } from '@/components/game';
 import RaiseHandComp from '@/components/game/RaiseHandComp.vue';
 import RoomSlots from '@/components/game/RoomSlots.vue';
 import { NumKey } from '@/components/keyboard';
-import { ElementImage, IconButton, IconButtonBackground, Modal, Timer, UserInfo } from '@/components/UI/';
-import { Hand } from '@/models/Game';
-import { Role } from '@/models/User';
+import { ElementImage, Timer } from '@/components/UI/';
 import { useInterfaceStore } from '@/stores/RoomInterface';
 import { useGameStore } from '@/stores/useGameStore';
 import { useKeyboardStore } from '@/stores/useRaiseHand';
-import { useUserStore } from '@/stores/useUserStore';
-import {
-    ArrowLeftStartOnRectangleIcon,
-    ArrowsPointingOutIcon,
-    CheckIcon,
-    EllipsisVerticalIcon
-} from "@heroicons/vue/24/outline";
-import { useFullscreen } from '@vueuse/core';
 import { storeToRefs } from 'pinia';
-import { computed, inject, ref, useTemplateRef, watch } from 'vue';
+import { computed, ref, watch } from 'vue';
 
 
 const GameStore = useGameStore()
-const userStore = useUserStore()
 
 const keyboardStore = useKeyboardStore()
 const { InputName } = storeToRefs(keyboardStore)
-const ws = inject('connector') as WebsocketConnector
-
-const currPlayer = computed(() => {
-    return GameStore.gameState.Players.find(player => player.Name === curInfoPlayer.value)
-})
-
-const curInfoPlayer = ref('')
 
 const InterfaceStore = useInterfaceStore()
 const { currentPlayerSelection } = storeToRefs(InterfaceStore)
@@ -61,7 +42,7 @@ const selectedBtn = ref<"strip" | "list">('strip')
 
 const click_selected_raiseHand = ref('')
 
-const playerElems = GameStore.SelfPlayer
+const player = GameStore.SelfPlayer!
 
 
 
@@ -97,7 +78,7 @@ const playerElems = GameStore.SelfPlayer
                     </div>
                 </template>
                 <template v-if="selectedBtn === 'list'">
-                    <UserElements :player="GameStore.SelfPlayer" />
+                    <UserElements :player="player" />
                 </template>
             </div>
 
@@ -107,7 +88,7 @@ const playerElems = GameStore.SelfPlayer
         </template>
         <template #right>
             <RaiseHandComp v-model:selectedElem="click_selected_raiseHand" v-show="selectedTool == 'puzzle'"
-                v-if="GameStore.SelfPlayer" :player="GameStore.SelfPlayer" />
+                v-if="GameStore.SelfPlayer" :player="player" />
 
             <TradeExchange v-show="selectedTool == 'trade'" />
         </template>

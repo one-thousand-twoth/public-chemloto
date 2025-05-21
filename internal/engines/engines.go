@@ -20,12 +20,11 @@ func NewEngine(
 	engineType string,
 	name string,
 	log *slog.Logger,
-	config map[string]interface{},
+	config map[string]any,
 	unicast enmodels.UnicastFunction,
 	broadcast enmodels.BroadcastFunction,
 ) (enmodels.Engine, error) {
 	const op enerr.Op = "engines.factory/GetEngine"
-	log = log.With(slog.String("room", name))
 	switch engineType {
 	case "polymers":
 		var data PolymersConfig
@@ -39,12 +38,12 @@ func NewEngine(
 }
 
 type PolymersConfig struct {
-	Name        string         `json:"name" validate:"required,min=1,safeinput"`
-	MaxPlayers  int            `json:"maxPlayers" validate:"required,gt=1,lt=100"`
-	Elements    map[string]int `json:"elementCounts" validate:"required"`
-	Time        int            `validate:"excluded_if=isAuto false,gte=0"`
-	IsAuto      bool           `json:"isAuto"`
-	IsAutoCheck bool           `json:isAutoCheck`
+	Name        string         `mapstructure:"name"`
+	MaxPlayers  int            `mapstructure:"maxPlayers"`
+	Elements    map[string]int `mapstructure:"elementCounts"`
+	Time        int            `mapstructure:"time"`
+	IsAuto      bool           `mapstructure:"isAuto"`
+	IsAutoCheck bool           `mapstructure:isAutoCheck`
 }
 
 // Returns the structure needed to check the collected chem-structures of the player

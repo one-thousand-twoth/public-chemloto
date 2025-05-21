@@ -8,7 +8,7 @@ import { computed } from 'vue';
 import { ElementImage } from '../UI';
 
 const GameStore = useGameStore()
-const { gameState, SelfPlayer } = storeToRefs(GameStore)
+const { gameState } = storeToRefs(GameStore)
 const emit = defineEmits<{
   selectPlayer: [name: string]
 }>()

@@ -1,26 +1,20 @@
 <script setup lang="ts">
 import { WebsocketConnector } from '@/api/websocket/websocket';
-import obtain from "@/assets/sounds/notification.mp3";
-import { ButtonPanelAdmin, ButtonPanelPlayer, CheckPlayer, FieldsTable, LeaderBoard, UserElements } from '@/components/game';
-import RaiseHandComp from '@/components/game/RaiseHandComp.vue';
+import { ButtonPanelAdmin, CheckPlayer, FieldsTable, LeaderBoard, UserElements } from '@/components/game';
 import RoomSlots from '@/components/game/RoomSlots.vue';
 import { NumKey } from '@/components/keyboard';
-import { ElementImage, IconButton, IconButtonBackground, Modal, Timer, UserInfo } from '@/components/UI/';
+import { ElementImage, Modal, Timer, UserInfo } from '@/components/UI/';
 import { Hand } from '@/models/Game';
 import { Role } from '@/models/User';
 import { useGameStore } from '@/stores/useGameStore';
 import { useKeyboardStore } from '@/stores/useRaiseHand';
 import { useUserStore } from '@/stores/useUserStore';
 import {
-    ArrowLeftStartOnRectangleIcon,
-    ArrowsPointingOutIcon,
-    CheckIcon,
-    EllipsisVerticalIcon
+    CheckIcon
 } from "@heroicons/vue/24/outline";
-import { useFullscreen } from '@vueuse/core';
 import { openModal } from 'jenesius-vue-modal';
 import { storeToRefs } from 'pinia';
-import { computed, inject, ref, useTemplateRef, watch } from 'vue';
+import { computed, inject, ref } from 'vue';
 
 
 const GameStore = useGameStore()

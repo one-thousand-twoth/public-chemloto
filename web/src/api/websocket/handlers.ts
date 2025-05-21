@@ -1,6 +1,7 @@
 import { StartTimer, useGameStore } from "@/stores/useGameStore"
 import { useToasterStore } from "@/stores/useToasterStore"
 import { useUserStore } from "@/stores/useUserStore"
+import { storeToRefs } from "pinia"
 import { WEBSOCKET_EVENT } from "./websocket"
 
 interface HUB_SUBSCRIBE_EVENT {
@@ -9,13 +10,13 @@ interface HUB_SUBSCRIBE_EVENT {
 }
 export function Subscribe(e: WEBSOCKET_EVENT) {
     const store = useGameStore()
+    const {name} = storeToRefs(store)
     const user = useUserStore()
     console.log("changing to room")
     const b = e.Body as HUB_SUBSCRIBE_EVENT
     if (b.Target == "room") {
-        console.log("Hi")
-        user.UserInfo!.room = b.Name
-        store.name = b.Name
+        user.UserInfo.room = b.Name
+        name.value = b.Name
     }
 }
 export function UNSubscribe(e: WEBSOCKET_EVENT) {

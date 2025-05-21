@@ -1,12 +1,11 @@
 <script setup lang="ts">
-import { DesignButton, RaiseHandComp, SelectedElements, TradeExchange, UserElements } from '@/components/game/';
+import { DesignButton, RaiseHandComp, TradeExchange, UserElements } from '@/components/game/';
 import { Modal } from '@/components/UI';
 import { useGameStore } from '@/stores/useGameStore';
 import {
     ArrowDownCircleIcon,
     HandRaisedIcon, PuzzlePieceIcon, ShoppingBagIcon
 } from "@heroicons/vue/24/solid";
-import { openModal } from "jenesius-vue-modal";
 import { computed, ref } from 'vue';
 
 const selectedBtn = defineModel<"strip" | "list">('btn', { required: true })

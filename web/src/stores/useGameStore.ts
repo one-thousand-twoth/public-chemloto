@@ -1,7 +1,7 @@
-import { WEBSOCKET_EVENT, WebsocketConnector } from '@/api/websocket/websocket'
-import { GameInfo, getStateTimer, hasTimer, Player, updateTimer } from '@/models/Game'
+import { WEBSOCKET_EVENT } from '@/api/websocket/websocket'
+import { GameInfo, getStateTimer, hasTimer, updateTimer } from '@/models/Game'
 import { acceptHMRUpdate, defineStore } from 'pinia'
-import { computed, inject, ref } from 'vue'
+import { computed, ref } from 'vue'
 import { useUserStore } from './useUserStore'
 
 
@@ -40,7 +40,7 @@ export const useGameStore = defineStore('game', () => {
         get: () => {
             return roomname.value
         },
-        set: (v) => {
+        set: (v: string) => {
             roomname.value = v
             if (v === "") {
                 roomname.value = ""
