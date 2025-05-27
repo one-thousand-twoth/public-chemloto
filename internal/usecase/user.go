@@ -20,7 +20,7 @@ import (
 )
 
 type LoginRequest struct {
-	Name string `json:"name" validate:"required,min=1,safeinput"`
+	Name string `json:"name"`
 	Code string `json:"code,omitempty"`
 }
 type LoginResponse struct {
@@ -30,13 +30,18 @@ type LoginResponse struct {
 }
 
 func (r LoginRequest) Validate() error {
-	return validation.ValidateStruct(&r,
+	const op enerr.Op = "usecase.user/LoginRequest.Validate()"
+	errs := validation.ValidateStruct(&r,
 		validation.Field(&r.Name,
 			validation.Required,
 			validation.Length(1, 25).Error("Должно быть меньше 26 символов"),
 			validation.Match(regexp.MustCompile(`^[a-zA-Zа-яА-Я0-9- ]+$`)).
 				Error("Должно содержать только буквы, цифры и пробел"),
 		))
+	if errs != nil {
+		return enerr.EM(op, errs, enerr.Validation)
+	}
+	return nil
 }
 func stringEquals(str string) validation.RuleFunc {
 	return func(value interface{}) error {
@@ -48,21 +53,18 @@ func stringEquals(str string) validation.RuleFunc {
 	}
 }
 
-func (uc *Usecases) Login(log *slog.Logger, req LoginRequest, code string) (*LoginResponse, error) {
+func (uc *Usecases) Login(log *slog.Logger, req LoginRequest, secret string) (*LoginResponse, error) {
 	const op enerr.Op = "usecase.user/Login"
 	err := req.Validate()
 	if err != nil {
-		return nil, enerr.E(op, err, enerr.Validation)
+		return nil, enerr.E(op, err)
 	}
 
 	var role common.Role
 	role = common.Player_Role
 	if req.Code != "" {
-		err = validation.Errors{
-			"code": validation.Validate(req.Code, validation.By(stringEquals(code))),
-		}.Filter()
-		if err != nil {
-			return nil, enerr.E(op, err, enerr.Validation)
+		if req.Code != secret {
+			return nil, enerr.EM(op, "code", "Код недействителен")
 		}
 		role = common.Admin_Role
 	}
@@ -82,10 +84,13 @@ func (uc *Usecases) Login(log *slog.Logger, req LoginRequest, code string) (*Log
 	}
 
 	_, err = uc.UserRepo.CreateUser(params)
-
 	if err != nil {
+		if enerr.KindIs(enerr.Exist, err) {
+			return nil, enerr.EM(op, "name", "Команда с таким именем уже существует")
+		}
 		return nil, enerr.E(op, err)
 	}
+
 	log.Info("user registred", "name", req.Name, "role", role)
 	resp := &LoginResponse{
 		Token: token,

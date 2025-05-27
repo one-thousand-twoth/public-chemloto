@@ -19,7 +19,18 @@ export function i18nRole(role: Role) {
 export function IconRole(role: Role): FunctionalComponent<HTMLAttributes & VNodeProps> {
     return roleData[role]?.icon || ExclamationCircleIcon
 }
-export type User = UserCreds & UserInfo
+export class UserEntity {
+  constructor(
+    public username: string,
+    public token: string,
+    public room: string,
+    public role: Role
+  ) {}
+
+  hasPermission(): boolean {
+    return this.role !== Role.Player
+  }
+}
 
 export type UserCreds =  {
     username: string

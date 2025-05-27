@@ -31,7 +31,7 @@ function Delete(usr: string) {
 }
 </script>
 <template>
-  <div class="p-4 mt-4 max-w-[80%] mx-auto bars shadow-lg bg-white">
+  <div class="p-4 bars shadow-lg bg-white">
     <table class="mb-4">
       <thead>
         <tr>

@@ -16,7 +16,7 @@ func ErrorResponse(unicast models.UnicastFunction, user string, log *slog.Logger
 		// nilErrorResponse(w, lgr)
 		return
 	}
-	var e *EngineError
+	var e *ApplicationError
 	if errors.As(err, &e) {
 		switch e.Kind {
 		default:
@@ -29,7 +29,7 @@ func ErrorResponse(unicast models.UnicastFunction, user string, log *slog.Logger
 }
 
 // ErrorResponse unicast message with ENGINE_ACTION type to user and log error.
-func engineErrorResponse(unicast models.UnicastFunction, user string, log *slog.Logger, e *EngineError) {
+func engineErrorResponse(unicast models.UnicastFunction, user string, log *slog.Logger, e *ApplicationError) {
 	const op Op = "errs/typicalErrorResponse"
 
 	// Error should not be empty, but it's
@@ -47,13 +47,11 @@ func engineErrorResponse(unicast models.UnicastFunction, user string, log *slog.
 		// j, _ := json.Marshal(ops)
 		log.Error(errMsg, slog.Any("stack", ops),
 			slog.String("Kind", e.Kind.String()),
-			slog.String("Parameter", string(e.Param)),
 			slog.String("User", string(e.User)),
 			sl.Err(e.Err))
 	} else {
 		log.Error(errMsg,
 			slog.String("Kind", e.Kind.String()),
-			slog.String("Parameter", string(e.Param)),
 			slog.String("User", string(e.User)),
 			sl.Err(e.Err))
 	}
@@ -65,7 +63,7 @@ func engineErrorResponse(unicast models.UnicastFunction, user string, log *slog.
 
 }
 
-func newErrResponse(err *EngineError) common.Message {
+func newErrResponse(err *ApplicationError) common.Message {
 	var msg = []string{"Ошибка сервера", "Cообщите о ней организатору"}
 
 	switch err.Kind {

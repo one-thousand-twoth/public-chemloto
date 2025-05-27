@@ -35,7 +35,7 @@ func TestLogin(t *testing.T) {
 		name    string
 		args    args
 		want    *LoginResponse
-		wantErr *enerr.EngineError
+		wantErr *enerr.ApplicationError
 	}{
 		{
 			name: "Create Player",
@@ -58,7 +58,7 @@ func TestLogin(t *testing.T) {
 				},
 			},
 			want:    nil,
-			wantErr: enerr.E(enerr.Exist).(*enerr.EngineError),
+			wantErr: enerr.E(enerr.Exist),
 		},
 		{
 			name: "Create Admin",
@@ -88,7 +88,7 @@ func TestLogin(t *testing.T) {
 				Role:  common.Admin_Role,
 				Error: []string{},
 			},
-			wantErr: enerr.E(enerr.Validation).(*enerr.EngineError),
+			wantErr: enerr.E(enerr.Validation),
 		},
 	}
 	for _, tt := range tests {

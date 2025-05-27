@@ -2,6 +2,7 @@
 package enerr
 
 import (
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
@@ -9,10 +10,105 @@ import (
 	"sort"
 )
 
-// Error is the type that implements the error interface.
+// MultiError contains a map indicating the parameter and its error.
+// Serves to display errors in user interface forms
+type MultiError struct {
+	Errs map[string]error
+}
+
+func (e *MultiError) Error() string {
+	return fmt.Sprintf("%+v", e.Errs)
+}
+
+// MarshalJSON converts the Errors into a valid JSON.
+func (es *MultiError) MarshalJSON() ([]byte, error) {
+	errs := map[string]interface{}{}
+	for key, err := range es.Errs {
+		if ms, ok := err.(json.Marshaler); ok {
+			errs[key] = ms
+		} else {
+			errs[key] = err.Error()
+		}
+	}
+	return json.Marshal(errs)
+}
+
+func mapStringToError(arg map[string]string) map[string]error {
+	res := make(map[string]error, len(arg))
+	for k, v := range arg {
+		res[k] = errors.New(v)
+	}
+	return res
+}
+
+func errsToMap(errs []string) map[string]error {
+	result := make(map[string]error, len(errs)/2+1)
+	for i := 0; i < len(errs); i += 2 {
+		key := errs[i]
+		if i+1 < len(errs) {
+			result[key] = errors.New(errs[i+1])
+		} else {
+			result[key] = errors.New("%not-defined%")
+		}
+	}
+	return result
+}
+
+// EM() extends E() and builds an error value from its arguments with different types of input args:
+//
+// There must be at least one argument or EM panics.
+// The type of each argument determines its meaning.
+// If more than one argument of a given type is presented,
+// only the last one is recorded.
+//
+// The types are:
+//
+//	map[string]error,
+//	map[string]string,
+//		The underlying multi-errors
+func EM(args ...interface{}) *ApplicationError {
+
+	if len(args) == 0 {
+		panic("call to errors.E with no arguments")
+	}
+	var e = &MultiError{}
+	var errPairs []string
+	newArgs := make([]any, 0)
+	for _, arg := range args {
+		switch arg := arg.(type) {
+		case string:
+			if errPairs == nil {
+				errPairs = make([]string, 0, 2)
+			}
+			errPairs = append(errPairs, arg)
+		case map[string]error:
+			e = &MultiError{arg}
+		case map[string]string:
+			e = &MultiError{mapStringToError(arg)}
+		case Op, Kind, UserName:
+			newArgs = append(newArgs, arg)
+		default:
+			_, file, line, _ := runtime.Caller(1)
+			return &ApplicationError{Err: fmt.Errorf(
+				"errors.E: bad call from %s:%d: %v, unknown type %T, value %v in error call",
+				file, line, args, arg, arg)}
+		}
+	}
+	if len(errPairs) > 0 {
+		e = &MultiError{
+			Errs: errsToMap(errPairs),
+		}
+	}
+
+	newArgs = append(newArgs, e)
+
+	return E(newArgs...)
+}
+
+// ApplicationError is the type that implements the error interface.
 // It contains a number of fields, each of different type.
 // An Error value may leave some values unset.
-type EngineError struct {
+type ApplicationError struct {
 	// Op is the operation being performed, usually the name of the method
 	// being invoked.
 	Op Op
@@ -21,24 +117,20 @@ type EngineError struct {
 	// Kind is the class of error, such as permission failure,
 	// or "Other" if its class is unknown or irrelevant.
 	Kind Kind
-	// Param represents the parameter related to the error.
-	Param Parameter
-	// Code is a human-readable, short representation of the error
-	Code Code
 	// The underlying error that triggered this one, if any.
 	Err error
 }
 
-func (e *EngineError) isZero() bool {
-	return e.User == "" && e.Kind == 0 && e.Param == "" && e.Code == "" && e.Err == nil
+func (e *ApplicationError) isZero() bool {
+	return e.User == "" && e.Kind == 0 && e.Err == nil
 }
 
 // Unwrap method allows for unwrapping errors using errors.As
-func (e *EngineError) Unwrap() error {
+func (e *ApplicationError) Unwrap() error {
 	return e.Err
 }
 
-func (e *EngineError) Error() string {
+func (e *ApplicationError) Error() string {
 	return e.Err.Error()
 }
 
@@ -60,12 +152,6 @@ type UserName string
 // Kind defines the kind of error this is, mostly for use by systems
 // such as FUSE that must act differently depending on the error.
 type Kind uint8
-
-// Parameter represents the parameter related to the error.
-type Parameter string
-
-// Code is a human-readable, short representation of the error
-type Code string
 
 // Kinds of errors.
 //
@@ -124,12 +210,12 @@ const (
 //
 // If Kind is not specified or Other, we set it to the Kind of
 // the underlying error.
-func E(args ...interface{}) error {
+func E(args ...interface{}) *ApplicationError {
 
 	if len(args) == 0 {
 		panic("call to errors.E with no arguments")
 	}
-	e := &EngineError{}
+	e := &ApplicationError{}
 	for _, arg := range args {
 		switch arg := arg.(type) {
 		case Op:
@@ -140,25 +226,21 @@ func E(args ...interface{}) error {
 			e.Kind = arg
 		case string:
 			e.Err = Str(arg)
-		case *EngineError:
+		case *ApplicationError:
 			// Make a copy
 			errorCopy := *arg
 			e.Err = &errorCopy
 		case error:
 			e.Err = arg
-		case Code:
-			e.Code = arg
-		case Parameter:
-			e.Param = arg
 		default:
 			_, file, line, _ := runtime.Caller(1)
-			return fmt.Errorf(
+			return &ApplicationError{Err: fmt.Errorf(
 				"errors.E: bad call from %s:%d: %v, unknown type %T, value %v in error call",
-				file, line, args, arg, arg)
+				file, line, args, arg, arg)}
 		}
 	}
 
-	prev, ok := e.Err.(*EngineError)
+	prev, ok := e.Err.(*ApplicationError)
 	if !ok {
 		return e
 	}
@@ -167,24 +249,6 @@ func E(args ...interface{}) error {
 	if e.Kind == Other {
 		e.Kind = prev.Kind
 		prev.Kind = Other
-	}
-
-	if prev.Code == e.Code {
-		prev.Code = ""
-	}
-	// If this error has Code == "", pull up the inner one.
-	if e.Code == "" {
-		e.Code = prev.Code
-		prev.Code = ""
-	}
-
-	if prev.Param == e.Param {
-		prev.Param = ""
-	}
-	// If this error has Param == "", pull up the inner one.
-	if e.Param == "" {
-		e.Param = prev.Param
-		prev.Param = ""
 	}
 
 	return e
@@ -245,7 +309,7 @@ func (e *errorString) Error() string {
 // KindIs reports whether err is an *Error of the given Kind.
 // If err is nil then KindIs returns false.
 func KindIs(kind Kind, err error) bool {
-	var e *EngineError
+	var e *ApplicationError
 	if errors.As(err, &e) {
 		if e.Kind != Other {
 			return e.Kind == kind
@@ -271,7 +335,7 @@ func OpStack(err error) []string {
 	// loop through all wrapped errors and add to struct
 	// order will be from top to bottom of stack
 	for errors.Unwrap(e) != nil {
-		var errsError *EngineError
+		var errsError *ApplicationError
 		if errors.As(e, &errsError) {
 			if errsError.Op != "" {
 				op := o{Op: string(errsError.Op), Order: i}

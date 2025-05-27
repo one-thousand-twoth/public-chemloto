@@ -46,10 +46,10 @@ func RaiseHand(engine *PolymersEngine, isAuto bool) HandlerFunc {
 			slog.String("player", e.Player),
 			slog.Any("players", engine.players()),
 			enerr.OpAttr(op))
-
-		if invalid, err := player.checkIfHasElements(data.Structure); err != nil {
+		// TODO: передать каких именно не хватает
+		if _, err := player.checkIfHasElements(data.Structure); err != nil {
 			return NO_TRANSITION, enerr.E(op, "У вас недостаточно элементов для этой структуры",
-				enerr.GameLogic, enerr.Parameter(fmt.Sprintf("%+v", invalid)))
+				enerr.GameLogic)
 		}
 		if isAuto {
 			eq := checkFields(engine.checks, data.Field, data.Name, data.Structure)

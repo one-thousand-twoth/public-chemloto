@@ -9,7 +9,6 @@ import (
 	"strings"
 
 	"github.com/anrew1002/Tournament-ChemLoto/internal/sl"
-	"github.com/invopop/validation"
 )
 
 // ErrResponse is used as the Response Body
@@ -41,7 +40,7 @@ func HTTPErrorResponse(w http.ResponseWriter, log *slog.Logger, err error) {
 		return
 	}
 
-	var e *EngineError
+	var e *ApplicationError
 	if errors.As(err, &e) {
 		switch e.Kind {
 		// case Unauthenticated:
@@ -55,7 +54,6 @@ func HTTPErrorResponse(w http.ResponseWriter, log *slog.Logger, err error) {
 			return
 		}
 	}
-	// var formerr *validation.Errors
 
 	unknownHTTPErrorResponse(w, log, err)
 }
@@ -66,7 +64,7 @@ func HTTPErrorResponse(w http.ResponseWriter, log *slog.Logger, err error) {
 //
 // Taken from standard library and modified.
 // https://golang.org/pkg/net/http/#Error
-func typicalErrorResponse(w http.ResponseWriter, log *slog.Logger, e *EngineError) {
+func typicalErrorResponse(w http.ResponseWriter, log *slog.Logger, e *ApplicationError) {
 	const op Op = "errs/typicalErrorResponse"
 
 	httpStatusCode := httpErrorStatusCode(e.Kind)
@@ -117,7 +115,7 @@ func typicalErrorResponse(w http.ResponseWriter, log *slog.Logger, e *EngineErro
 	fmt.Fprintln(w, ej)
 }
 
-func newHTTPErrResponse(err *EngineError) ErrResponse {
+func newHTTPErrResponse(err *ApplicationError) ErrResponse {
 	const msg string = "internal server error - please contact support"
 
 	switch err.Kind {
@@ -128,23 +126,20 @@ func newHTTPErrResponse(err *EngineError) ErrResponse {
 				Message: msg,
 			},
 		}
-	case Validation:
-		var formerr validation.Errors
-		if errors.As(err, &formerr) {
-			// fmt.Println("Error AS")
-			j, _ := formerr.MarshalJSON()
-
+	default:
+		var mer *MultiError
+		if errors.As(err.Err, &mer) {
+			bytes, err := json.Marshal(mer)
+			if err != nil {
+				panic(err)
+			}
 			return ErrResponse{
-				FormError: j,
+				FormError: bytes,
 			}
 		}
-		fallthrough
-	default:
 		return ErrResponse{
 			Error: ServiceError{
 				Kind:    err.Kind.String(),
-				Code:    string(err.Code),
-				Param:   string(err.Param),
 				Message: err.Error(),
 			},
 		}

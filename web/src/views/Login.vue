@@ -12,13 +12,13 @@ const userStore = useUserStore();
 async function onSubmit() {
     formErrors.value = {}
     const result = await userStore.Login(username.value, code.value);
-    
+
     if (result?.formErrors) {
-      // Устанавливаем ошибки формы для отображения
-      formErrors.value = result.formErrors;
-      return;
+        // Устанавливаем ошибки формы для отображения
+        formErrors.value = result.formErrors;
+        return;
     }
-    
+
     if (result?.success && userStore.UserCreds) {
         console.log(await router.replace({ name: "Hub" }))
     }
@@ -28,9 +28,9 @@ const router = useRouter()
 
 const isChecked = ref(false)
 
-function Check(){
+function Check() {
     isChecked.value = !isChecked.value
-    code.value = "" 
+    code.value = ""
 }
 
 </script>
@@ -44,18 +44,17 @@ function Check(){
                 <div>
                     <form @submit.prevent="onSubmit()" class="w-full flex items-start justify-center flex-col gap-4">
                         <h2>Вход</h2>
-                        <label>Введите имя:
-                            <input v-model.trim="username" autocomplete="off" type="text" maxlength="25" required
-                                style="width: 95%;">
+                        <label>Введите название команды:
+                            <input v-model.trim="username" class="w-full" autocomplete="off" type="text" maxlength="25" required>
                         </label>
                         <p v-if="formErrors.name" class="text-red-500 text-sm mt-1">{{ formErrors.name }}</p>
                         <label>
-                            <input type="checkbox" v-on:click="Check()"/>
+                            <input type="checkbox" v-on:click="Check()" />
                             Я админ
                         </label>
                         <label v-show="isChecked">Введите код:
                             <input :required="isChecked ? true : undefined" v-model="code" autocomplete="off"
-                                type="text" maxlength="25" style="width: 95%;">
+                                type="text" maxlength="25">
                         </label>
                         <p v-if="formErrors.code" class="text-red-500 text-sm mt-1">{{ formErrors.code }}</p>
                         <button type="submit">Войти</button>

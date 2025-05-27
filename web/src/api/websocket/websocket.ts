@@ -58,7 +58,7 @@ export class WebsocketConnector {
 
         this.connection.onopen = function (event) {
             console.log(event)
-            console.log("Successfully connected to the echo websocket server...")
+            console.log("Successfully connected to the websocket server...")
         }
     }
     Send(msg: Object) {

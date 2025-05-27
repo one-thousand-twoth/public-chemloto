@@ -1,14 +1,20 @@
 <script setup lang="ts">
-import ChemicalElementFormInput from '@/components/UI/ChemicalElementFormInput.vue';
+import { ChemicalElementFormInput, IconButton } from '@/components/UI/';
 import { CreateRoomRequest } from '@/models/RoomModel';
 import { useRoomsStore } from '@/stores/useRoomsStore';
+import { XMarkIcon } from '@heroicons/vue/24/outline';
 import { ref } from 'vue';
+
 
 const roomStore = useRoomsStore()
 
 function onSubmit() {
     roomStore.CreateGame(room.value)
+    emit('exitPanel')
 }
+
+const emit = defineEmits(['exitPanel'])
+
 
 const room = ref<CreateRoomRequest>({
     name: '',
@@ -36,7 +42,7 @@ const room = ref<CreateRoomRequest>({
 })
 
 function onChangeMaxPlayers(_: Event) {
-    if (room.value.type == "polymers"){
+    if (room.value.type == "polymers") {
         const tradeCount = Math.round(room.value.engineConfig.maxPlayers / 2)
         room.value.engineConfig.elementCounts["TRADE"] = (tradeCount > 10) ? 10 : tradeCount
     }
@@ -45,12 +51,16 @@ function onChangeMaxPlayers(_: Event) {
 </script>
 
 <template>
-    <form v-if="room.type=='polymers'" @submit.prevent="onSubmit()">
-        <div class="flex flex-col gap-4 w-[90vw] md:w-[50vw]">
-            <section>
-                <label for="roomName">Название комнаты:</label>
-                <input v-model="room.name" type="text" name="roomName" required placeholder="Комната 402">
-            </section>
+    <form class="bg-white" v-if="room.type == 'polymers'" @submit.prevent="onSubmit()">
+        <div class="  p-4  relative flex flex-col gap-4">
+            <div class="flex">
+                <section class="w-3/4">
+                    <label for="roomName">Название комнаты:</label>
+                    <input class="" v-model="room.name" type="text" name="roomName" required
+                        placeholder="Комната 402">
+                </section>
+            </div>
+            <!-- <IconButton class="absolute -right-2 -top-2 p-0 mx-auto text-gray-500" :icon="XMarkIcon" @click="$emit('exit')" /> -->
             <section>
                 <div>
                     <label for="autoPlay">Авто-игра:</label>
@@ -65,15 +75,16 @@ function onChangeMaxPlayers(_: Event) {
             </section>
             <section>
                 <label for="maxPlayers">Макс. количество игроков:</label>
-                <input @change="onChangeMaxPlayers" v-model="room.engineConfig.maxPlayers" type="number" id="maxPlayers" min="2"
-                    placeholder="Например, 24">
+                <input @change="onChangeMaxPlayers" v-model="room.engineConfig.maxPlayers" type="number" id="maxPlayers"
+                    min="2" placeholder="Например, 24">
             </section>
             <details>
                 <summary class="mb-4">
                     Количество элементов
                 </summary>
                 <div class="flex flex-wrap justify-evenly gap-1 ">
-                    <ChemicalElementFormInput :max="100" elname="TRADE" v-model="room.engineConfig.elementCounts['TRADE']" />
+                    <ChemicalElementFormInput :max="100" elname="TRADE"
+                        v-model="room.engineConfig.elementCounts['TRADE']" />
                     <ChemicalElementFormInput
                         v-for="[name, _] in Object.entries(room.engineConfig.elementCounts).filter(([name, _]) => name != 'TRADE')"
                         :max="100" :elname="name" v-model="room.engineConfig.elementCounts[name]" />
@@ -84,7 +95,8 @@ function onChangeMaxPlayers(_: Event) {
                     Дополнительно
                 </summary>
                 <label for="isAutoCheck">Проверять игроков:</label>
-                <input id='isAutoCheck' v-model="room.engineConfig.isAutoCheck" class="m-2" type="checkbox" name="isAutoCheck">
+                <input id='isAutoCheck' v-model="room.engineConfig.isAutoCheck" class="m-2" type="checkbox"
+                    name="isAutoCheck">
             </details>
 
             <button type="submit">Создать</button>
