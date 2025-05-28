@@ -31,33 +31,22 @@ export const useUserStore = defineStore('users', {
     },
 
     async PatchUser (usr: UserEntity) {
+      const userApiService = new UserApiService()
       const toasterStore = useToasterStore()
-      const client = new Client(APISettings.protocol + APISettings.baseURL, '')
+      
       let role = ''
       if (usr.role == Role.Player) {
         role = Role.Judge
       } else if (usr.role == Role.Judge) {
         role = Role.Player
       }
-      const resp = await fetch(
-        client.url(`/users/${encodeURI(usr.username)}`),
-        {
-          method: 'POST',
-          // headers: client.headers(),
-          body: JSON.stringify({
-            Role: role
-          })
-        }
-      )
-
-      const json = await resp.json()
-      if (!resp.ok) {
-        console.error('Failed to login with user')
+      try{
+        await userApiService.patchUserRole(usr.username, usr.role)
+      }
+      catch (error){
         toasterStore.error(
           `Не удалось изменить роль пользователя ${usr.username}`
         )
-        toasterStore.error(json['error'])
-        return
       }
     },
 

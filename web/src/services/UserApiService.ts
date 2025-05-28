@@ -56,7 +56,18 @@ export class UserApiService {
   }
 
   async patchUserRole (username: string, newRole: Role): Promise<void> {
-    // Изолированная логика изменения роли
+    const resp = await fetch(this.client.url(`/users/${encodeURI(username)}`), {
+      method: 'POST',
+      // headers: client.headers(),
+      body: JSON.stringify({
+        Role: newRole
+      })
+    })
+
+    const json = await resp.json()
+    if (!resp.ok) {
+      throw new AppError(`статус ответа: ${resp.status}`)
+    }
   }
 
   async removeUser (username: string): Promise<void> {
