@@ -13,7 +13,7 @@ import (
 	"github.com/go-chi/render"
 )
 
-func (s *Server) Login2() http.HandlerFunc {
+func (s *Server) Login() http.HandlerFunc {
 	type Request struct {
 		Name string `json:"name" validate:"required,min=1,safeinput"`
 		Code string `json:"code,omitempty"`
@@ -87,7 +87,7 @@ func (s *Server) PatchUser() http.HandlerFunc {
 	}
 }
 
-func (s *Server) CreateRoom2() http.HandlerFunc {
+func (s *Server) CreateRoom() http.HandlerFunc {
 	type Request struct {
 		Name         string         `json:"name" validate:"required,min=1,safeinput"`
 		Type         string         `json:"type"`
@@ -124,7 +124,7 @@ func (s *Server) CreateRoom2() http.HandlerFunc {
 	}
 }
 
-func (s *Server) GetRooms2() http.HandlerFunc {
+func (s *Server) GetRooms() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		rooms, err := s.usecases.GetRooms(context.TODO())
@@ -140,7 +140,7 @@ func (s *Server) GetRooms2() http.HandlerFunc {
 	}
 }
 
-func (s *Server) GetUser2() http.HandlerFunc {
+func (s *Server) GetUser() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		token := chi.URLParam(r, "token")
 		if token == "" {
