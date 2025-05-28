@@ -180,3 +180,12 @@ func (uc *Usecases) RouteActionToUserRoom(ctx context.Context, userID entities.I
 	return nil
 
 }
+
+func (uc *Usecases) GetUsers() ([]entities.User, error) {
+	const op enerr.Op = "usecase.user/GetUsers"
+	users, err := uc.UserRepo.GetUsers()
+	if err != nil {
+		return nil, err
+	}
+	return users, nil
+}

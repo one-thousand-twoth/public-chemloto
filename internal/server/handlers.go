@@ -6,6 +6,7 @@ import (
 	"net/http"
 
 	"github.com/anrew1002/Tournament-ChemLoto/internal/common"
+	"github.com/anrew1002/Tournament-ChemLoto/internal/common/enerr"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/entities"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/sl"
 	"github.com/anrew1002/Tournament-ChemLoto/internal/usecase"
@@ -126,7 +127,6 @@ func (s *Server) CreateRoom() http.HandlerFunc {
 
 func (s *Server) GetRooms() http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-
 		rooms, err := s.usecases.GetRooms(context.TODO())
 		if err != nil {
 			encode(w, r, http.StatusInternalServerError, struct{}{})
@@ -177,5 +177,17 @@ func (s *Server) DeleteUser() http.HandlerFunc {
 
 		log.Info("Deleted user", "user", username)
 		encode(w, r, http.StatusOK, Response{})
+	}
+}
+
+func (s *Server) GetUsers() http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		const op enerr.Op = "server.handlers.GetUsers"
+		log := s.log.With(enerr.OpAttr(op))
+		users, err := s.usecases.GetUsers()
+		if err != nil {
+			encodeError(w, log, err)
+		}
+		encode(w, r, http.StatusOK, users)
 	}
 }

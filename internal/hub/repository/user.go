@@ -127,6 +127,26 @@ func (repo *UserRepository) GetUserByName(name string) (*entities.User, error) {
 	return &user, nil
 }
 
+func (repo *UserRepository) GetUsers() ([]entities.User, error) {
+	const op enerr.Op = "repository.user/GetUsers"
+	userRows, err := repo.queries.GetUsers(context.TODO())
+	if err != nil {
+		return nil, enerr.E(op, err)
+	}
+	users := make([]entities.User, 0, len(userRows))
+	for _, row := range userRows {
+		users = append(users, entities.User{
+			ID:          entities.ID(row.ID),
+			Name:        row.Name,
+			Apikey:      row.Apikey,
+			Room:        row.Room.String,
+			Role:        common.Role(row.Role),
+			MessageChan: repo.messageChannels.Get(row.Name),
+		})
+	}
+	return users, nil
+}
+
 func (repo *UserRepository) GetRoomSubscribers(roomname string) ([]entities.User, error) {
 	rows, err := repo.queries.GetUsersByRoom(context.TODO(),
 		sql.NullString{
