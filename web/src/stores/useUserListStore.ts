@@ -34,7 +34,8 @@ export const useUsersListStore = defineStore('usersList', {
             `Код ошибки при запросе пользователей: ${resp.status}`
           )
         }
-        this.UsersList = Object.values(await resp.json())
+        const userList = Object.values(await resp.json()).map((v)=>{return UserEntity.fromJSON(v)})
+        this.UsersList = userList
       } catch (e) {
         toasterStore.error('Не удалось обновить информацию о доступных играх')
       }
