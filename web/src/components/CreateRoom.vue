@@ -1,8 +1,7 @@
 <script setup lang="ts">
-import { ChemicalElementFormInput, IconButton } from '@/components/UI/';
+import { ChemicalElementFormInput } from '@/components/UI/';
 import { CreateRoomRequest } from '@/models/RoomModel';
 import { useRoomsStore } from '@/stores/useRoomsStore';
-import { XMarkIcon } from '@heroicons/vue/24/outline';
 import { ref } from 'vue';
 
 

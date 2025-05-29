@@ -1,13 +1,12 @@
 <script setup lang="ts">
 import { PlayIcon, PlusCircleIcon, XCircleIcon } from '@heroicons/vue/24/solid'
 import { useElementSize } from '@vueuse/core'
-import { computed, inject, nextTick, onMounted, ref, useTemplateRef } from 'vue'
+import { computed, inject, onMounted, ref, useTemplateRef } from 'vue'
 
 import { WebsocketConnector } from '@/api/websocket/websocket'
 import CreateRoom from '@/components/CreateRoom.vue'
 import { ElementImage } from '@/components/UI'
 import { i18nStatus } from '@/models/RoomModel'
-import { Role } from '@/models/User'
 import { useUserStore } from '@/stores/useUserStore'
 import { useRoomsStore } from '../stores/useRoomsStore'
 
@@ -59,7 +58,7 @@ function transitionend() {
   }
 }
 onMounted(() => {
-  const el = createRoomRef.value
+  const el = createRoomRef.value as any
   if (el) {
     const height = el.$el.offsetHeight
     console.log('Element height:', height)

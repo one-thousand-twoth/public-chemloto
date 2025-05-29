@@ -32,7 +32,7 @@ func (s *Server) configureRoutes() {
 		r.Get("/rooms", s.GetRooms())
 		r.Post("/rooms", s.CreateRoom())
 		r.Get("/users", s.GetUsers())
-		// r.Post("/users/{username}", s.PatchUser())
+		r.Post("/users/{username}", s.PatchUser())
 		r.Delete("/users/{username}", s.DeleteUser())
 		r.Post("/users", s.Login())
 		r.Get("/users/{token}", s.GetUser())

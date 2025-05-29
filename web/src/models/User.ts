@@ -36,13 +36,17 @@ export class UserEntity {
   hasPermission (): boolean {
     return this.role !== Role.Player
   }
-  switchRole () {
-    let role = ''
+  public switchRole () {
+    let role: Role
     if (this.role == Role.Player) {
       role = Role.Judge
-    } else if (this.role == Role.Judge) {
+    } else {
       role = Role.Player
     }
+    this.role = role
+  }
+  static fromJSON (obj: any): UserEntity {
+    return new UserEntity(obj.username, obj.token, obj.room, obj.role)
   }
 }
 

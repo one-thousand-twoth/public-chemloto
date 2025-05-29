@@ -1,7 +1,7 @@
 import { APISettings } from '@/api/config'
 import { Client } from '@/api/core/client'
 import { FormValidationError } from '@/errors/TryCatch'
-import { Role, UserCreds, UserEntity, UserInfo } from '@/models/User'
+import { Role, UserEntity, UserInfo } from '@/models/User'
 import { UserApiService } from '@/services/UserApiService'
 import { UserStorageService } from '@/services/UserStorageService'
 import { acceptHMRUpdate, defineStore } from 'pinia'
@@ -30,16 +30,12 @@ export const useUserStore = defineStore('users', {
       )
     },
 
-    async PatchUser (usr: UserEntity) {
+    async PatchUser (usr: UserEntity) {      
       const userApiService = new UserApiService()
       const toasterStore = useToasterStore()
+      usr.switchRole()
       
-      let role = ''
-      if (usr.role == Role.Player) {
-        role = Role.Judge
-      } else if (usr.role == Role.Judge) {
-        role = Role.Player
-      }
+
       try{
         await userApiService.patchUserRole(usr.username, usr.role)
       }

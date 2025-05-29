@@ -9,7 +9,7 @@ import {
     ArrowLeftStartOnRectangleIcon
 } from "@heroicons/vue/24/outline";
 import { storeToRefs } from 'pinia';
-import { onMounted, ref } from 'vue';
+import { ref } from 'vue';
 import Room from './Room.vue';
 const tabs = {
     "Комнаты": RoomList,

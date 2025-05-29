@@ -3,10 +3,9 @@ import { Client } from '@/api/core/client'
 import {
   AppError,
   FormValidationError,
-  Result,
-  tryCatch
+  Result
 } from '@/errors/TryCatch'
-import { Role, UserEntity } from '@/models/User'
+import { Role } from '@/models/User'
 // services/UserApiService.ts
 
 export class UserApiService {
@@ -64,13 +63,13 @@ export class UserApiService {
       })
     })
 
-    const json = await resp.json()
+    await resp.json()
     if (!resp.ok) {
       throw new AppError(`статус ответа: ${resp.status}`)
     }
   }
 
-  async removeUser (username: string): Promise<void> {
+  async removeUser (_: string): Promise<void> {
     // Изолированная логика удаления
   }
 

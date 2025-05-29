@@ -1,26 +1,22 @@
 <script setup lang="ts">
 import IconButton from '@/components/UI/IconButton.vue';
 import IconButtonBackground from '@/components/UI/IconButtonBackground.vue';
-import { i18nRole, Role, User } from '@/models/User';
+import { i18nRole, Role, UserEntity } from '@/models/User';
 import { useUsersListStore } from '@/stores/useUserListStore';
 import { useUserStore } from '@/stores/useUserStore';
 import { ArrowPathIcon, TrashIcon } from "@heroicons/vue/24/outline";
 import { storeToRefs } from 'pinia';
 
 const userStore = useUserStore()
-const selfuser = userStore.getUser()
+const selfuser = userStore.getUser()!
 const usersListStore = useUsersListStore()
 const { UsersList } = storeToRefs(usersListStore)
+
 usersListStore.fetchUsers()
-function Patch(usr: User) {
-  let role = ""
-  if (usr.role == Role.Player) {
-    role = Role.Judge
-  } else if (usr.role == Role.Judge) {
-    role = Role.Player
-  }
-  if (confirm(`Вы действительно хотите изменить роль ${usr.username} на ${role} ?`)) {
-    userStore.PatchUser(usr)
+
+async function Patch(usr: UserEntity) {
+  if (confirm(`Вы действительно хотите изменить роль ${usr.username}?`)) {
+    await userStore.PatchUser(usr)
     usersListStore.fetchUsers()
   }
 }

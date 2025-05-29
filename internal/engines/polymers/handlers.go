@@ -34,7 +34,7 @@ func RaiseHand(engine *PolymersEngine, isAuto bool) HandlerFunc {
 		if err != nil {
 			return NO_TRANSITION, enerr.E(op, err)
 		}
-
+		// NOTE: нужна проверка не собрал ли игрок уже это поле ранее.
 		_, ok := lo.Find(engine.raisedHands, func(v Hand) bool {
 			return v.Player.Name == player.Name && v.Field == data.Field
 		})
