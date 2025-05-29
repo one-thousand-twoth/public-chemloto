@@ -34,7 +34,7 @@ func (r LoginRequest) Validate() error {
 	errs := validation.ValidateStruct(&r,
 		validation.Field(&r.Name,
 			validation.Required,
-			validation.Length(1, 25).Error("Должно быть меньше 26 символов"),
+			validation.RuneLength(1, 25).Error("Должно быть меньше 26 символов"),
 			validation.Match(regexp.MustCompile(`^[a-zA-Zа-яА-Я0-9- ]+$`)).
 				Error("Должно содержать только буквы, цифры и пробел"),
 		))
