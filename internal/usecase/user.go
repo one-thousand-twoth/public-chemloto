@@ -59,22 +59,20 @@ func (uc *Usecases) Login(log *slog.Logger, req LoginRequest, secret string) (*L
 	if err != nil {
 		return nil, enerr.E(op, err)
 	}
-
-	var role common.Role
-	role = common.Player_Role
-	if req.Code != "" {
-		if req.Code != secret {
-			return nil, enerr.EM(op, "code", "Код недействителен")
-		}
-		role = common.Admin_Role
-	}
 	token, err := generateRandomStringURLSafe(32)
 	if err != nil {
-		return nil, enerr.E(op, err)
+		return nil, enerr.E(op, err, enerr.Internal)
 	}
 
 	channels := []string{"default"}
-	user := entities.NewUser(req.Name, token, "", role, channels)
+	user := entities.NewUser(req.Name, token, "", common.Player_Role, channels)
+
+	if req.Code != "" {
+		err := setAdminRole(user, req.Code, secret)
+		if err != nil {
+			return nil, enerr.E(op, err)
+		}
+	}
 
 	params := database.InsertUserParams{
 		Name:   user.Name,
@@ -91,7 +89,7 @@ func (uc *Usecases) Login(log *slog.Logger, req LoginRequest, secret string) (*L
 		return nil, enerr.E(op, err)
 	}
 
-	log.Info("user registred", "name", req.Name, "role", role)
+	log.Info("user registred", "name", req.Name, "role", user.Role)
 	resp := &LoginResponse{
 		Token: token,
 		Role:  user.Role,
@@ -99,6 +97,17 @@ func (uc *Usecases) Login(log *slog.Logger, req LoginRequest, secret string) (*L
 	}
 	return resp, nil
 
+}
+
+func setAdminRole(user *entities.User, code string, secret string) error {
+	const op enerr.Op = "usecase.user/setAdminRole"
+
+	if code != secret {
+		return enerr.EM(op, "code", "Код недействителен")
+	}
+
+	user.Role = common.Admin_Role
+	return nil
 }
 
 func (uc *Usecases) DeleteUser(ctx context.Context, username string) error {
