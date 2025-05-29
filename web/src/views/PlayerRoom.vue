@@ -5,6 +5,7 @@ import RaiseHandComp from '@/components/game/RaiseHandComp.vue';
 import RoomSlots from '@/components/game/RoomSlots.vue';
 import { NumKey } from '@/components/keyboard';
 import { ElementImage, Timer } from '@/components/UI/';
+import { AppError } from "@/errors/TryCatch";
 import { useInterfaceStore } from '@/stores/RoomInterface';
 import { useGameStore } from '@/stores/useGameStore';
 import { useKeyboardStore } from '@/stores/useRaiseHand';
@@ -42,7 +43,11 @@ const selectedBtn = ref<"strip" | "list">('strip')
 
 const click_selected_raiseHand = ref('')
 
-const player = GameStore.SelfPlayer!
+const player = GameStore.SelfPlayer
+if (player === undefined){
+    throw new AppError("Попытка получить игрока")
+}
+
 
 
 

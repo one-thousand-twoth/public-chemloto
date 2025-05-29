@@ -11,8 +11,10 @@ const gameStore = useGameStore()
 </script>
 <template>
     <div v-if="gameStore.fetching"> Загрузка...</div>
+    <template v-else>
     <AdminRoom v-if="userStore.hasPermision"/>
     <PlayerRoom v-else />
+    </template>
 
 </template>
     

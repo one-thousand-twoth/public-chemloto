@@ -104,7 +104,7 @@ export const useGameStore = defineStore('game', () => {
         name,
         timer,
         currElement,
-        SelfPlayer,
+            SelfPlayer,
         LastElements,
         gameState,
         EngineInfo,
