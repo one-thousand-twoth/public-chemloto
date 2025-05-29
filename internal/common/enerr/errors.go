@@ -8,6 +8,8 @@ import (
 	"log/slog"
 	"runtime"
 	"sort"
+
+	"github.com/invopop/validation"
 )
 
 // MultiError contains a map indicating the parameter and its error.
@@ -81,6 +83,8 @@ func EM(args ...interface{}) *ApplicationError {
 				errPairs = make([]string, 0, 2)
 			}
 			errPairs = append(errPairs, arg)
+		case validation.Errors:
+			e = &MultiError{arg}
 		case map[string]error:
 			e = &MultiError{arg}
 		case map[string]string:
