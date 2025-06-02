@@ -37,7 +37,6 @@ func RaiseHand(engine *PolymersEngine, isAuto bool) HandlerFunc {
 		if player.ifAlreadyCompleteField(data.Field) {
 			return NO_TRANSITION, enerr.E(op, "Вы уже собирали это поле", enerr.GameLogic)
 		}
-		// NOTE: нужна проверка не собрал ли игрок уже это поле ранее.
 		_, ok := lo.Find(engine.raisedHands, func(v Hand) bool {
 			return v.Player.Name == player.Name && v.Field == data.Field
 		})
