@@ -41,6 +41,15 @@ type Player struct {
 	CompletedFields []string
 }
 
+func (p *Player) ifAlreadyCompleteField(field string) bool {
+	for _, v := range p.CompletedFields {
+		if v == field {
+			return true
+		}
+	}
+	return false
+}
+
 // setScore will decrease Participant`s setScore with min value = -2
 func (p *Player) setScore(score int) {
 	p.Score += score

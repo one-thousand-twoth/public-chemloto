@@ -34,6 +34,9 @@ func RaiseHand(engine *PolymersEngine, isAuto bool) HandlerFunc {
 		if err != nil {
 			return NO_TRANSITION, enerr.E(op, err)
 		}
+		if player.ifAlreadyCompleteField(data.Field) {
+			return NO_TRANSITION, enerr.E(op, "Вы уже собирали это поле", enerr.GameLogic)
+		}
 		// NOTE: нужна проверка не собрал ли игрок уже это поле ранее.
 		_, ok := lo.Find(engine.raisedHands, func(v Hand) bool {
 			return v.Player.Name == player.Name && v.Field == data.Field
@@ -88,7 +91,7 @@ func Check(engine *PolymersEngine) HandlerFunc {
 		if err != nil {
 			return NO_TRANSITION, err
 		}
-		target, err := engine.getParticipant(data.Player)
+		targetPl, err := engine.getParticipant(data.Player)
 		if err != nil {
 			return NO_TRANSITION, err
 		}
@@ -109,7 +112,7 @@ func Check(engine *PolymersEngine) HandlerFunc {
 			return NO_TRANSITION, enerr.E(op, "Вы уже проверили этого игрока", enerr.GameLogic)
 		}
 		if !data.Accept {
-			target.setScore(-1)
+			targetPl.setScore(-1)
 			// NOTE: Не делаю zeroing elements, так как после перехода на новые версии компилятора
 			// DeleteFunc сам будет занулять их. Пока влиянием на производительность можно принебречь.
 			engine.raisedHands = slices.DeleteFunc(engine.raisedHands, func(v Hand) bool {
@@ -117,12 +120,12 @@ func Check(engine *PolymersEngine) HandlerFunc {
 			})
 		} else {
 			engine.raisedHands[index].Checked = true
-			target.CompletedFields = append(target.CompletedFields, hand.Field)
-			for k := range target.Bag {
-				target.Bag[k] -= hand.Structure[k]
+			targetPl.CompletedFields = append(targetPl.CompletedFields, hand.Field)
+			for k := range targetPl.Bag {
+				targetPl.Bag[k] -= hand.Structure[k]
 			}
 		}
-		target.RaisedHand = false
+		targetPl.RaisedHand = false
 
 		engine.log.Info("Succesful check Polymers",
 			slog.String("Player", e.Player),
