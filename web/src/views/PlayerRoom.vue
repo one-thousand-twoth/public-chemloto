@@ -6,6 +6,7 @@ import RoomSlots from '@/components/game/RoomSlots.vue';
 import { NumKey } from '@/components/keyboard';
 import { ElementImage, Timer } from '@/components/UI/';
 import { AppError } from "@/errors/TryCatch";
+import { Player } from "@/models/Game";
 import { useInterfaceStore } from '@/stores/RoomInterface';
 import { useGameStore } from '@/stores/useGameStore';
 import { useKeyboardStore } from '@/stores/useRaiseHand';
@@ -37,17 +38,20 @@ let audio = new Audio(obtain);
 
 watch(() => GameStore.gameState.Bag.LastElements, () => { audio.play() })
 
+function assertPlayerDefined(player: Player | undefined): asserts player is Player {
+    if (player === undefined) {
+        throw new AppError("Попытка получить игрока");
+    }
+}
 
 const selectedTool = ref<'puzzle' | 'trade'>('puzzle')
 const selectedBtn = ref<"strip" | "list">('strip')
 
 const click_selected_raiseHand = ref('')
 
-const player = GameStore.SelfPlayer
-if (player === undefined){
-    throw new AppError("Попытка получить игрока")
-}
-
+const pl = GameStore.SelfPlayer
+assertPlayerDefined(pl)
+const player = pl
 
 
 
