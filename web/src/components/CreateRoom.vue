@@ -1,16 +1,26 @@
 <script setup lang="ts">
 import { ChemicalElementFormInput } from '@/components/UI/';
+import { useFetching } from '@/composables/useFetching';
 import { CreateRoomRequest } from '@/models/RoomModel';
 import { useRoomsStore } from '@/stores/useRoomsStore';
 import { ref } from 'vue';
 
 
 const roomStore = useRoomsStore()
+const formErrors = ref<Record<string, string> | null>(null)
+async function onSubmit() {
 
-function onSubmit() {
-    roomStore.CreateGame(room.value)
+    const err = await roomStore.CreateGame(room.value)
+    if (err != null) {
+        formErrors.value = err
+        return
+    }
+
+
     emit('exitPanel')
 }
+
+const { execute: onSubmitHook } = useFetching(onSubmit)
 
 const emit = defineEmits(['exitPanel'])
 
@@ -50,17 +60,17 @@ function onChangeMaxPlayers(_: Event) {
 </script>
 
 <template>
-    <form class="bg-white" v-if="room.type == 'polymers'" @submit.prevent="onSubmit()">
+    <form class="bg-white" v-if="room.type == 'polymers'" @submit.prevent="onSubmitHook()">
         <div class="  p-4  relative flex flex-col gap-4">
             <div class="flex">
                 <section class="w-3/4">
                     <label for="roomName">Название комнаты:</label>
-                    <input class="" v-model="room.name" type="text" name="roomName" required
-                        placeholder="Комната 402">
+                    <input class="" v-model="room.name" type="text" name="roomName" required placeholder="Комната 402">
+                    <div :class="formErrors ? '' : 'opacity-0'" class="text-red-600">{{ formErrors?.name ?? "_" }}</div>
                 </section>
             </div>
             <!-- <IconButton class="absolute -right-2 -top-2 p-0 mx-auto text-gray-500" :icon="XMarkIcon" @click="$emit('exit')" /> -->
-            <section>
+            <section class="">
                 <div>
                     <label for="autoPlay">Авто-игра:</label>
                     <input v-model="room.engineConfig.isAuto" class="m-2" type="checkbox" name="autoPlay">

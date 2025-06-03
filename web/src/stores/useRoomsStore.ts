@@ -1,6 +1,8 @@
 import { APISettings } from '@/api/config'
 import { Client } from '@/api/core/client'
+import { AppError, FormValidationError } from '@/errors/TryCatch'
 import { CreateRoomRequest, Room } from '@/models/RoomModel'
+import { RoomApiService } from '@/services/RoomApiService'
 import { acceptHMRUpdate, defineStore } from 'pinia'
 import { ref } from 'vue'
 import { useToasterStore } from '../stores/useToasterStore'
@@ -34,31 +36,29 @@ export const useRoomsStore = defineStore('rooms', () => {
     }
     fetching.value = false
   }
-  async function CreateGame (room: CreateRoomRequest) {
+  async function CreateGame (
+    room: CreateRoomRequest
+  ): Promise<Record<string, string> | null> {
     if (userStore.UserCreds == null) {
-      return
+      throw new AppError('Вызов без UserCreds')
     }
-    console.log(room)
-    const client = new Client(
-      APISettings.protocol + APISettings.baseURL,
-      userStore.UserCreds.token
-    )
-    const resp = await fetch(client.url('/rooms'), {
-      method: 'POST',
-      headers: client.headers(),
-      body: JSON.stringify(room)
-    })
-
-    if (!resp.ok) {
-      const json = await resp.json()
-      json['error'].forEach((element: string) => {
-        toasterStore.error(element)
-      })
-      return
+    const api = new RoomApiService()
+    try {
+      await api.createRoom(room)
+    } catch (e) {
+      if (e instanceof FormValidationError) {
+        return e.fields
+      }
+      if (e instanceof AppError) {
+        toasterStore.error(e.message)
+        return null
+      }
+      throw e
     }
 
     toasterStore.info('Новая игра успешно создана!')
     await Fetch()
+    return null
   }
   return {
     roomList,

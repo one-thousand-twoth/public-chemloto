@@ -6,13 +6,16 @@ import {
   Result
 } from '@/errors/TryCatch'
 import { Role } from '@/models/User'
+import { useUserStore } from '@/stores/useUserStore'
 // services/UserApiService.ts
 
 export class UserApiService {
   private client: Client
 
   constructor () {
-    this.client = new Client(APISettings.protocol + APISettings.baseURL, '')
+    const userStore = useUserStore()
+    const token = userStore.UserCreds?.token
+    this.client = new Client(APISettings.protocol + APISettings.baseURL, token ?? '')
   }
 
   async loginUser (

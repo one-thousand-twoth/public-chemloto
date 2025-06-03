@@ -1183,6 +1183,10 @@ select {
   width: 100vw;
 }
 
+.w-1\/2 {
+  width: 50%;
+}
+
 .min-w-96 {
   min-width: 24rem;
 }
@@ -1221,6 +1225,10 @@ select {
 
 .shrink-0 {
   flex-shrink: 0;
+}
+
+.shrink {
+  flex-shrink: 1;
 }
 
 .flex-grow {
@@ -1275,6 +1283,10 @@ select {
 
 .grid-rows-\[calc\(100lvh-1rem\)\] {
   grid-template-rows: calc(100lvh - 1rem);
+}
+
+.grid-rows-1 {
+  grid-template-rows: repeat(1, minmax(0, 1fr));
 }
 
 .flex-row {
@@ -1872,6 +1884,11 @@ select {
 .text-red-500 {
   --tw-text-opacity: 1;
   color: rgb(239 68 68 / var(--tw-text-opacity));
+}
+
+.text-red-600 {
+  --tw-text-opacity: 1;
+  color: rgb(220 38 38 / var(--tw-text-opacity));
 }
 
 .text-slate-500 {

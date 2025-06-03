@@ -45,7 +45,7 @@ type Response struct {
 
 func (uc *Usecases) CreateRoom(args CreateRoomParams, log *slog.Logger) (*entities.Room, error) {
 
-	const op = "server.handlers.CreateRoom"
+	const op enerr.Op = "server.handlers.CreateRoom"
 
 	log.Info("Creating room...", slog.Any("args", args))
 
@@ -84,6 +84,9 @@ func (uc *Usecases) CreateRoom(args CreateRoomParams, log *slog.Logger) (*entiti
 
 	room, err := uc.RoomRepo.AddRoom(args.Name, eng)
 	if err != nil {
+		if enerr.KindIs(enerr.Exist, err) {
+			return nil, enerr.EM(op, "name", "Комната с таким именем уже есть")
+		}
 		return nil, enerr.E(op, err)
 	}
 
